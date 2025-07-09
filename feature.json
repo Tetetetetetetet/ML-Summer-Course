@@ -1,406 +1,422 @@
 {
   "dataset_name": "糖尿病数据集",
   "target_feature": "readmitted",
-  "features": [
-    {
+  "features": {
+    "encounter_id": {
       "feature_id": 0,
-      "name": "encounter_id",
       "category": "identifier",
       "type": "categorical",
       "description": "就诊ID",
       "visualization": "不适用"
     },
-    {
+    "patient_nbr": {
       "feature_id": 1,
-      "name": "patient_nbr",
       "category": "identifier",
       "type": "categorical",
       "description": "患者ID",
       "visualization": "不适用"
     },
-    {
+    "race": {
       "feature_id": 2,
-      "name": "race",
       "category": "demographic",
       "type": "categorical",
       "description": "种族",
-      "visualization": "饼图"
+      "visualization": "饼图",
+      "label_encoding": {
+        "unique_values": [
+          "Caucasian",
+          "AfricanAmerican",
+          "?",
+          "Other",
+          "Hispanic",
+          "Asian"
+        ],
+        "encoding_mapping": {
+          "Caucasian": 0,
+          "AfricanAmerican": 1,
+          "?": 2,
+          "Other": 3,
+          "Hispanic": 4,
+          "Asian": 5
+        }
+      }
     },
-    {
+    "gender": {
       "feature_id": 3,
-      "name": "gender",
       "category": "demographic",
       "type": "categorical",
       "description": "性别",
-      "visualization": "条形图"
+      "visualization": "条形图",
+      "label_encoding": {
+        "unique_values": [
+          "Female",
+          "Male",
+          "Unknown/Invalid"
+        ],
+        "encoding_mapping": {
+          "Female": 0,
+          "Male": 1,
+          "Unknown/Invalid": 2
+        }
+      }
     },
-    {
+    "age": {
       "feature_id": 4,
-      "name": "age",
       "category": "demographic",
       "type": "categorical",
       "description": "年龄组",
-      "visualization": "条形图"
+      "visualization": "条形图",
+      "label_encoding": {
+        "unique_values": [
+          "[10-20)",
+          "[20-30)",
+          "[30-40)",
+          "[40-50)",
+          "[50-60)",
+          "[60-70)",
+          "[70-80)",
+          "[80-90)",
+          "[90-100)",
+          "[0-10)"
+        ],
+        "encoding_mapping": {
+          "[0-10)": 0,
+          "[10-20)": 1,
+          "[20-30)": 2,
+          "[30-40)": 3,
+          "[40-50)": 4,
+          "[50-60)": 5,
+          "[60-70)": 6,
+          "[70-80)": 7,
+          "[80-90)": 8,
+          "[90-100)": 9
+        }
+      }
     },
-    {
+    "weight": {
       "feature_id": 5,
-      "name": "weight",
       "category": "demographic",
       "type": "categorical",
       "description": "体重",
-      "visualization": "饼图"
+      "visualization": "饼图",
+      "label_encoding": {
+        "unique_values": [
+          "Missing",
+          "Available"
+        ],
+        "encoding_mapping": {
+          "Missing": 0,
+          "Available": 1
+        }
+      }
     },
-    {
+    "admission_type_id": {
       "feature_id": 6,
-      "name": "admission_type_id",
       "category": "categorical",
       "type": "categorical",
       "description": "入院类型ID",
       "visualization": "水平条形图"
     },
-    {
+    "discharge_disposition_id": {
       "feature_id": 7,
-      "name": "discharge_disposition_id",
       "category": "categorical",
       "type": "categorical",
       "description": "出院状态ID",
       "visualization": "水平条形图"
     },
-    {
+    "admission_source_id": {
       "feature_id": 8,
-      "name": "admission_source_id",
       "category": "categorical",
       "type": "categorical",
       "description": "入院来源ID",
       "visualization": "水平条形图"
     },
-    {
+    "time_in_hospital": {
       "feature_id": 9,
-      "name": "time_in_hospital",
       "category": "numeric",
       "type": "continuous",
       "description": "住院时间",
       "visualization": "直方图"
     },
-    {
+    "payer_code": {
       "feature_id": 10,
-      "name": "payer_code",
       "category": "categorical",
       "type": "categorical",
       "description": "支付方代码",
       "visualization": "水平条形图"
     },
-    {
+    "medical_specialty": {
       "feature_id": 11,
-      "name": "medical_specialty",
       "category": "categorical",
       "type": "categorical",
       "description": "医疗专业",
       "visualization": "水平条形图"
     },
-    {
+    "num_lab_procedures": {
       "feature_id": 12,
-      "name": "num_lab_procedures",
       "category": "numeric",
       "type": "continuous",
       "description": "实验室检查次数",
       "visualization": "直方图"
     },
-    {
+    "num_procedures": {
       "feature_id": 13,
-      "name": "num_procedures",
       "category": "numeric",
       "type": "continuous",
       "description": "手术次数",
       "visualization": "直方图"
     },
-    {
+    "num_medications": {
       "feature_id": 14,
-      "name": "num_medications",
       "category": "numeric",
       "type": "continuous",
       "description": "药物数量",
       "visualization": "直方图"
     },
-    {
+    "number_outpatient": {
       "feature_id": 15,
-      "name": "number_outpatient",
       "category": "numeric",
       "type": "continuous",
       "description": "门诊次数",
       "visualization": "直方图"
     },
-    {
+    "number_emergency": {
       "feature_id": 16,
-      "name": "number_emergency",
       "category": "numeric",
       "type": "continuous",
       "description": "急诊次数",
       "visualization": "直方图"
     },
-    {
+    "number_inpatient": {
       "feature_id": 17,
-      "name": "number_inpatient",
       "category": "numeric",
       "type": "continuous",
       "description": "住院次数",
       "visualization": "直方图"
     },
-    {
+    "diag_1": {
       "feature_id": 18,
-      "name": "diag_1",
       "category": "diagnosis",
       "type": "categorical",
       "description": "主要诊断",
       "visualization": "水平条形图"
     },
-    {
+    "diag_2": {
       "feature_id": 19,
-      "name": "diag_2",
       "category": "diagnosis",
       "type": "categorical",
       "description": "次要诊断",
       "visualization": "水平条形图"
     },
-    {
+    "diag_3": {
       "feature_id": 20,
-      "name": "diag_3",
       "category": "diagnosis",
       "type": "categorical",
       "description": "第三诊断",
       "visualization": "水平条形图"
     },
-    {
+    "number_diagnoses": {
       "feature_id": 21,
-      "name": "number_diagnoses",
       "category": "numeric",
       "type": "continuous",
       "description": "诊断数量",
       "visualization": "直方图"
     },
-    {
+    "max_glu_serum": {
       "feature_id": 22,
-      "name": "max_glu_serum",
       "category": "categorical",
       "type": "categorical",
       "description": "最大血糖血清",
       "visualization": "水平条形图"
     },
-    {
+    "A1Cresult": {
       "feature_id": 23,
-      "name": "A1Cresult",
       "category": "categorical",
       "type": "categorical",
       "description": "糖化血红蛋白结果",
       "visualization": "水平条形图"
     },
-    {
+    "metformin": {
       "feature_id": 24,
-      "name": "metformin",
       "category": "medication",
       "type": "categorical",
       "description": "二甲双胍",
       "visualization": "热力图"
     },
-    {
+    "repaglinide": {
       "feature_id": 25,
-      "name": "repaglinide",
       "category": "medication",
       "type": "categorical",
       "description": "瑞格列奈",
       "visualization": "热力图"
     },
-    {
+    "nateglinide": {
       "feature_id": 26,
-      "name": "nateglinide",
       "category": "medication",
       "type": "categorical",
       "description": "那格列奈",
       "visualization": "热力图"
     },
-    {
+    "chlorpropamide": {
       "feature_id": 27,
-      "name": "chlorpropamide",
       "category": "medication",
       "type": "categorical",
       "description": "氯磺丙脲",
       "visualization": "热力图"
     },
-    {
+    "glimepiride": {
       "feature_id": 28,
-      "name": "glimepiride",
       "category": "medication",
       "type": "categorical",
       "description": "格列美脲",
       "visualization": "热力图"
     },
-    {
+    "acetohexamide": {
       "feature_id": 29,
-      "name": "acetohexamide",
       "category": "medication",
       "type": "categorical",
       "description": "醋磺己脲",
       "visualization": "热力图"
     },
-    {
+    "glipizide": {
       "feature_id": 30,
-      "name": "glipizide",
       "category": "medication",
       "type": "categorical",
       "description": "格列吡嗪",
       "visualization": "热力图"
     },
-    {
+    "glyburide": {
       "feature_id": 31,
-      "name": "glyburide",
       "category": "medication",
       "type": "categorical",
       "description": "格列本脲",
       "visualization": "热力图"
     },
-    {
+    "tolbutamide": {
       "feature_id": 32,
-      "name": "tolbutamide",
       "category": "medication",
       "type": "categorical",
       "description": "甲苯磺丁脲",
       "visualization": "热力图"
     },
-    {
+    "pioglitazone": {
       "feature_id": 33,
-      "name": "pioglitazone",
       "category": "medication",
       "type": "categorical",
       "description": "吡格列酮",
       "visualization": "热力图"
     },
-    {
+    "rosiglitazone": {
       "feature_id": 34,
-      "name": "rosiglitazone",
       "category": "medication",
       "type": "categorical",
       "description": "罗格列酮",
       "visualization": "热力图"
     },
-    {
+    "acarbose": {
       "feature_id": 35,
-      "name": "acarbose",
       "category": "medication",
       "type": "categorical",
       "description": "阿卡波糖",
       "visualization": "热力图"
     },
-    {
+    "miglitol": {
       "feature_id": 36,
-      "name": "miglitol",
       "category": "medication",
       "type": "categorical",
       "description": "米格列醇",
       "visualization": "热力图"
     },
-    {
+    "troglitazone": {
       "feature_id": 37,
-      "name": "troglitazone",
       "category": "medication",
       "type": "categorical",
       "description": "曲格列酮",
       "visualization": "热力图"
     },
-    {
+    "tolazamide": {
       "feature_id": 38,
-      "name": "tolazamide",
       "category": "medication",
       "type": "categorical",
       "description": "妥拉磺脲",
       "visualization": "热力图"
     },
-    {
+    "examide": {
       "feature_id": 39,
-      "name": "examide",
       "category": "medication",
       "type": "categorical",
       "description": "依沙米德",
       "visualization": "热力图"
     },
-    {
+    "citoglipton": {
       "feature_id": 40,
-      "name": "citoglipton",
       "category": "medication",
       "type": "categorical",
       "description": "西格列汀",
       "visualization": "热力图"
     },
-    {
+    "insulin": {
       "feature_id": 41,
-      "name": "insulin",
       "category": "medication",
       "type": "categorical",
       "description": "胰岛素",
       "visualization": "热力图"
     },
-    {
+    "glyburide-metformin": {
       "feature_id": 42,
-      "name": "glyburide-metformin",
       "category": "medication",
       "type": "categorical",
       "description": "格列本脲-二甲双胍",
       "visualization": "热力图"
     },
-    {
+    "glipizide-metformin": {
       "feature_id": 43,
-      "name": "glipizide-metformin",
       "category": "medication",
       "type": "categorical",
       "description": "格列吡嗪-二甲双胍",
       "visualization": "热力图"
     },
-    {
+    "glimepiride-pioglitazone": {
       "feature_id": 44,
-      "name": "glimepiride-pioglitazone",
       "category": "medication",
       "type": "categorical",
       "description": "格列美脲-吡格列酮",
       "visualization": "热力图"
     },
-    {
+    "metformin-rosiglitazone": {
       "feature_id": 45,
-      "name": "metformin-rosiglitazone",
       "category": "medication",
       "type": "categorical",
       "description": "二甲双胍-罗格列酮",
       "visualization": "热力图"
     },
-    {
+    "metformin-pioglitazone": {
       "feature_id": 46,
-      "name": "metformin-pioglitazone",
       "category": "medication",
       "type": "categorical",
       "description": "二甲双胍-吡格列酮",
       "visualization": "热力图"
     },
-    {
+    "change": {
       "feature_id": 47,
-      "name": "change",
       "category": "categorical",
       "type": "categorical",
       "description": "药物变化",
       "visualization": "水平条形图"
     },
-    {
+    "diabetesMed": {
       "feature_id": 48,
-      "name": "diabetesMed",
       "category": "categorical",
       "type": "categorical",
       "description": "糖尿病药物",
       "visualization": "水平条形图"
     },
-    {
+    "readmitted": {
       "feature_id": 49,
-      "name": "readmitted",
       "category": "target",
       "type": "categorical",
       "description": "复诊情况",
       "visualization": "饼图、条形图"
     }
-  ]
-} 
+  }
+}

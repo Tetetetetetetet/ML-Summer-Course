@@ -3,23 +3,28 @@
 糖尿病数据特征可视化分析
 """
 import pandas as pd
+from myutils import read_jsonl
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
 import warnings
+import json
 warnings.filterwarnings('ignore')
 
 # 设置中文字体和样式
-plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei', 'DejaVu Sans']
-plt.rcParams['axes.unicode_minus'] = False
+# plt.rcParams['font.sans-serif'] = ['STHeiti','Arial Unicode MS', 'SimHei', 'DejaVu Sans']
 sns.set_style("whitegrid")
+plt.rcParams['font.sans-serif'] = ['STHeiti']
+plt.rcParams['axes.unicode_minus'] = False
 
 class DataVisualizer:
     def __init__(self):
         self.dataset_path = Path(__file__).parent.parent / "Dataset"
         self.train_data = None
         self.test_data = None
+        self.feature_file = Path(__file__).parent.parent / "feature.json"
+        self.feature_json = read_jsonl(str(self.feature_file))
         
     def load_data(self):
         """加载数据"""
@@ -28,41 +33,191 @@ class DataVisualizer:
         self.test_data = pd.read_csv(self.dataset_path / "diabetic_data_test.csv")
         print(f"训练集: {self.train_data.shape}, 测试集: {self.test_data.shape}")
         
-    def visualize_demographic_features(self):
-        """可视化人口统计学特征"""
-        print("\n=== 人口统计学特征可视化 ===")
+    def get_demographic_features(self):
+        """从feature.json中获取demographic特征"""
+        demographic_features = []
+        for feature_name, feature_info in self.feature_json['features'].items():
+            if feature_info['category'] == 'demographic':
+                demographic_features.append(feature_name)
+        return demographic_features
         
-        fig, axes = plt.subplots(2, 2, figsize=(15, 12))
-        fig.suptitle('人口统计学特征分布', fontsize=16, fontweight='bold')
+    def process_demographic_features(self):
+        """处理demographic特征，包括体重缺失值处理"""
+        print("\n=== 处理Demographic特征 ===")
         
-        # 种族分布
-        race_counts = self.train_data['race'].value_counts()
-        axes[0, 0].pie(race_counts.values, labels=race_counts.index, autopct='%1.1f%%')
-        axes[0, 0].set_title('种族分布')
+        demographic_features = self.get_demographic_features()
+        print(f"Demographic特征: {demographic_features}")
         
-        # 性别分布
-        gender_counts = self.train_data['gender'].value_counts()
-        axes[0, 1].bar(gender_counts.index, gender_counts.values, color=['skyblue', 'lightcoral'])
-        axes[0, 1].set_title('性别分布')
-        axes[0, 1].set_ylabel('数量')
+        # 处理体重缺失值：将'?'视为一类，其他视为另一类
+        if 'weight' in self.train_data.columns:
+            # 创建新的weight_processed列
+            self.train_data['weight_processed'] = self.train_data['weight'].apply(
+                lambda x: 'Missing' if x == '?' else 'Available'
+            )
+            self.test_data['weight_processed'] = self.test_data['weight'].apply(
+                lambda x: 'Missing' if x == '?' else 'Available'
+            )
+            print("体重缺失值处理完成")
+            
+        return demographic_features
         
-        # 年龄分布
-        age_counts = self.train_data['age'].value_counts().sort_index()
-        axes[1, 0].bar(range(len(age_counts)), age_counts.values, color='lightgreen')
-        axes[1, 0].set_title('年龄分布')
-        axes[1, 0].set_xlabel('年龄组')
-        axes[1, 0].set_ylabel('数量')
-        axes[1, 0].set_xticks(range(len(age_counts)))
-        axes[1, 0].set_xticklabels(age_counts.index, rotation=45)
+    def visualize_demographic_features_histogram(self):
+        """为demographic特征创建直方图，标注数量和比例"""
+        print("\n=== Demographic特征直方图可视化 ===")
         
-        # 体重分布（缺失值处理）
-        weight_counts = self.train_data['weight'].value_counts()
-        axes[1, 1].pie(weight_counts.values, labels=weight_counts.index, autopct='%1.1f%%')
-        axes[1, 1].set_title('体重分布')
+        demographic_features = self.get_demographic_features()
         
-        plt.tight_layout()
-        plt.savefig('src/visualizations/demographic_features.png', dpi=300, bbox_inches='tight')
+        # 创建子图，增加高度以避免重叠
+        fig, axes = plt.subplots(2, 2, figsize=(15, 14))
+        fig.suptitle('Demographic特征分布直方图', fontsize=16, fontweight='bold', y=0.95)
+        
+        for i, feature in enumerate(demographic_features):
+            row, col = i // 2, i % 2
+            
+            if feature == 'weight':
+                # 使用处理后的weight_processed
+                feature_data = self.train_data['weight_processed']
+            else:
+                feature_data = self.train_data[feature]
+            
+            # 计算统计信息
+            value_counts = feature_data.value_counts()
+            total_count = len(feature_data)
+            
+            # 创建直方图
+            bars = axes[row, col].bar(range(len(value_counts)), value_counts.values, 
+                                    color='skyblue', alpha=0.7, edgecolor='black')
+            axes[row, col].set_title(f'{feature} 分布', pad=20)
+            axes[row, col].set_ylabel('数量')
+            axes[row, col].set_xticks(range(len(value_counts)))
+            axes[row, col].set_xticklabels(value_counts.index, rotation=45, ha='right')
+            
+            # 添加数量和比例标签
+            for j, (value, count) in enumerate(value_counts.items()):
+                percentage = (count / total_count) * 100
+                axes[row, col].text(j, count + max(value_counts.values) * 0.01, 
+                                  f'{count}\n({percentage:.1f}%)', 
+                                  ha='center', va='bottom', fontsize=9)
+            
+            # 添加总数信息
+            axes[row, col].text(0.02, 0.98, f'总数: {total_count}', 
+                              transform=axes[row, col].transAxes, 
+                              verticalalignment='top', fontsize=10,
+                              bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+        
+        # 调整布局，增加底部空间
+        plt.tight_layout(pad=3.0)
+        plt.subplots_adjust(bottom=0.15)  # 增加底部空间
+        plt.savefig('src/visualizations/demographic_features_histogram.png', dpi=300, bbox_inches='tight')
         plt.show()
+        
+    def create_label_encoding(self):
+        """为demographic特征创建标签编码（0,1,2,...序列）"""
+        print("\n=== 创建Demographic特征标签编码 ===")
+        
+        demographic_features = self.get_demographic_features()
+        label_encoding_data = {}
+        
+        for feature in demographic_features:
+            if feature == 'weight':
+                # 使用处理后的weight_processed
+                feature_data = self.train_data['weight_processed']
+            else:
+                feature_data = self.train_data[feature]
+            
+            # 获取唯一值
+            unique_values = feature_data.unique()
+            print(f"{feature} 唯一值: {unique_values}")
+            
+            # 存储编码信息
+            label_encoding_data[feature] = {
+                'unique_values': unique_values.tolist(),
+                'encoding_mapping': {}
+            }
+            
+            # 创建标签编码映射（0,1,2,...）
+            if feature == 'age':
+                # 特殊处理age特征，让[0-10)编码为0
+                sorted_values = sorted(unique_values)
+                # 将[0-10)移到第一位
+                if '[0-10)' in sorted_values:
+                    sorted_values.remove('[0-10)')
+                    sorted_values.insert(0, '[0-10)')
+                
+                for i, value in enumerate(sorted_values):
+                    label_encoding_data[feature]['encoding_mapping'][str(value)] = i
+            else:
+                # 其他特征按原有顺序编码
+                for i, value in enumerate(unique_values):
+                    label_encoding_data[feature]['encoding_mapping'][str(value)] = i
+            
+            print(f"{feature} 标签编码完成，编码范围: 0-{len(unique_values)-1}")
+        
+        return label_encoding_data
+        
+    def update_feature_json(self, label_encoding_data):
+        """直接以name为key写入features，并且不包含one-hot编码，只保留label_encoding和其它原有字段。"""
+        print("\n=== 更新feature.json文件 ===")
+        
+        # 读取原始feature.json
+        feature_data = self.feature_json
+        
+        # 构建新的features字典
+        new_features = {}
+        # 兼容旧结构（列表）和新结构（字典）
+        features_iter = feature_data['features'].items() if isinstance(feature_data['features'], dict) else ((f['name'], f) for f in feature_data['features'])
+        for feature_name, feature_info in features_iter:
+            # 构建新特征字典（不包含one-hot编码）
+            new_feature = {
+                'feature_id': feature_info['feature_id'],
+                'category': feature_info['category'],
+                'type': feature_info['type'],
+                'description': feature_info['description'],
+                'visualization': feature_info['visualization']
+            }
+            # 如果有label_encoding，更新为最新的
+            if feature_name in label_encoding_data:
+                new_feature['label_encoding'] = label_encoding_data[feature_name]
+            elif 'label_encoding' in feature_info:
+                new_feature['label_encoding'] = feature_info['label_encoding']
+            # 以name为key
+            new_features[feature_name] = new_feature
+        
+        # 构建新结构
+        new_data = {
+            'dataset_name': feature_data['dataset_name'],
+            'target_feature': feature_data['target_feature'],
+            'features': new_features
+        }
+        
+        # 保存新feature.json
+        with open(self.feature_file, 'w', encoding='utf-8') as f:
+            json.dump(new_data, f, ensure_ascii=False, indent=2)
+        print("feature.json文件已更新为以name为key的结构，并删除了one-hot编码，只保留label_encoding")
+        
+    def process_and_visualize_demographic(self):
+        """处理demographic特征并创建可视化"""
+        print("开始处理Demographic特征...")
+        
+        # 加载数据
+        self.load_data()
+        
+        # 处理demographic特征
+        demographic_features = self.process_demographic_features()
+        
+        # 创建直方图可视化
+        self.visualize_demographic_features_histogram()
+        
+        # 创建标签编码
+        label_encoding_data = self.create_label_encoding()
+        
+        # 更新feature.json
+        self.update_feature_json(label_encoding_data)
+        
+        print("\nDemographic特征处理完成！")
+        print(f"处理的特征: {demographic_features}")
+        print("可视化图片保存在 src/visualizations/demographic_features_histogram.png")
+        print("标签编码信息已更新到 feature.json")
         
     def visualize_numeric_features(self):
         """可视化数值型特征"""
@@ -290,18 +445,8 @@ class DataVisualizer:
         save_dir = Path(__file__).parent / "visualizations"
         save_dir.mkdir(exist_ok=True)
         
-        # 加载数据
-        self.load_data()
-        
-        # 创建各种可视化
-        self.visualize_demographic_features()
-        # self.visualize_numeric_features()
-        # self.visualize_categorical_features()
-        # self.visualize_medication_features()
-        # self.visualize_diagnosis_features()
-        # self.visualize_target_feature()
-        # self.visualize_correlations()
-        # self.visualize_missing_values()
+        # 处理demographic特征
+        self.process_and_visualize_demographic()
         
         print("\n所有可视化已完成！图片保存在 src/visualizations/ 目录中")
 
