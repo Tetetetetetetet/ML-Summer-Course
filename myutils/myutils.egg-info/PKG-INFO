@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: myutils
+Version: 0.1
+Summary: My custom utils for jsonl and file operations
+Author: Tet
+Author-email: tett8107@gmail.com
+Requires-Python: >=3.6
+Dynamic: author
+Dynamic: author-email
+Dynamic: requires-python
+Dynamic: summary
