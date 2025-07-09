@@ -2,26 +2,16 @@
 
 ## 项目概述
 
-本项目旨在对糖尿病数据集进行全面的特征分析和可视化，为后续的机器学习模型训练提供数据预处理支持。
+本项目对糖尿病数据集进行特征分析和可视化，为机器学习模型训练提供数据预处理支持。
 
 ### 项目结构
 ```
 coursework/
 ├── Dataset/                    # 原始数据集
-│   ├── diabetic_data_training.csv
-│   ├── diabetic_data_test.csv
-│   ├── FeatureTable.xlsx
-│   └── IDS_mapping.csv
 ├── src/                       # 源代码目录
 │   ├── data_visualization.py  # 数据可视化主程序
-│   ├── feature.json          # 特征配置文件
 │   ├── visualizations/       # 可视化输出目录
-│   └── modify_feature_json.py # 特征文件修改工具
-├── myutils/                   # 工具包
-│   └── myutils/
-│       ├── __init__.py
-│       ├── genie.py
-│       └── model.py
+│   └── feature.json          # 特征配置文件
 └── docs.md                   # 本文档
 ```
 
@@ -41,251 +31,111 @@ coursework/
       "visualization": "可视化类型",
       "label_encoding": {
         "unique_values": ["值1", "值2", ...],
-        "encoding_mapping": {
-          "值1": 0,
-          "值2": 1,
-          ...
-        }
+        "encoding_mapping": {"值1": 0, "值2": 1, ...}
       }
     }
   }
 }
 ```
 
-### 特征分类
-- **demographic**: 人口统计学特征 (race, gender, age, weight)
-- **categorical**: 分类特征 (admission_type_id, discharge_disposition_id, etc.)
-- **numeric**: 数值型特征 (time_in_hospital, num_lab_procedures, etc.)
-- **diagnosis**: 诊断特征 (diag_1, diag_2, diag_3)
-- **medication**: 药物特征 (metformin, insulin, etc.)
-- **identifier**: 标识符特征 (encounter_id, patient_nbr)
+## 特征处理规范
+
+### Demographic特征
+- **race**: 种族 (6个值) - 完整显示
+- **gender**: 性别 (3个值) - 完整显示  
+- **age**: 年龄组 (10个值) - 完整显示
+- **weight**: 体重 (2个值) - 完整显示
+
+### Categorical特征
+- **admission_type_id**: 入院类型 (8个值) - 完整显示
+- **discharge_disposition_id**: 出院处置 (26个值) - 完整显示
+- **admission_source_id**: 入院来源 (17个值) - 完整显示
+- **payer_code**: 支付方代码 (18个值) - 完整显示
+- **medical_specialty**: 医疗专业 (73个值) - **⚠️ 只显示前20个**
+- **max_glu_serum**: 最大血糖血清 (3个值) - 完整显示
+- **A1Cresult**: A1C结果 (3个值) - 完整显示
+- **change**: 药物变化 (2个值) - 完整显示
+- **diabetesMed**: 糖尿病药物 (2个值) - 完整显示
+
+### 诊断特征
+- **diag_1**: 主要诊断 (711个值) - **⚠️ 只显示前30个**
+- **diag_2**: 次要诊断 (731个值) - **⚠️ 只显示前30个**  
+- **diag_3**: 第三诊断 (776个值) - **⚠️ 只显示前30个**
+
+### 数值型特征
+- **time_in_hospital**: 住院时间
+- **num_lab_procedures**: 实验室检查次数
+- **num_procedures**: 手术次数
+- **num_medications**: 药物数量
+- **number_outpatient**: 门诊次数
+- **number_emergency**: 急诊次数
+- **number_inpatient**: 住院次数
+- **number_diagnoses**: 诊断数量
+
+## 可视化规范
+
+### 显示限制
+- **高基数特征** (>20个取值): 只显示前20个最常见的值
+- **诊断特征** (>30个取值): 只显示前30个最常见的值
+- **其他特征**: 完整显示所有取值
+
+### 输出规范
+- 保存路径: `src/visualizations/`
+- 文件格式: PNG, 300 DPI
+- 不显示图形: 只保存文件，不调用 `plt.show()`
+- 标注要求: 显示数量和百分比，添加总数信息
 
 ## 核心模块
 
 ### DataVisualizer 类
-
-#### 类初始化
 ```python
 class DataVisualizer:
     def __init__(self):
-        self.dataset_path = Path(__file__).parent.parent / "Dataset"
-        self.train_data = None
-        self.test_data = None
-        self.feature_file = Path(__file__).parent.parent / "feature.json"
-        self.feature_json = read_jsonl(str(self.feature_file))
+        # 初始化数据路径和配置文件
+    
+    def create_all_visualizations(self):
+        # 创建所有可视化
+    
+    def process_and_visualize_demographic(self):
+        # 处理demographic特征
+    
+    def process_categorical_features(self):
+        # 处理categorical特征
 ```
 
-#### 主要方法
+## 生成文件列表
 
-##### 1. 数据加载
-```python
-def load_data(self):
-    """加载训练集和测试集数据"""
-```
+### 可视化输出文件
+- **Demographic**: `demographic_features_histogram.png`
+- **Categorical**: 11个单独的特征分布图
+- **诊断特征**: 3个单独的诊断分布图
+- **其他**: 数值型、药物、目标特征、相关性、缺失值等
 
-##### 2. 特征处理
-```python
-def get_demographic_features(self):
-    """从feature.json中获取demographic特征列表"""
+### 配置文件
+- `feature.json` - 特征配置文件（包含标签编码和映射信息）
 
-def process_demographic_features(self):
-    """处理demographic特征，包括体重缺失值处理"""
-```
-
-##### 3. 可视化方法
-```python
-def visualize_demographic_features_histogram(self):
-    """为demographic特征创建直方图，标注数量和比例"""
-
-def visualize_numeric_features(self):
-    """可视化数值型特征"""
-
-def visualize_categorical_features(self):
-    """可视化类别型特征"""
-
-def visualize_medication_features(self):
-    """可视化药物特征"""
-
-def visualize_diagnosis_features(self):
-    """可视化诊断特征"""
-
-def visualize_target_feature(self):
-    """可视化目标特征"""
-
-def visualize_correlations(self):
-    """可视化特征相关性"""
-
-def visualize_missing_values(self):
-    """可视化缺失值情况"""
-```
-
-##### 4. 编码处理
-```python
-def create_label_encoding(self):
-    """为demographic特征创建标签编码（0,1,2,...序列）"""
-
-def update_feature_json(self, label_encoding_data):
-    """更新feature.json文件，以name为key写入features"""
-```
-
-## 特征处理规范
-
-### Demographic特征处理
-
-#### 1. Race (种族)
-- **原始值**: ['Caucasian', 'AfricanAmerican', '?', 'Other', 'Hispanic', 'Asian']
-- **标签编码**: 0-5
-- **缺失值处理**: '?' 作为有效类别处理
-
-#### 2. Gender (性别)
-- **原始值**: ['Female', 'Male', 'Unknown/Invalid']
-- **标签编码**: 0-2
-- **缺失值处理**: 'Unknown/Invalid' 作为有效类别处理
-
-#### 3. Age (年龄组)
-- **原始值**: ['[0-10)', '[10-20)', '[20-30)', '[30-40)', '[40-50)', '[50-60)', '[60-70)', '[70-80)', '[80-90)', '[90-100)']
-- **标签编码**: 0-9 (特殊处理：[0-10) 编码为 0)
-- **排序规则**: 按年龄组顺序排列
-
-#### 4. Weight (体重)
-- **原始值**: ['Missing', 'Available']
-- **标签编码**: 0-1
-- **缺失值处理**: 将 '?' 统一处理为 'Missing'，其他值处理为 'Available'
-
-### 编码规范
-
-#### 标签编码 (Label Encoding)
-- 将类别特征转换为 0, 1, 2, ... 的序列
-- 保持类别间的相对顺序
-- 特殊处理：age特征中 [0-10) 编码为 0
-
-#### 缺失值处理
-- 体重特征：'?' → 'Missing'
-- 其他特征：保留原始缺失值标记
-
-## 可视化规范
-
-### 图表类型
-- **直方图**: 用于显示特征分布
-- **饼图**: 用于显示比例分布
-- **条形图**: 用于显示类别计数
-- **热力图**: 用于显示相关性
-- **水平条形图**: 用于显示类别特征分布
-
-### 标注要求
-- 显示具体数量和百分比
-- 添加总数信息
-- 使用中文标签
-- 合理的颜色搭配
-
-### 输出规范
-- 保存路径: `src/visualizations/`
-- 文件格式: PNG
-- 分辨率: 300 DPI
-- 文件名: `{feature_category}_features.png`
-
-## 开发规范
-
-### 代码风格
-- 使用中文注释
-- 函数名使用下划线命名法
-- 类名使用驼峰命名法
-- 变量名使用下划线命名法
-
-### 文件组织
-- 所有源代码放在 `src/` 目录下
-- 配置文件放在项目根目录
-- 输出文件放在对应的输出目录
-
-### 错误处理
-- 使用 try-except 处理文件读取错误
-- 检查数据完整性
-- 提供有意义的错误信息
-
-### 性能优化
-- 避免重复读取大文件
-- 使用适当的数据结构
-- 及时释放内存
-
-## API 文档
-
-### DataVisualizer 类 API
-
-#### 初始化
-```python
-visualizer = DataVisualizer()
-```
-
-#### 主要方法调用
-```python
-# 创建所有可视化
-visualizer.create_all_visualizations()
-
-# 处理demographic特征
-visualizer.process_and_visualize_demographic()
-
-# 单独创建可视化
-visualizer.visualize_demographic_features_histogram()
-visualizer.visualize_numeric_features()
-visualizer.visualize_categorical_features()
-```
-
-### 配置文件 API
-
-#### 读取特征配置
-```python
-from myutils import read_jsonl
-feature_json = read_jsonl("feature.json")
-```
-
-#### 获取特定类别特征
-```python
-demographic_features = [name for name, info in feature_json['features'].items() 
-                       if info['category'] == 'demographic']
-```
-
-## 开发计划
-
-### 已完成
+## 已完成功能
 - [x] Demographic特征处理
-- [x] 体重缺失值处理
-- [x] 标签编码实现
-- [x] 直方图可视化
-- [x] feature.json结构优化
-
-### 待完成
-- [ ] Categorical特征处理
-- [ ] Numeric特征处理
-- [ ] Diagnosis特征处理
-- [ ] Medication特征处理
-- [ ] 特征相关性分析
-- [ ] 缺失值分析
-- [ ] 数据质量报告
-
-### 下一步计划
-1. 实现categorical特征的处理和可视化
-2. 完善numeric特征的分析
-3. 添加特征选择功能
-4. 实现数据预处理流水线
+- [x] Categorical特征处理
+- [x] 诊断特征可视化
+- [x] 数值型特征可视化
+- [x] 药物特征可视化
+- [x] 特征相关性分析
+- [x] 缺失值分析
+- [x] 移除plt.show()，只保存图片
+- [x] 总数验证和百分比显示
 
 ## 注意事项
 
-1. **路径处理**: 所有相对路径都以项目根目录为基准
-2. **编码问题**: 确保中文字符正确显示
-3. **内存管理**: 大数据集处理时注意内存使用
-4. **版本控制**: 重要修改前备份配置文件
-5. **测试**: 新功能添加后进行充分测试
+1. **高基数特征**: medical_specialty、diag_1/2/3 因取值过多，只显示部分数据
+2. **路径处理**: 所有相对路径都以项目根目录为基准
+3. **编码问题**: 确保中文字符正确显示
+4. **内存管理**: 大数据集处理时注意内存使用
 
 ## 故障排除
 
 ### 常见问题
 1. **中文显示乱码**: 检查字体设置
 2. **路径错误**: 确认工作目录
-3. **内存不足**: 分批处理大数据集
-4. **编码错误**: 检查JSON文件格式
-
-### 调试技巧
-- 使用print语句输出中间结果
-- 检查数据类型和形状
-- 验证配置文件格式
-- 查看错误堆栈信息
+3. **图片不显示**: 已移除plt.show()，只保存文件
+4. **高基数特征显示不全**: 这是正常行为，只显示最常见的值

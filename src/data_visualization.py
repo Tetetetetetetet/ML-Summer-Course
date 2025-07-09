@@ -109,7 +109,7 @@ class DataVisualizer:
         plt.tight_layout(pad=3.0)
         plt.subplots_adjust(bottom=0.15)  # 增加底部空间
         plt.savefig('src/visualizations/demographic_features_histogram.png', dpi=300, bbox_inches='tight')
-        plt.show()
+        plt.close()
         
     def create_label_encoding(self):
         """为demographic特征创建标签编码（0,1,2,...序列）"""
@@ -199,9 +199,6 @@ class DataVisualizer:
         """处理demographic特征并创建可视化"""
         print("开始处理Demographic特征...")
         
-        # 加载数据
-        self.load_data()
-        
         # 处理demographic特征
         demographic_features = self.process_demographic_features()
         
@@ -218,6 +215,223 @@ class DataVisualizer:
         print(f"处理的特征: {demographic_features}")
         print("可视化图片保存在 src/visualizations/demographic_features_histogram.png")
         print("标签编码信息已更新到 feature.json")
+        
+    def get_categorical_features(self):
+        """从feature.json中获取categorical特征"""
+        categorical_features = []
+        for feature_name, feature_info in self.feature_json['features'].items():
+            if feature_info['category'] == 'categorical':
+                categorical_features.append(feature_name)
+        return categorical_features
+        
+    def load_ids_mapping(self):
+        """加载IDS映射文件"""
+        ids_file = self.dataset_path / "IDS_mapping.csv"
+        with open(ids_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # 解析映射文件
+        mappings = {}
+        current_feature = None
+        
+        for line in content.strip().split('\n'):
+            if line.strip() == '':
+                continue
+            if ',' in line:
+                parts = line.split(',', 1)
+                if parts[0].strip() in ['admission_type_id', 'discharge_disposition_id', 'admission_source_id']:
+                    current_feature = parts[0].strip()
+                    mappings[current_feature] = {}
+                elif current_feature and parts[0].strip().isdigit():
+                    id_val = int(parts[0].strip())
+                    description = parts[1].strip().strip('"')
+                    mappings[current_feature][id_val] = description
+        
+        return mappings
+        
+    def process_categorical_features(self):
+        """处理categorical特征，包括预定义映射的重新编码"""
+        print("\n=== 处理Categorical特征 ===")
+        
+        categorical_features = self.get_categorical_features()
+        print(f"Categorical特征: {categorical_features}")
+        
+        # 加载IDS映射
+        ids_mapping = self.load_ids_mapping()
+        print("IDS映射加载完成")
+        
+        # 处理预定义映射的特征
+        predefined_features = ['admission_type_id', 'discharge_disposition_id', 'admission_source_id']
+        
+        for feature in predefined_features:
+            if feature in categorical_features:
+                # 获取原始数据中的唯一值
+                unique_values = self.train_data[feature].unique()
+                # 过滤掉nan值，但保留在unique_values中用于显示
+                valid_values = [v for v in unique_values if pd.notna(v)]
+                
+                # 创建新的编码映射（连续编码）
+                new_mapping = {}
+                reverse_mapping = {}
+                
+                for i, value in enumerate(sorted(valid_values)):
+                    new_mapping[value] = i
+                    if value in ids_mapping[feature]:
+                        reverse_mapping[i] = ids_mapping[feature][value]
+                    else:
+                        reverse_mapping[i] = f"Unknown_{value}"
+                
+                print(f"{feature} 重新编码完成，编码范围: 0-{len(valid_values)-1}")
+                
+                # 更新feature.json中的映射信息
+                if feature in self.feature_json['features']:
+                    self.feature_json['features'][feature]['label_encoding'] = {
+                        'unique_values': [str(v) for v in sorted(valid_values)],
+                        'encoding_mapping': {str(k): v for k, v in new_mapping.items()},
+                        'id_mapping': reverse_mapping
+                    }
+        
+        return categorical_features
+        
+    def visualize_categorical_features_histogram(self):
+        """为categorical特征创建直方图"""
+        print("\n=== Categorical特征直方图可视化 ===")
+        
+        categorical_features = self.get_categorical_features()
+        
+        # 预定义映射的特征（取值较少，可以一起画）
+        predefined_features = ['admission_type_id', 'discharge_disposition_id', 'admission_source_id']
+        
+        # 其他categorical特征（可能取值较多，单独画）
+        other_features = [f for f in categorical_features if f not in predefined_features]
+        
+        # 处理预定义映射的特征
+        if predefined_features:
+            self._visualize_predefined_categorical_features(predefined_features)
+        
+        # 处理其他categorical特征
+        for feature in other_features:
+            self._visualize_single_categorical_feature(feature)
+            
+    def _visualize_predefined_categorical_features(self, features):
+        """可视化预定义映射的categorical特征"""
+        fig, axes = plt.subplots(1, len(features), figsize=(5*len(features), 8))
+        if len(features) == 1:
+            axes = [axes]
+        
+        fig.suptitle('预定义映射Categorical特征分布', fontsize=16, fontweight='bold')
+        
+        for i, feature in enumerate(features):
+            # 获取数据，处理nan值
+            feature_data = self.train_data[feature].fillna('"nan"')
+            
+            # 计算统计信息
+            value_counts = feature_data.value_counts()
+            total_count = len(feature_data)
+            
+            # 创建直方图
+            bars = axes[i].bar(range(len(value_counts)), value_counts.values, 
+                             color='lightcoral', alpha=0.7, edgecolor='black')
+            axes[i].set_title(f'{feature} 分布')
+            axes[i].set_ylabel('数量')
+            axes[i].set_xticks(range(len(value_counts)))
+            axes[i].set_xticklabels(value_counts.index, rotation=45, ha='right')
+            
+            # 添加数量和比例标签
+            for j, (value, count) in enumerate(value_counts.items()):
+                percentage = (count / total_count) * 100
+                axes[i].text(j, count + max(value_counts.values) * 0.01, 
+                           f'{count}\n({percentage:.1f}%)', 
+                           ha='center', va='bottom', fontsize=9)
+            
+            # 添加总数信息
+            axes[i].text(0.02, 0.98, f'总数: {total_count}', 
+                        transform=axes[i].transAxes, 
+                        verticalalignment='top', fontsize=10,
+                        bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+        
+        plt.tight_layout()
+        plt.savefig('src/visualizations/predefined_categorical_features_histogram.png', dpi=300, bbox_inches='tight')
+        plt.close()
+        
+    def _visualize_single_categorical_feature(self, feature):
+        """单独可视化一个categorical特征"""
+        print(f"处理特征: {feature}")
+        
+        # 获取数据，处理nan值
+        feature_data = self.train_data[feature].fillna('"nan"')
+        
+        # 计算统计信息
+        value_counts = feature_data.value_counts()
+        total_count = len(feature_data)
+        
+        # 如果取值太多，只显示前20个
+        if len(value_counts) > 20:
+            print(f"  {feature} 取值较多({len(value_counts)}个)，只显示前20个")
+            value_counts = value_counts.head(20)
+        
+        # 创建图形
+        fig, ax = plt.subplots(1, 1, figsize=(15, 8))
+        fig.suptitle(f'{feature} 分布 (Categorical)', fontsize=16, fontweight='bold')
+        
+        # 创建水平条形图（适合长文本）
+        bars = ax.barh(range(len(value_counts)), value_counts.values, 
+                      color='lightblue', alpha=0.7, edgecolor='black')
+        ax.set_title(f'{feature} 分布')
+        ax.set_xlabel('数量')
+        ax.set_yticks(range(len(value_counts)))
+        ax.set_yticklabels(value_counts.index)
+        
+        # 添加数量标签
+        for j, (value, count) in enumerate(value_counts.items()):
+            percentage = (count / total_count) * 100
+            ax.text(count, j, f' {count} ({percentage:.1f}%)', 
+                   va='center', fontsize=9)
+        
+        # 添加总数信息
+        ax.text(0.02, 0.98, f'总数: {total_count}', 
+               transform=ax.transAxes, 
+               verticalalignment='top', fontsize=10,
+               bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+        
+        plt.tight_layout()
+        plt.savefig(f'src/visualizations/{feature}_categorical_features_histogram.png', dpi=300, bbox_inches='tight')
+        plt.close()
+        
+    def create_categorical_label_encoding(self):
+        """为categorical特征创建标签编码"""
+        print("\n=== 创建Categorical特征标签编码 ===")
+        
+        categorical_features = self.get_categorical_features()
+        label_encoding_data = {}
+        
+        for feature in categorical_features:
+            # 如果特征已经有label_encoding（预定义映射特征），直接使用
+            if feature in self.feature_json['features'] and 'label_encoding' in self.feature_json['features'][feature]:
+                label_encoding_data[feature] = self.feature_json['features'][feature]['label_encoding']
+                print(f"{feature} 使用预定义映射，编码范围: 0-{len(label_encoding_data[feature]['encoding_mapping'])-1}")
+                continue
+            
+            # 获取数据，处理nan值
+            feature_data = self.train_data[feature].fillna('"nan"')
+            
+            # 获取唯一值
+            unique_values = feature_data.unique()
+            print(f"{feature} 唯一值数量: {len(unique_values)}")
+            
+            # 存储编码信息
+            label_encoding_data[feature] = {
+                'unique_values': [str(v) for v in unique_values],
+                'encoding_mapping': {}
+            }
+            
+            # 创建标签编码映射（0,1,2,...）
+            for i, value in enumerate(sorted(unique_values)):
+                label_encoding_data[feature]['encoding_mapping'][str(value)] = i
+            
+            print(f"{feature} 标签编码完成，编码范围: 0-{len(unique_values)-1}")
+        
+        return label_encoding_data
         
     def visualize_numeric_features(self):
         """可视化数值型特征"""
@@ -248,38 +462,7 @@ class DataVisualizer:
         
         plt.tight_layout()
         plt.savefig('src/visualizations/numeric_features.png', dpi=300, bbox_inches='tight')
-        plt.show()
-        
-    def visualize_categorical_features(self):
-        """可视化类别型特征"""
-        print("\n=== 类别型特征可视化 ===")
-        
-        categorical_features = ['admission_type_id', 'discharge_disposition_id', 'admission_source_id',
-                               'payer_code', 'medical_specialty', 'max_glu_serum', 'A1Cresult', 'change', 'diabetesMed']
-        
-        fig, axes = plt.subplots(3, 3, figsize=(20, 15))
-        fig.suptitle('类别型特征分布', fontsize=16, fontweight='bold')
-        
-        for i, feature in enumerate(categorical_features):
-            row, col = i // 3, i % 3
-            
-            # 获取前10个最常见的值
-            value_counts = self.train_data[feature].value_counts().head(10)
-            
-            # 水平条形图
-            axes[row, col].barh(range(len(value_counts)), value_counts.values, color='lightcoral')
-            axes[row, col].set_yticks(range(len(value_counts)))
-            axes[row, col].set_yticklabels(value_counts.index)
-            axes[row, col].set_title(f'{feature} 分布 (Top 10)')
-            axes[row, col].set_xlabel('数量')
-            
-            # 添加数值标签
-            for j, v in enumerate(value_counts.values):
-                axes[row, col].text(v, j, str(v), va='center')
-        
-        plt.tight_layout()
-        plt.savefig('src/visualizations/categorical_features.png', dpi=300, bbox_inches='tight')
-        plt.show()
+        plt.close()
         
     def visualize_medication_features(self):
         """可视化药物特征"""
@@ -321,7 +504,7 @@ class DataVisualizer:
         
         plt.tight_layout()
         plt.savefig('src/visualizations/medication_features.png', dpi=300, bbox_inches='tight')
-        plt.show()
+        plt.close()
         
     def visualize_diagnosis_features(self):
         """可视化诊断特征"""
@@ -329,26 +512,45 @@ class DataVisualizer:
         
         diagnosis_features = ['diag_1', 'diag_2', 'diag_3']
         
-        fig, axes = plt.subplots(1, 3, figsize=(20, 6))
-        fig.suptitle('诊断特征分布', fontsize=16, fontweight='bold')
-        
-        for i, feature in enumerate(diagnosis_features):
-            # 获取前15个最常见的诊断
-            diag_counts = self.train_data[feature].value_counts().head(15)
+        for feature in diagnosis_features:
+            print(f"处理诊断特征: {feature}")
             
-            axes[i].barh(range(len(diag_counts)), diag_counts.values, color='lightblue')
-            axes[i].set_yticks(range(len(diag_counts)))
-            axes[i].set_yticklabels(diag_counts.index)
-            axes[i].set_title(f'{feature} 分布 (Top 15)')
-            axes[i].set_xlabel('数量')
+            # 获取所有诊断值（不限制数量）
+            diag_counts = self.train_data[feature].value_counts()
+            total_count = len(self.train_data[feature])
             
-            # 添加数值标签
-            for j, v in enumerate(diag_counts.values):
-                axes[i].text(v, j, str(v), va='center')
-        
-        plt.tight_layout()
-        plt.savefig('src/visualizations/diagnosis_features.png', dpi=300, bbox_inches='tight')
-        plt.show()
+            # 如果取值太多，只显示前30个
+            if len(diag_counts) > 30:
+                print(f"  {feature} 取值较多({len(diag_counts)}个)，只显示前30个")
+                diag_counts = diag_counts.head(30)
+            
+            # 创建图形
+            fig, ax = plt.subplots(1, 1, figsize=(15, 10))
+            fig.suptitle(f'{feature} 分布 (Diagnosis)', fontsize=16, fontweight='bold')
+            
+            # 创建水平条形图（适合长文本）
+            bars = ax.barh(range(len(diag_counts)), diag_counts.values, 
+                          color='lightgreen', alpha=0.7, edgecolor='black')
+            ax.set_title(f'{feature} 分布')
+            ax.set_xlabel('数量')
+            ax.set_yticks(range(len(diag_counts)))
+            ax.set_yticklabels(diag_counts.index)
+            
+            # 添加数量标签
+            for j, (value, count) in enumerate(diag_counts.items()):
+                percentage = (count / total_count) * 100
+                ax.text(count, j, f' {count} ({percentage:.1f}%)', 
+                       va='center', fontsize=9)
+            
+            # 添加总数信息
+            ax.text(0.02, 0.98, f'总数: {total_count}', 
+                   transform=ax.transAxes, 
+                   verticalalignment='top', fontsize=10,
+                   bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+            
+            plt.tight_layout()
+            plt.savefig(f'src/visualizations/{feature}_diagnosis_features_histogram.png', dpi=300, bbox_inches='tight')
+            plt.close()
         
     def visualize_target_feature(self):
         """可视化目标特征"""
@@ -375,7 +577,7 @@ class DataVisualizer:
         
         plt.tight_layout()
         plt.savefig('src/visualizations/target_feature.png', dpi=300, bbox_inches='tight')
-        plt.show()
+        plt.close()
         
     def visualize_correlations(self):
         """可视化特征相关性"""
@@ -394,7 +596,7 @@ class DataVisualizer:
         plt.title('数值型特征相关性矩阵')
         plt.tight_layout()
         plt.savefig('src/visualizations/correlations.png', dpi=300, bbox_inches='tight')
-        plt.show()
+        plt.close()
         
     def visualize_missing_values(self):
         """可视化缺失值情况"""
@@ -435,7 +637,7 @@ class DataVisualizer:
         
         plt.tight_layout()
         plt.savefig('src/visualizations/missing_values.png', dpi=300, bbox_inches='tight')
-        plt.show()
+        plt.close()
         
     def create_all_visualizations(self):
         """创建所有可视化"""
@@ -445,8 +647,39 @@ class DataVisualizer:
         save_dir = Path(__file__).parent / "visualizations"
         save_dir.mkdir(exist_ok=True)
         
+        # 加载数据
+        self.load_data()
+        
         # 处理demographic特征
         self.process_and_visualize_demographic()
+        
+        # 处理categorical特征
+        self.process_categorical_features()
+        self.visualize_categorical_features_histogram()
+        categorical_label_encoding_data = self.create_categorical_label_encoding()
+        self.update_feature_json(categorical_label_encoding_data)
+        print("\nCategorical特征处理完成！")
+        print(f"处理的特征: {self.get_categorical_features()}")
+        print("可视化图片保存在 src/visualizations/predefined_categorical_features_histogram.png 和 src/visualizations/ 目录中")
+        print("标签编码信息已更新到 feature.json")
+        
+        # 可视化数值型特征
+        self.visualize_numeric_features()
+        
+        # 可视化类别型特征
+        self.visualize_medication_features()
+        
+        # 可视化诊断特征
+        self.visualize_diagnosis_features()
+        
+        # 可视化目标特征
+        self.visualize_target_feature()
+        
+        # 可视化特征相关性
+        self.visualize_correlations()
+        
+        # 可视化缺失值
+        self.visualize_missing_values()
         
         print("\n所有可视化已完成！图片保存在 src/visualizations/ 目录中")
 

@@ -6,3 +6,8 @@ visualize:
 	python src/data_visualization.py
 e:
 	python src/exp.py
+
+r:
+	git restore .
+clean:
+	rm -rf src/visualizations/*
