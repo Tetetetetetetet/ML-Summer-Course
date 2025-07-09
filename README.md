@@ -35,6 +35,8 @@ coursework/
 └── README.md
 ```
 
+> Dataset/FeatureTabel_Ch.xlsx: 带中文解释 && gpt意见的FeatureTabel
+
 ## 使用方法
 
 ### 原始数据可视化
