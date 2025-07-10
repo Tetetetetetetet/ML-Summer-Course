@@ -10,6 +10,13 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 def read_jsonl(meta_path):
+    '''
+    read a json/jsonl file
+    Args:
+        meta_path: str, the path to the json/jsonl file
+    Returns:
+        list of dicts/dict
+    '''
     if meta_path.endswith('.jsonl'):
         meta_l = []
         with open(meta_path) as f:
@@ -23,11 +30,24 @@ def read_jsonl(meta_path):
         with open(meta_path, 'r') as f1:
             meta_l = json.load(f1)
     return meta_l
-def write_jsonl(data, file_path):
-    with open(file_path, "w", encoding="utf-8") as f:
-        for item in data:
-            json.dump(item, f, ensure_ascii=False)
-            f.write("\n")
+
+def write_jsonl(data, file_path:str):
+    '''
+    write data to a json/jsonl file
+    Args:
+        data: list of dicts or dict
+        file_path: str, the path to the json/jsonl file
+    Returns:
+        None
+    '''
+    if file_path.endswith('.jsonl'):
+        with open(file_path, "w", encoding="utf-8") as f:
+            for item in data:
+                json.dump(item, f, ensure_ascii=False)
+                f.write("\n")
+    else:
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False)
 
 def rename_imgs(json_path:str,image_key:str="images"):
     '''
