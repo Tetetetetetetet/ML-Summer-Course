@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import json
 from typing import Dict
 
 logging.basicConfig(
@@ -27,6 +28,7 @@ class DataProcess:
         self.output_dir = Path('Dataset/processed')
         self.dataset_path = Path('Dataset')
         self.ids_mapping = read_jsonl('config/id_mapping.json')
+        self.visualization_dir = 'Dataset/processed/visualization'
 
     def drop_features(self):
         '''
@@ -258,47 +260,66 @@ class DataProcess:
         self.train_data.to_csv(self.output_dir/f'{name}.csv', index=False)
         print(f'train.csv saved to {self.output_dir}/{name}.csv')
 
-
-def visualize_recoded_features(df: pd.DataFrame, feature_names: Dict[str, str], output_dir: str = 'Dataset/processed/visualization'):
-    """
-    为重编码后的数据集中的每个特征创建可视化图表。
-    
-    Args:
-        df (pd.DataFrame): 重编码后的数据集
-        feature_names (Dict[str, str]): 特征ID到特征名称的映射字典
-        output_dir (str): 输出目录路径
-    """
-    # 确保输出目录存在
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # 设置图表样式
-    plt.style.use('seaborn')
-    
-    # 为每个特征创建直方图
-    for feature_id in df.columns:
-        # 创建新的图表
-        plt.figure(figsize=(10, 6))
+    def visualize_recoded_features(self):
+        """
+        为重编码后的数据集中的每个特征创建可视化图表。
+        从recoded_train.csv读取数据，使用features_config中的特征信息。
+        图表保存在visualization_dir目录下。
+        """
+        # 确保配置和输出目录存在
+        os.makedirs(self.visualization_dir, exist_ok=True)
         
-        # 获取特征名称，如果在映射中不存在就使用特征ID
-        feature_name = feature_names.get(feature_id, feature_id)
+        # 读取重编码后的数据
+        recoded_data_path = os.path.join(self.output_dir, 'recoded_train.csv')
+        if not os.path.exists(recoded_data_path):
+            raise FileNotFoundError(f"重编码后的数据文件不存在: {recoded_data_path}. 请先运行recode_train_data()")
         
-        # 创建直方图
-        sns.histplot(data=df, x=feature_id, bins=30)
+        df = pd.read_csv(recoded_data_path)
+        print(f"读取重编码数据: {recoded_data_path}")
+        print("\n数据集中的列名:")
+        print(df.columns.tolist())
+        print("\n")
         
-        # 设置标题和标签
-        plt.title(f'Distribution of {feature_name}')
-        plt.xlabel(feature_name)
-        plt.ylabel('Count')
+        # 设置默认的图表样式
+        sns.set_style("whitegrid")
         
-        # 调整布局
-        plt.tight_layout()
-        
-        # 保存图表
-        output_path = os.path.join(output_dir, f'{feature_id}_{feature_name}.png')
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
-        plt.close()
-        
-        print(f'Created visualization for {feature_name} at {output_path}')
+        # 为每个特征创建直方图
+        for feature_name, feature_info in self.features_config.items():
+            # 跳过不需要保留的特征
+            if not feature_info.get('iskeep', True):
+                continue
+            feature_id = feature_info.get('feature_id')
+            # 检查特征是否在数据集中
+            if feature_name not in df.columns:
+                print(f"警告: 特征 {feature_name} 在数据集中未找到，跳过")
+                continue
+                
+            # 创建新的图表
+            plt.figure(figsize=(12, 6))
+            
+            # 创建直方图
+            if df[feature_name].dtype in ['int64', 'float64']:
+                # 数值型特征使用直方图
+                sns.histplot(data=df, x=feature_name, bins=30, kde=True)
+            else:
+                # 分类特征使用计数图
+                sns.countplot(data=df, x=feature_name)
+                plt.xticks(rotation=45, ha='right')
+            
+            # 设置标题和标签
+            plt.title(f'Distribution of {feature_name}', pad=20)
+            plt.xlabel(feature_name)
+            plt.ylabel('Count')
+            
+            # 调整布局
+            plt.tight_layout()
+            
+            # 保存图表
+            output_path = os.path.join(self.visualization_dir, f'{feature_id}_{feature_name}.png')
+            plt.savefig(output_path, dpi=300, bbox_inches='tight')
+            plt.close()
+            
+            print(f'创建特征可视化: {feature_name} -> {output_path}')
 
 
 def main():
@@ -311,8 +332,10 @@ def main():
     # dp.show_feature_config()
     # dp.drop_features()
     # dp.save_train_data('missing_replaced_train')
-    dp.recode_train_data()
-    dp.save_train_data('recoded_train')
+    # dp.recode_train_data()
+    # dp.save_train_data('recoded_train')
+    # dp.visualize_recoded_features()
+    dp.check_recoded_data()
 
 if __name__ == '__main__':
     main()
