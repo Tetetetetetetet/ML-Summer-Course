@@ -65,7 +65,9 @@
             "missing_values": [
                 "?"
             ],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 5.0,
+            "min_value": 0.0
         },
         "gender": {
             "feature_id": 3,
@@ -94,7 +96,9 @@
             "missing_values": [
                 "Unknown/Invalid"
             ],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 2.0,
+            "min_value": 0.0
         },
         "age": {
             "feature_id": 4,
@@ -135,7 +139,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 9.0,
+            "min_value": 0.0
         },
         "weight": {
             "feature_id": 5,
@@ -209,7 +215,9 @@
                 "5",
                 "6"
             ],
-            "missing_replace": -1
+            "missing_replace": -1,
+            "max_value": 5.0,
+            "min_value": 0.0
         },
         "discharge_disposition_id": {
             "feature_id": 7,
@@ -284,7 +292,9 @@
                 "18",
                 "25"
             ],
-            "missing_replace": -1
+            "missing_replace": -1,
+            "max_value": 24.0,
+            "min_value": 0.0
         },
         "admission_source_id": {
             "feature_id": 8,
@@ -341,7 +351,9 @@
                 "9",
                 "17"
             ],
-            "missing_replace": -1
+            "missing_replace": -1,
+            "max_value": 14.0,
+            "min_value": 0.0
         },
         "time_in_hospital": {
             "feature_id": 9,
@@ -356,7 +368,9 @@
             "value_num": 14,
             "iskeep": true,
             "process": "normal",
-            "missing": false
+            "missing": false,
+            "max_value": 14.0,
+            "min_value": 1.0
         },
         "payer_code": {
             "feature_id": 10,
@@ -415,7 +429,9 @@
             "missing_values": [
                 "?"
             ],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 17.0,
+            "min_value": 0.0
         },
         "medical_specialty": {
             "feature_id": 11,
@@ -584,7 +600,9 @@
             "missing_values": [
                 "?"
             ],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 72.0,
+            "min_value": 0.0
         },
         "num_lab_procedures": {
             "feature_id": 12,
@@ -599,7 +617,9 @@
             "value_num": 117,
             "iskeep": true,
             "process": "normal",
-            "missing": false
+            "missing": false,
+            "max_value": 132.0,
+            "min_value": 1.0
         },
         "num_procedures": {
             "feature_id": 13,
@@ -614,7 +634,9 @@
             "value_num": 7,
             "iskeep": true,
             "process": "normal",
-            "missing": false
+            "missing": false,
+            "max_value": 6.0,
+            "min_value": 0.0
         },
         "num_medications": {
             "feature_id": 14,
@@ -629,7 +651,9 @@
             "value_num": 75,
             "iskeep": true,
             "process": "normal",
-            "missing": false
+            "missing": false,
+            "max_value": 81.0,
+            "min_value": 1.0
         },
         "number_outpatient": {
             "feature_id": 15,
@@ -644,7 +668,9 @@
             "value_num": 39,
             "iskeep": true,
             "process": "special",
-            "missing": false
+            "missing": false,
+            "max_value": 42.0,
+            "min_value": 0.0
         },
         "number_emergency": {
             "feature_id": 16,
@@ -659,7 +685,9 @@
             "value_num": 33,
             "iskeep": true,
             "process": "special",
-            "missing": false
+            "missing": false,
+            "max_value": 76.0,
+            "min_value": 0.0
         },
         "number_inpatient": {
             "feature_id": 17,
@@ -674,7 +702,9 @@
             "value_num": 21,
             "iskeep": true,
             "process": "normal",
-            "missing": false
+            "missing": false,
+            "max_value": 21.0,
+            "min_value": 0.0
         },
         "diag_1": {
             "feature_id": 18,
@@ -2119,7 +2149,9 @@
             "missing_values": [
                 "?"
             ],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 710.0,
+            "min_value": 0.0
         },
         "diag_2": {
             "feature_id": 19,
@@ -3604,7 +3636,9 @@
             "missing_values": [
                 "?"
             ],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 730.0,
+            "min_value": 0.0
         },
         "diag_3": {
             "feature_id": 20,
@@ -5179,7 +5213,9 @@
             "missing_values": [
                 "?"
             ],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 775.0,
+            "min_value": 0.0
         },
         "number_diagnoses": {
             "feature_id": 21,
@@ -5194,7 +5230,9 @@
             "value_num": 16,
             "iskeep": true,
             "process": "normal",
-            "missing": false
+            "missing": false,
+            "max_value": 16.0,
+            "min_value": 1.0
         },
         "max_glu_serum": {
             "feature_id": 22,
@@ -5248,7 +5286,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 3.0,
+            "min_value": 0.0
         },
         "metformin": {
             "feature_id": 24,
@@ -5277,7 +5317,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 3.0,
+            "min_value": 0.0
         },
         "repaglinide": {
             "feature_id": 25,
@@ -5306,7 +5348,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 3.0,
+            "min_value": 0.0
         },
         "nateglinide": {
             "feature_id": 26,
@@ -5335,7 +5379,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 3.0,
+            "min_value": 0.0
         },
         "chlorpropamide": {
             "feature_id": 27,
@@ -5362,7 +5408,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 2.0,
+            "min_value": 0.0
         },
         "glimepiride": {
             "feature_id": 28,
@@ -5391,7 +5439,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 3.0,
+            "min_value": 0.0
         },
         "acetohexamide": {
             "feature_id": 29,
@@ -5416,7 +5466,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 1.0,
+            "min_value": 0.0
         },
         "glipizide": {
             "feature_id": 30,
@@ -5445,7 +5497,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 3.0,
+            "min_value": 0.0
         },
         "glyburide": {
             "feature_id": 31,
@@ -5474,7 +5528,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 3.0,
+            "min_value": 0.0
         },
         "tolbutamide": {
             "feature_id": 32,
@@ -5499,7 +5555,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 1.0,
+            "min_value": 0.0
         },
         "pioglitazone": {
             "feature_id": 33,
@@ -5528,7 +5586,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 3.0,
+            "min_value": 0.0
         },
         "rosiglitazone": {
             "feature_id": 34,
@@ -5557,7 +5617,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 3.0,
+            "min_value": 0.0
         },
         "acarbose": {
             "feature_id": 35,
@@ -5586,7 +5648,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 3.0,
+            "min_value": 0.0
         },
         "miglitol": {
             "feature_id": 36,
@@ -5615,7 +5679,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 3.0,
+            "min_value": 0.0
         },
         "troglitazone": {
             "feature_id": 37,
@@ -5640,7 +5706,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 1.0,
+            "min_value": 0.0
         },
         "tolazamide": {
             "feature_id": 38,
@@ -5665,7 +5733,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 1.0,
+            "min_value": 0.0
         },
         "examide": {
             "feature_id": 39,
@@ -5732,7 +5802,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 3.0,
+            "min_value": 0.0
         },
         "glyburide-metformin": {
             "feature_id": 42,
@@ -5761,7 +5833,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 3.0,
+            "min_value": 0.0
         },
         "glipizide-metformin": {
             "feature_id": 43,
@@ -5786,7 +5860,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 1.0,
+            "min_value": 0.0
         },
         "glimepiride-pioglitazone": {
             "feature_id": 44,
@@ -5809,7 +5885,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 0.0,
+            "min_value": 0.0
         },
         "metformin-rosiglitazone": {
             "feature_id": 45,
@@ -5834,7 +5912,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 1.0,
+            "min_value": 0.0
         },
         "metformin-pioglitazone": {
             "feature_id": 46,
@@ -5859,7 +5939,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 1.0,
+            "min_value": 0.0
         },
         "change": {
             "feature_id": 47,
@@ -5884,7 +5966,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 1.0,
+            "min_value": 0.0
         },
         "diabetesMed": {
             "feature_id": 48,
@@ -5909,7 +5993,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 1.0,
+            "min_value": 0.0
         },
         "readmitted": {
             "feature_id": 49,
@@ -5936,7 +6022,9 @@
             "missing_values_num": 0,
             "missing_values_p": 0.0,
             "missing_values": [],
-            "missing_replace": "missing"
+            "missing_replace": "missing",
+            "max_value": 2.0,
+            "min_value": 0.0
         }
     }
 }

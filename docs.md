@@ -8,34 +8,53 @@
 ```
 coursework/
 ├── config/                    # 配置文件目录
-│   └── feature.json          # 特征配置文件
+│   ├── feature.json          # 特征配置文件
+│   └── id_mapping.json       # ID映射配置文件
 ├── Dataset/                   # 原始数据集
+│   └── processed/            # 处理后的数据
+│       ├── recoded_train.csv # 重编码后的训练数据
+│       ├── normalized_train.csv # 归一化后的训练数据
+│       └── visualization/    # 特征可视化图表
 ├── src/                      # 源代码目录
-│   ├── data_visualization.py # 数据可视化主程序
-│   └── visualizations/       # 可视化输出目录
+│   ├── data_process.py      # 数据处理主程序
+│   └── data_visualization.py # 数据可视化主程序
 └── docs.md                   # 本文档
 ```
+
+## 数据处理流程
+
+### 1. 特征重编码
+- 根据feature.json中的配置进行特征重编码
+- 对分类特征进行标签编码
+- 处理缺失值
+- 输出：recoded_train.csv
+
+### 2. 数据归一化
+- 对所有保留的特征进行归一化处理（包括分类特征和数值特征）
+- 将特征值归一化到[0,1]区间
+- 记录每个特征的最大值和最小值到feature.json
+- 对于所有值相同的特征，设置为0
+- 输出：normalized_train.csv
 
 ## 特征配置文件 (feature.json)
 
 ### 文件结构
 ```json
 {
-  "dataset_name": "糖尿病数据集",
-  "target_feature": "readmitted",
-  "features": {
     "feature_name": {
-      "feature_id": 0,
-      "category": "demographic|categorical|numeric|diagnosis|medication|identifier",
-      "type": "categorical|continuous",
-      "description": "特征描述",
-      "visualization": "可视化类型",
-      "label_encoding": {
-        "unique_values": ["值1", "值2", ...],
-        "encoding_mapping": {"值1": 0, "值2": 1, ...}
-      }
+        "feature_id": 0,
+        "category": "demographic|categorical|numeric|diagnosis|medication|identifier",
+        "type": "categorical|continuous",
+        "description": "特征描述",
+        "visualization": "可视化类型",
+        "label_encoding": {
+            "unique_values": ["值1", "值2", ...],
+            "encoding_mapping": {"值1": 0, "值2": 1, ...}
+        },
+        "iskeep": true|false,
+        "max_value": 1.0,  // 归一化后添加
+        "min_value": 0.0   // 归一化后添加
     }
-  }
 }
 ```
 
@@ -88,6 +107,23 @@ coursework/
 
 ## 核心模块
 
+### DataProcess 类
+```python
+class DataProcess:
+    def __init__(self):
+        # 初始化数据路径和配置文件
+    
+    def recode_train_data(self):
+        # 重编码训练数据
+    
+    def normalize_data(self):
+        # 对所有特征进行归一化处理
+        # 更新feature.json中的最大最小值
+    
+    def save_train_data(self, name):
+        # 保存处理后的数据
+```
+
 ### DataVisualizer 类
 ```python
 class DataVisualizer:
@@ -114,29 +150,41 @@ class DataVisualizer:
 
 ### 配置文件
 - `config/feature.json` - 特征配置文件（包含标签编码和映射信息）
+- `config/id_mapping.json` - ID映射配置文件
 
 ## 已完成功能
-- [x] Demographic特征处理
-- [x] Categorical特征处理
-- [x] 诊断特征可视化
-- [x] 数值型特征可视化
-- [x] 药物特征可视化
-- [x] 特征相关性分析
-- [x] 缺失值分析
-- [x] 移除plt.show()，只保存图片
-- [x] 总数验证和百分比显示
+- [x] 特征重编码
+- [x] 数据归一化
+- [x] 特征可视化
+- [x] 配置文件自动更新
+- [x] 数据验证和检查
 
 ## 注意事项
 
-1. **高基数特征**: medical_specialty、diag_1/2/3 因取值过多，只显示部分数据
-2. **路径处理**: 所有相对路径都以项目根目录为基准
-3. **编码问题**: 确保中文字符正确显示
-4. **内存管理**: 大数据集处理时注意内存使用
+1. **数据处理顺序**: 必须先进行重编码，再进行归一化
+2. **特征选择**: 通过feature.json中的iskeep字段控制
+3. **归一化处理**: 
+   - 所有特征都进行归一化，包括分类特征
+   - 特征的原始范围保存在feature.json中
+   - 所有值相同的特征会被设置为0
+4. **配置文件**: 
+   - feature.json会自动更新，包含归一化信息
+   - 确保有写入权限
 
 ## 故障排除
 
 ### 常见问题
-1. **中文显示乱码**: 检查字体设置
-2. **路径错误**: 确认工作目录
-3. **图片不显示**: 已移除plt.show()，只保存文件
-4. **高基数特征显示不全**: 这是正常行为，只显示最常见的值
+1. **找不到重编码数据**: 确保先运行recode_train_data()
+2. **归一化失败**: 检查特征类型和数值范围
+3. **配置文件更新失败**: 检查文件权限和路径
+4. **特征缺失**: 检查iskeep标记和特征名称匹配
+
+### 使用示例
+```python
+dp = DataProcess()
+dp.load_train_data()
+dp.load_features_config()
+dp.recode_train_data()
+dp.save_train_data('recoded_train')
+dp.normalize_data()  # 自动保存normalized_train.csv
+```

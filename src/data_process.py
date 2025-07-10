@@ -237,9 +237,9 @@ class DataProcess:
         for feature,config in self.features_config.items():
             if config['category']=='identifier' or config['type']!='categorical' or config['iskeep']==False:
                 continue
-            print(f'{feature}: {data[feature].unique()}')
+            print(f'{feature}: {[int(v) for v in sorted(data[feature].unique())]}')
             vc = data[feature].value_counts()
-            print(f'=========={feature}==========')
+            print(f'=========={feature}========== value_num: {len(vc)}, data_num: {len(data[feature])}')
             print(vc)
             print('--------------------------------')
             input()
@@ -320,6 +320,66 @@ class DataProcess:
             plt.close()
             
             print(f'创建特征可视化: {feature_name} -> {output_path}')
+    def normalize_data(self):
+        '''
+        将所有特征归一化到0-1之间，并记录该feature的最大值到feature.json中
+        对于离散值和连续值都进行归一化
+        '''
+        # 读取重编码后的数据
+        data_path = os.path.join(self.output_dir, 'recoded_train.csv')
+        if not os.path.exists(data_path):
+            print(f"重编码后的数据文件不存在: {data_path}. 先进行重编码...")
+            self.recode_train_data()
+            self.save_train_data('recoded_train')
+        
+        data = pd.read_csv(data_path)
+        print("开始数据归一化...")
+        
+        # 遍历所有特征
+        for feature_name, feature_info in self.features_config.items():
+            # 只跳过不需要保留的特征
+            if not feature_info.get('iskeep', True):
+                continue
+                
+            print(f"处理特征: {feature_name}")
+            
+            # 获取特征数据
+            if feature_name not in data.columns:
+                print(f"警告: 特征 {feature_name} 在数据集中未找到，跳过")
+                continue
+                
+            feature_data = data[feature_name]
+            
+            # 记录最大值和最小值
+            feature_max = float(feature_data.max())
+            feature_min = float(feature_data.min())
+            
+            # 更新feature_config中的信息
+            self.features_config[feature_name]['max_value'] = feature_max
+            self.features_config[feature_name]['min_value'] = feature_min
+            
+            # 进行归一化 (x - min) / (max - min)
+            if feature_max > feature_min:  # 避免除以0
+                data[feature_name] = (feature_data - feature_min) / (feature_max - feature_min)
+                # 验证归一化结果
+                normalized_max = float(data[feature_name].max())
+                normalized_min = float(data[feature_name].min())
+                print(f"归一化后范围: [{normalized_min}, {normalized_max}]")
+                if not (abs(normalized_max - 1.0) < 1e-6 and abs(normalized_min) < 1e-6):
+                    print(f"警告: 特征 {feature_name} 归一化可能不成功")
+            else:
+                print(f"警告: 特征 {feature_name} 的所有值相同 ({feature_max})，设置为0")
+                data[feature_name] = 0
+                
+        # 保存归一化后的数据
+        output_path = os.path.join(self.output_dir, 'normalized_train.csv')
+        data.to_csv(output_path, index=False)
+        print(f"归一化数据已保存到: {output_path}")
+        
+        # 保存更新后的feature配置
+        with open(self.feature_json_path, 'w', encoding='utf-8') as f:
+            json.dump(self.feature_json, f, indent=4, ensure_ascii=False)
+        print("特征配置已更新，包含最大值和最小值信息")
 
 
 def main():
@@ -335,7 +395,8 @@ def main():
     # dp.recode_train_data()
     # dp.save_train_data('recoded_train')
     # dp.visualize_recoded_features()
-    dp.check_recoded_data()
+    # dp.check_recoded_data()
+    dp.normalize_data()
 
 if __name__ == '__main__':
     main()
