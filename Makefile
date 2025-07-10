@@ -1,5 +1,5 @@
 all:
-	python src/data_visualization.py
+	python src/data_process.py
 process:
 	python src/data_processing.py
 visualize:

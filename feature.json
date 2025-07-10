@@ -1,841 +1,891 @@
 {
-  "dataset_name": "糖尿病数据集",
-  "target_feature": "readmitted",
-  "features": {
-    "encounter_id": {
-      "feature_id": 0,
-      "category": "identifier",
-      "type": "categorical",
-      "description": "就诊ID",
-      "visualization": "不适用"
-    },
-    "patient_nbr": {
-      "feature_id": 1,
-      "category": "identifier",
-      "type": "categorical",
-      "description": "患者ID",
-      "visualization": "不适用"
-    },
-    "race": {
-      "feature_id": 2,
-      "category": "demographic",
-      "type": "categorical",
-      "description": "种族",
-      "visualization": "饼图",
-      "label_encoding": {
-        "unique_values": [
-          "Caucasian",
-          "AfricanAmerican",
-          "?",
-          "Other",
-          "Hispanic",
-          "Asian"
-        ],
-        "encoding_mapping": {
-          "Caucasian": 0,
-          "AfricanAmerican": 1,
-          "?": 2,
-          "Other": 3,
-          "Hispanic": 4,
-          "Asian": 5
-        }
-      }
-    },
-    "gender": {
-      "feature_id": 3,
-      "category": "demographic",
-      "type": "categorical",
-      "description": "性别",
-      "visualization": "条形图",
-      "label_encoding": {
-        "unique_values": [
-          "Female",
-          "Male",
-          "Unknown/Invalid"
-        ],
-        "encoding_mapping": {
-          "Female": 0,
-          "Male": 1,
-          "Unknown/Invalid": 2
-        }
-      }
-    },
-    "age": {
-      "feature_id": 4,
-      "category": "demographic",
-      "type": "categorical",
-      "description": "年龄组",
-      "visualization": "条形图",
-      "label_encoding": {
-        "unique_values": [
-          "[10-20)",
-          "[20-30)",
-          "[30-40)",
-          "[40-50)",
-          "[50-60)",
-          "[60-70)",
-          "[70-80)",
-          "[80-90)",
-          "[90-100)",
-          "[0-10)"
-        ],
-        "encoding_mapping": {
-          "[0-10)": 0,
-          "[10-20)": 1,
-          "[20-30)": 2,
-          "[30-40)": 3,
-          "[40-50)": 4,
-          "[50-60)": 5,
-          "[60-70)": 6,
-          "[70-80)": 7,
-          "[80-90)": 8,
-          "[90-100)": 9
-        }
-      }
-    },
-    "weight": {
-      "feature_id": 5,
-      "category": "demographic",
-      "type": "categorical",
-      "description": "体重",
-      "visualization": "饼图",
-      "label_encoding": {
-        "unique_values": [
-          "Missing",
-          "Available"
-        ],
-        "encoding_mapping": {
-          "Missing": 0,
-          "Available": 1
-        }
-      }
-    },
-    "admission_type_id": {
-      "feature_id": 6,
-      "category": "categorical",
-      "type": "categorical",
-      "description": "入院类型ID",
-      "visualization": "水平条形图",
-      "label_encoding": {
-        "unique_values": [
-          "1",
-          "2",
-          "3",
-          "4",
-          "5",
-          "6",
-          "7",
-          "8"
-        ],
-        "encoding_mapping": {
-          "1": 0,
-          "2": 1,
-          "3": 2,
-          "4": 3,
-          "5": 4,
-          "6": 5,
-          "7": 6,
-          "8": 7
+    "dataset_name": "糖尿病数据集",
+    "target_feature": "readmitted",
+    "features": {
+        "encounter_id": {
+            "feature_id": 0,
+            "category": "identifier",
+            "type": "categorical",
+            "description": "就诊ID",
+            "visualization": "不适用",
+            "iskeep": true
         },
-        "id_mapping": {
-          "0": "Emergency",
-          "1": "Urgent",
-          "2": "Elective",
-          "3": "Newborn",
-          "4": "Not Available",
-          "5": "NULL",
-          "6": "Trauma Center",
-          "7": "Not Mapped"
-        }
-      }
-    },
-    "discharge_disposition_id": {
-      "feature_id": 7,
-      "category": "categorical",
-      "type": "categorical",
-      "description": "出院状态ID",
-      "visualization": "水平条形图",
-      "label_encoding": {
-        "unique_values": [
-          "1",
-          "2",
-          "3",
-          "4",
-          "5",
-          "6",
-          "7",
-          "8",
-          "9",
-          "10",
-          "11",
-          "12",
-          "13",
-          "14",
-          "15",
-          "16",
-          "17",
-          "18",
-          "19",
-          "20",
-          "22",
-          "23",
-          "24",
-          "25",
-          "27",
-          "28"
-        ],
-        "encoding_mapping": {
-          "1": 0,
-          "2": 1,
-          "3": 2,
-          "4": 3,
-          "5": 4,
-          "6": 5,
-          "7": 6,
-          "8": 7,
-          "9": 8,
-          "10": 9,
-          "11": 10,
-          "12": 11,
-          "13": 12,
-          "14": 13,
-          "15": 14,
-          "16": 15,
-          "17": 16,
-          "18": 17,
-          "19": 18,
-          "20": 19,
-          "22": 20,
-          "23": 21,
-          "24": 22,
-          "25": 23,
-          "27": 24,
-          "28": 25
+        "patient_nbr": {
+            "feature_id": 1,
+            "category": "identifier",
+            "type": "categorical",
+            "description": "患者ID",
+            "visualization": "不适用",
+            "iskeep": true
         },
-        "id_mapping": {
-          "0": "Discharged to home",
-          "1": "Discharged/transferred to another short term hospital",
-          "2": "Discharged/transferred to SNF",
-          "3": "Discharged/transferred to ICF",
-          "4": "Discharged/transferred to another type of inpatient care institution",
-          "5": "Discharged/transferred to home with home health service",
-          "6": "Left AMA",
-          "7": "Discharged/transferred to home under care of Home IV provider",
-          "8": "Admitted as an inpatient to this hospital",
-          "9": "Neonate discharged to another hospital for neonatal aftercare",
-          "10": "Expired",
-          "11": "Still patient or expected to return for outpatient services",
-          "12": "Hospice / home",
-          "13": "Hospice / medical facility",
-          "14": "Discharged/transferred within this institution to Medicare approved swing bed",
-          "15": "Discharged/transferred/referred another institution for outpatient services",
-          "16": "Discharged/transferred/referred to this institution for outpatient services",
-          "17": "NULL",
-          "18": "Expired at home. Medicaid only, hospice.",
-          "19": "Expired in a medical facility. Medicaid only, hospice.",
-          "20": "Discharged/transferred to another rehab fac including rehab units of a hospital .",
-          "21": "Discharged/transferred to a long term care hospital.",
-          "22": "Discharged/transferred to a nursing facility certified under Medicaid but not certified under Medicare.",
-          "23": "Not Mapped",
-          "24": "Discharged/transferred to a federal health care facility.",
-          "25": "Discharged/transferred/referred to a psychiatric hospital of psychiatric distinct part unit of a hospital"
-        }
-      }
-    },
-    "admission_source_id": {
-      "feature_id": 8,
-      "category": "categorical",
-      "type": "categorical",
-      "description": "入院来源ID",
-      "visualization": "水平条形图",
-      "label_encoding": {
-        "unique_values": [
-          "1",
-          "2",
-          "3",
-          "4",
-          "5",
-          "6",
-          "7",
-          "8",
-          "9",
-          "10",
-          "11",
-          "13",
-          "14",
-          "17",
-          "20",
-          "22",
-          "25"
-        ],
-        "encoding_mapping": {
-          "1": 0,
-          "2": 1,
-          "3": 2,
-          "4": 3,
-          "5": 4,
-          "6": 5,
-          "7": 6,
-          "8": 7,
-          "9": 8,
-          "10": 9,
-          "11": 10,
-          "13": 11,
-          "14": 12,
-          "17": 13,
-          "20": 14,
-          "22": 15,
-          "25": 16
+        "race": {
+            "feature_id": 2,
+            "category": "demographic",
+            "type": "categorical",
+            "description": "种族",
+            "visualization": "饼图",
+            "label_encoding": {
+                "unique_values": [
+                    "Caucasian",
+                    "AfricanAmerican",
+                    "?",
+                    "Other",
+                    "Hispanic",
+                    "Asian"
+                ],
+                "encoding_mapping": {
+                    "Caucasian": 0,
+                    "AfricanAmerican": 1,
+                    "?": 2,
+                    "Other": 3,
+                    "Hispanic": 4,
+                    "Asian": 5
+                }
+            },
+            "iskeep": true
         },
-        "id_mapping": {
-          "0": "Physician Referral",
-          "1": "Clinic Referral",
-          "2": "HMO Referral",
-          "3": "Transfer from a hospital",
-          "4": "Transfer from a Skilled Nursing Facility (SNF)",
-          "5": "Transfer from another health care facility",
-          "6": "Emergency Room",
-          "7": "Court/Law Enforcement",
-          "8": "Not Available",
-          "9": "Transfer from critial access hospital",
-          "10": "Normal Delivery",
-          "11": "Sick Baby",
-          "12": "Extramural Birth",
-          "13": "NULL",
-          "14": "Not Mapped",
-          "15": "Transfer from hospital inpt/same fac reslt in a sep claim",
-          "16": "Transfer from Ambulatory Surgery Center"
+        "gender": {
+            "feature_id": 3,
+            "category": "demographic",
+            "type": "categorical",
+            "description": "性别",
+            "visualization": "条形图",
+            "label_encoding": {
+                "unique_values": [
+                    "Female",
+                    "Male",
+                    "Unknown/Invalid"
+                ],
+                "encoding_mapping": {
+                    "Female": 0,
+                    "Male": 1,
+                    "Unknown/Invalid": 2
+                }
+            },
+            "iskeep": true
+        },
+        "age": {
+            "feature_id": 4,
+            "category": "demographic",
+            "type": "categorical",
+            "description": "年龄组",
+            "visualization": "条形图",
+            "label_encoding": {
+                "unique_values": [
+                    "[10-20)",
+                    "[20-30)",
+                    "[30-40)",
+                    "[40-50)",
+                    "[50-60)",
+                    "[60-70)",
+                    "[70-80)",
+                    "[80-90)",
+                    "[90-100)",
+                    "[0-10)"
+                ],
+                "encoding_mapping": {
+                    "[0-10)": 0,
+                    "[10-20)": 1,
+                    "[20-30)": 2,
+                    "[30-40)": 3,
+                    "[40-50)": 4,
+                    "[50-60)": 5,
+                    "[60-70)": 6,
+                    "[70-80)": 7,
+                    "[80-90)": 8,
+                    "[90-100)": 9
+                }
+            },
+            "iskeep": true
+        },
+        "weight": {
+            "feature_id": 5,
+            "category": "demographic",
+            "type": "categorical",
+            "description": "体重",
+            "visualization": "饼图",
+            "label_encoding": {
+                "unique_values": [
+                    "Missing",
+                    "Available"
+                ],
+                "encoding_mapping": {
+                    "Missing": 0,
+                    "Available": 1
+                }
+            },
+            "iskeep": false
+        },
+        "admission_type_id": {
+            "feature_id": 6,
+            "category": "categorical",
+            "type": "categorical",
+            "description": "入院类型ID",
+            "visualization": "水平条形图",
+            "label_encoding": {
+                "unique_values": [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                    "7",
+                    "8"
+                ],
+                "encoding_mapping": {
+                    "1": 0,
+                    "2": 1,
+                    "3": 2,
+                    "4": 3,
+                    "5": 4,
+                    "6": 5,
+                    "7": 6,
+                    "8": 7
+                },
+                "id_mapping": {
+                    "0": "Emergency",
+                    "1": "Urgent",
+                    "2": "Elective",
+                    "3": "Newborn",
+                    "4": "Not Available",
+                    "5": "NULL",
+                    "6": "Trauma Center",
+                    "7": "Not Mapped"
+                }
+            },
+            "iskeep": true
+        },
+        "discharge_disposition_id": {
+            "feature_id": 7,
+            "category": "categorical",
+            "type": "categorical",
+            "description": "出院状态ID",
+            "visualization": "水平条形图",
+            "label_encoding": {
+                "unique_values": [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                    "7",
+                    "8",
+                    "9",
+                    "10",
+                    "11",
+                    "12",
+                    "13",
+                    "14",
+                    "15",
+                    "16",
+                    "17",
+                    "18",
+                    "19",
+                    "20",
+                    "22",
+                    "23",
+                    "24",
+                    "25",
+                    "27",
+                    "28"
+                ],
+                "encoding_mapping": {
+                    "1": 0,
+                    "2": 1,
+                    "3": 2,
+                    "4": 3,
+                    "5": 4,
+                    "6": 5,
+                    "7": 6,
+                    "8": 7,
+                    "9": 8,
+                    "10": 9,
+                    "11": 10,
+                    "12": 11,
+                    "13": 12,
+                    "14": 13,
+                    "15": 14,
+                    "16": 15,
+                    "17": 16,
+                    "18": 17,
+                    "19": 18,
+                    "20": 19,
+                    "22": 20,
+                    "23": 21,
+                    "24": 22,
+                    "25": 23,
+                    "27": 24,
+                    "28": 25
+                },
+                "id_mapping": {
+                    "0": "Discharged to home",
+                    "1": "Discharged/transferred to another short term hospital",
+                    "2": "Discharged/transferred to SNF",
+                    "3": "Discharged/transferred to ICF",
+                    "4": "Discharged/transferred to another type of inpatient care institution",
+                    "5": "Discharged/transferred to home with home health service",
+                    "6": "Left AMA",
+                    "7": "Discharged/transferred to home under care of Home IV provider",
+                    "8": "Admitted as an inpatient to this hospital",
+                    "9": "Neonate discharged to another hospital for neonatal aftercare",
+                    "10": "Expired",
+                    "11": "Still patient or expected to return for outpatient services",
+                    "12": "Hospice / home",
+                    "13": "Hospice / medical facility",
+                    "14": "Discharged/transferred within this institution to Medicare approved swing bed",
+                    "15": "Discharged/transferred/referred another institution for outpatient services",
+                    "16": "Discharged/transferred/referred to this institution for outpatient services",
+                    "17": "NULL",
+                    "18": "Expired at home. Medicaid only, hospice.",
+                    "19": "Expired in a medical facility. Medicaid only, hospice.",
+                    "20": "Discharged/transferred to another rehab fac including rehab units of a hospital .",
+                    "21": "Discharged/transferred to a long term care hospital.",
+                    "22": "Discharged/transferred to a nursing facility certified under Medicaid but not certified under Medicare.",
+                    "23": "Not Mapped",
+                    "24": "Discharged/transferred to a federal health care facility.",
+                    "25": "Discharged/transferred/referred to a psychiatric hospital of psychiatric distinct part unit of a hospital"
+                }
+            },
+            "iskeep": true
+        },
+        "admission_source_id": {
+            "feature_id": 8,
+            "category": "categorical",
+            "type": "categorical",
+            "description": "入院来源ID",
+            "visualization": "水平条形图",
+            "label_encoding": {
+                "unique_values": [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                    "7",
+                    "8",
+                    "9",
+                    "10",
+                    "11",
+                    "13",
+                    "14",
+                    "17",
+                    "20",
+                    "22",
+                    "25"
+                ],
+                "encoding_mapping": {
+                    "1": 0,
+                    "2": 1,
+                    "3": 2,
+                    "4": 3,
+                    "5": 4,
+                    "6": 5,
+                    "7": 6,
+                    "8": 7,
+                    "9": 8,
+                    "10": 9,
+                    "11": 10,
+                    "13": 11,
+                    "14": 12,
+                    "17": 13,
+                    "20": 14,
+                    "22": 15,
+                    "25": 16
+                },
+                "id_mapping": {
+                    "0": "Physician Referral",
+                    "1": "Clinic Referral",
+                    "2": "HMO Referral",
+                    "3": "Transfer from a hospital",
+                    "4": "Transfer from a Skilled Nursing Facility (SNF)",
+                    "5": "Transfer from another health care facility",
+                    "6": "Emergency Room",
+                    "7": "Court/Law Enforcement",
+                    "8": "Not Available",
+                    "9": "Transfer from critial access hospital",
+                    "10": "Normal Delivery",
+                    "11": "Sick Baby",
+                    "12": "Extramural Birth",
+                    "13": "NULL",
+                    "14": "Not Mapped",
+                    "15": "Transfer from hospital inpt/same fac reslt in a sep claim",
+                    "16": "Transfer from Ambulatory Surgery Center"
+                }
+            },
+            "iskeep": true
+        },
+        "time_in_hospital": {
+            "feature_id": 9,
+            "category": "numeric",
+            "type": "continuous",
+            "description": "住院时间",
+            "visualization": "直方图",
+            "iskeep": true
+        },
+        "payer_code": {
+            "feature_id": 10,
+            "category": "categorical",
+            "type": "categorical",
+            "description": "支付方代码",
+            "visualization": "水平条形图",
+            "label_encoding": {
+                "unique_values": [
+                    "?",
+                    "MC",
+                    "MD",
+                    "HM",
+                    "UN",
+                    "BC",
+                    "SP",
+                    "CP",
+                    "SI",
+                    "DM",
+                    "CM",
+                    "CH",
+                    "PO",
+                    "WC",
+                    "OT",
+                    "OG",
+                    "MP",
+                    "FR"
+                ],
+                "encoding_mapping": {
+                    "?": 0,
+                    "BC": 1,
+                    "CH": 2,
+                    "CM": 3,
+                    "CP": 4,
+                    "DM": 5,
+                    "FR": 6,
+                    "HM": 7,
+                    "MC": 8,
+                    "MD": 9,
+                    "MP": 10,
+                    "OG": 11,
+                    "OT": 12,
+                    "PO": 13,
+                    "SI": 14,
+                    "SP": 15,
+                    "UN": 16,
+                    "WC": 17
+                }
+            },
+            "iskeep": true
+        },
+        "medical_specialty": {
+            "feature_id": 11,
+            "category": "categorical",
+            "type": "categorical",
+            "description": "医疗专业",
+            "visualization": "水平条形图",
+            "label_encoding": {
+                "unique_values": [
+                    "?",
+                    "InternalMedicine",
+                    "Family/GeneralPractice",
+                    "Cardiology",
+                    "Surgery-General",
+                    "Orthopedics",
+                    "Gastroenterology",
+                    "Surgery-Cardiovascular/Thoracic",
+                    "Nephrology",
+                    "Orthopedics-Reconstructive",
+                    "Psychiatry",
+                    "Emergency/Trauma",
+                    "Pulmonology",
+                    "Surgery-Neuro",
+                    "Obsterics&Gynecology-GynecologicOnco",
+                    "ObstetricsandGynecology",
+                    "Pediatrics",
+                    "Pediatrics-Endocrinology",
+                    "Hematology/Oncology",
+                    "Otolaryngology",
+                    "Surgery-Colon&Rectal",
+                    "Pediatrics-CriticalCare",
+                    "Endocrinology",
+                    "Urology",
+                    "Psychiatry-Child/Adolescent",
+                    "Pediatrics-Pulmonology",
+                    "Neurology",
+                    "Anesthesiology-Pediatric",
+                    "Radiology",
+                    "Pediatrics-Hematology-Oncology",
+                    "Psychology",
+                    "Podiatry",
+                    "Gynecology",
+                    "Pediatrics-Neurology",
+                    "Surgery-Plastic",
+                    "Surgery-Thoracic",
+                    "Surgery-PlasticwithinHeadandNeck",
+                    "Ophthalmology",
+                    "Surgery-Pediatric",
+                    "Pediatrics-EmergencyMedicine",
+                    "PhysicalMedicineandRehabilitation",
+                    "InfectiousDiseases",
+                    "Anesthesiology",
+                    "Oncology",
+                    "Rheumatology",
+                    "AllergyandImmunology",
+                    "Surgery-Maxillofacial",
+                    "Pediatrics-InfectiousDiseases",
+                    "Pediatrics-AllergyandImmunology",
+                    "Dentistry",
+                    "Surgeon",
+                    "Surgery-Vascular",
+                    "Osteopath",
+                    "Psychiatry-Addictive",
+                    "Surgery-Cardiovascular",
+                    "PhysicianNotFound",
+                    "Hematology",
+                    "Proctology",
+                    "Obstetrics",
+                    "SurgicalSpecialty",
+                    "Radiologist",
+                    "Pathology",
+                    "Dermatology",
+                    "SportsMedicine",
+                    "Speech",
+                    "Hospitalist",
+                    "OutreachServices",
+                    "Cardiology-Pediatric",
+                    "Perinatology",
+                    "Neurophysiology",
+                    "Endocrinology-Metabolism",
+                    "DCPTEAM",
+                    "Resident"
+                ],
+                "encoding_mapping": {
+                    "?": 0,
+                    "AllergyandImmunology": 1,
+                    "Anesthesiology": 2,
+                    "Anesthesiology-Pediatric": 3,
+                    "Cardiology": 4,
+                    "Cardiology-Pediatric": 5,
+                    "DCPTEAM": 6,
+                    "Dentistry": 7,
+                    "Dermatology": 8,
+                    "Emergency/Trauma": 9,
+                    "Endocrinology": 10,
+                    "Endocrinology-Metabolism": 11,
+                    "Family/GeneralPractice": 12,
+                    "Gastroenterology": 13,
+                    "Gynecology": 14,
+                    "Hematology": 15,
+                    "Hematology/Oncology": 16,
+                    "Hospitalist": 17,
+                    "InfectiousDiseases": 18,
+                    "InternalMedicine": 19,
+                    "Nephrology": 20,
+                    "Neurology": 21,
+                    "Neurophysiology": 22,
+                    "Obsterics&Gynecology-GynecologicOnco": 23,
+                    "Obstetrics": 24,
+                    "ObstetricsandGynecology": 25,
+                    "Oncology": 26,
+                    "Ophthalmology": 27,
+                    "Orthopedics": 28,
+                    "Orthopedics-Reconstructive": 29,
+                    "Osteopath": 30,
+                    "Otolaryngology": 31,
+                    "OutreachServices": 32,
+                    "Pathology": 33,
+                    "Pediatrics": 34,
+                    "Pediatrics-AllergyandImmunology": 35,
+                    "Pediatrics-CriticalCare": 36,
+                    "Pediatrics-EmergencyMedicine": 37,
+                    "Pediatrics-Endocrinology": 38,
+                    "Pediatrics-Hematology-Oncology": 39,
+                    "Pediatrics-InfectiousDiseases": 40,
+                    "Pediatrics-Neurology": 41,
+                    "Pediatrics-Pulmonology": 42,
+                    "Perinatology": 43,
+                    "PhysicalMedicineandRehabilitation": 44,
+                    "PhysicianNotFound": 45,
+                    "Podiatry": 46,
+                    "Proctology": 47,
+                    "Psychiatry": 48,
+                    "Psychiatry-Addictive": 49,
+                    "Psychiatry-Child/Adolescent": 50,
+                    "Psychology": 51,
+                    "Pulmonology": 52,
+                    "Radiologist": 53,
+                    "Radiology": 54,
+                    "Resident": 55,
+                    "Rheumatology": 56,
+                    "Speech": 57,
+                    "SportsMedicine": 58,
+                    "Surgeon": 59,
+                    "Surgery-Cardiovascular": 60,
+                    "Surgery-Cardiovascular/Thoracic": 61,
+                    "Surgery-Colon&Rectal": 62,
+                    "Surgery-General": 63,
+                    "Surgery-Maxillofacial": 64,
+                    "Surgery-Neuro": 65,
+                    "Surgery-Pediatric": 66,
+                    "Surgery-Plastic": 67,
+                    "Surgery-PlasticwithinHeadandNeck": 68,
+                    "Surgery-Thoracic": 69,
+                    "Surgery-Vascular": 70,
+                    "SurgicalSpecialty": 71,
+                    "Urology": 72
+                }
+            },
+            "iskeep": true
+        },
+        "num_lab_procedures": {
+            "feature_id": 12,
+            "category": "numeric",
+            "type": "continuous",
+            "description": "实验室检查次数",
+            "visualization": "直方图",
+            "iskeep": true
+        },
+        "num_procedures": {
+            "feature_id": 13,
+            "category": "numeric",
+            "type": "continuous",
+            "description": "手术次数",
+            "visualization": "直方图",
+            "iskeep": true
+        },
+        "num_medications": {
+            "feature_id": 14,
+            "category": "numeric",
+            "type": "continuous",
+            "description": "药物数量",
+            "visualization": "直方图",
+            "iskeep": true
+        },
+        "number_outpatient": {
+            "feature_id": 15,
+            "category": "numeric",
+            "type": "continuous",
+            "description": "门诊次数",
+            "visualization": "直方图",
+            "iskeep": true
+        },
+        "number_emergency": {
+            "feature_id": 16,
+            "category": "numeric",
+            "type": "continuous",
+            "description": "急诊次数",
+            "visualization": "直方图",
+            "iskeep": true
+        },
+        "number_inpatient": {
+            "feature_id": 17,
+            "category": "numeric",
+            "type": "continuous",
+            "description": "住院次数",
+            "visualization": "直方图",
+            "iskeep": true
+        },
+        "diag_1": {
+            "feature_id": 18,
+            "category": "diagnosis",
+            "type": "categorical",
+            "description": "主要诊断",
+            "visualization": "水平条形图",
+            "iskeep": true
+        },
+        "diag_2": {
+            "feature_id": 19,
+            "category": "diagnosis",
+            "type": "categorical",
+            "description": "次要诊断",
+            "visualization": "水平条形图",
+            "iskeep": true
+        },
+        "diag_3": {
+            "feature_id": 20,
+            "category": "diagnosis",
+            "type": "categorical",
+            "description": "第三诊断",
+            "visualization": "水平条形图",
+            "iskeep": true
+        },
+        "number_diagnoses": {
+            "feature_id": 21,
+            "category": "numeric",
+            "type": "continuous",
+            "description": "诊断数量",
+            "visualization": "直方图",
+            "iskeep": true
+        },
+        "max_glu_serum": {
+            "feature_id": 22,
+            "category": "categorical",
+            "type": "categorical",
+            "description": "最大血糖血清",
+            "visualization": "水平条形图",
+            "label_encoding": {
+                "unique_values": [
+                    "\"nan\"",
+                    ">300",
+                    "Norm",
+                    ">200"
+                ],
+                "encoding_mapping": {
+                    "\"nan\"": 0,
+                    ">200": 1,
+                    ">300": 2,
+                    "Norm": 3
+                }
+            },
+            "iskeep": false
+        },
+        "A1Cresult": {
+            "feature_id": 23,
+            "category": "categorical",
+            "type": "categorical",
+            "description": "糖化血红蛋白结果",
+            "visualization": "水平条形图",
+            "label_encoding": {
+                "unique_values": [
+                    "\"nan\"",
+                    ">7",
+                    ">8",
+                    "Norm"
+                ],
+                "encoding_mapping": {
+                    "\"nan\"": 0,
+                    ">7": 1,
+                    ">8": 2,
+                    "Norm": 3
+                }
+            },
+            "iskeep": true
+        },
+        "metformin": {
+            "feature_id": 24,
+            "category": "medication",
+            "type": "categorical",
+            "description": "二甲双胍",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "repaglinide": {
+            "feature_id": 25,
+            "category": "medication",
+            "type": "categorical",
+            "description": "瑞格列奈",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "nateglinide": {
+            "feature_id": 26,
+            "category": "medication",
+            "type": "categorical",
+            "description": "那格列奈",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "chlorpropamide": {
+            "feature_id": 27,
+            "category": "medication",
+            "type": "categorical",
+            "description": "氯磺丙脲",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "glimepiride": {
+            "feature_id": 28,
+            "category": "medication",
+            "type": "categorical",
+            "description": "格列美脲",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "acetohexamide": {
+            "feature_id": 29,
+            "category": "medication",
+            "type": "categorical",
+            "description": "醋磺己脲",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "glipizide": {
+            "feature_id": 30,
+            "category": "medication",
+            "type": "categorical",
+            "description": "格列吡嗪",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "glyburide": {
+            "feature_id": 31,
+            "category": "medication",
+            "type": "categorical",
+            "description": "格列本脲",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "tolbutamide": {
+            "feature_id": 32,
+            "category": "medication",
+            "type": "categorical",
+            "description": "甲苯磺丁脲",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "pioglitazone": {
+            "feature_id": 33,
+            "category": "medication",
+            "type": "categorical",
+            "description": "吡格列酮",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "rosiglitazone": {
+            "feature_id": 34,
+            "category": "medication",
+            "type": "categorical",
+            "description": "罗格列酮",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "acarbose": {
+            "feature_id": 35,
+            "category": "medication",
+            "type": "categorical",
+            "description": "阿卡波糖",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "miglitol": {
+            "feature_id": 36,
+            "category": "medication",
+            "type": "categorical",
+            "description": "米格列醇",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "troglitazone": {
+            "feature_id": 37,
+            "category": "medication",
+            "type": "categorical",
+            "description": "曲格列酮",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "tolazamide": {
+            "feature_id": 38,
+            "category": "medication",
+            "type": "categorical",
+            "description": "妥拉磺脲",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "examide": {
+            "feature_id": 39,
+            "category": "medication",
+            "type": "categorical",
+            "description": "依沙米德",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "citoglipton": {
+            "feature_id": 40,
+            "category": "medication",
+            "type": "categorical",
+            "description": "西格列汀",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "insulin": {
+            "feature_id": 41,
+            "category": "medication",
+            "type": "categorical",
+            "description": "胰岛素",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "glyburide-metformin": {
+            "feature_id": 42,
+            "category": "medication",
+            "type": "categorical",
+            "description": "格列本脲-二甲双胍",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "glipizide-metformin": {
+            "feature_id": 43,
+            "category": "medication",
+            "type": "categorical",
+            "description": "格列吡嗪-二甲双胍",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "glimepiride-pioglitazone": {
+            "feature_id": 44,
+            "category": "medication",
+            "type": "categorical",
+            "description": "格列美脲-吡格列酮",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "metformin-rosiglitazone": {
+            "feature_id": 45,
+            "category": "medication",
+            "type": "categorical",
+            "description": "二甲双胍-罗格列酮",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "metformin-pioglitazone": {
+            "feature_id": 46,
+            "category": "medication",
+            "type": "categorical",
+            "description": "二甲双胍-吡格列酮",
+            "visualization": "热力图",
+            "iskeep": true
+        },
+        "change": {
+            "feature_id": 47,
+            "category": "categorical",
+            "type": "categorical",
+            "description": "药物变化",
+            "visualization": "水平条形图",
+            "label_encoding": {
+                "unique_values": [
+                    "Ch",
+                    "No"
+                ],
+                "encoding_mapping": {
+                    "Ch": 0,
+                    "No": 1
+                }
+            },
+            "iskeep": true
+        },
+        "diabetesMed": {
+            "feature_id": 48,
+            "category": "categorical",
+            "type": "categorical",
+            "description": "糖尿病药物",
+            "visualization": "水平条形图",
+            "label_encoding": {
+                "unique_values": [
+                    "Yes",
+                    "No"
+                ],
+                "encoding_mapping": {
+                    "No": 0,
+                    "Yes": 1
+                }
+            },
+            "iskeep": true
+        },
+        "readmitted": {
+            "feature_id": 49,
+            "category": "target",
+            "type": "categorical",
+            "description": "复诊情况",
+            "visualization": "饼图、条形图",
+            "iskeep": true
         }
-      }
-    },
-    "time_in_hospital": {
-      "feature_id": 9,
-      "category": "numeric",
-      "type": "continuous",
-      "description": "住院时间",
-      "visualization": "直方图"
-    },
-    "payer_code": {
-      "feature_id": 10,
-      "category": "categorical",
-      "type": "categorical",
-      "description": "支付方代码",
-      "visualization": "水平条形图",
-      "label_encoding": {
-        "unique_values": [
-          "?",
-          "MC",
-          "MD",
-          "HM",
-          "UN",
-          "BC",
-          "SP",
-          "CP",
-          "SI",
-          "DM",
-          "CM",
-          "CH",
-          "PO",
-          "WC",
-          "OT",
-          "OG",
-          "MP",
-          "FR"
-        ],
-        "encoding_mapping": {
-          "?": 0,
-          "BC": 1,
-          "CH": 2,
-          "CM": 3,
-          "CP": 4,
-          "DM": 5,
-          "FR": 6,
-          "HM": 7,
-          "MC": 8,
-          "MD": 9,
-          "MP": 10,
-          "OG": 11,
-          "OT": 12,
-          "PO": 13,
-          "SI": 14,
-          "SP": 15,
-          "UN": 16,
-          "WC": 17
-        }
-      }
-    },
-    "medical_specialty": {
-      "feature_id": 11,
-      "category": "categorical",
-      "type": "categorical",
-      "description": "医疗专业",
-      "visualization": "水平条形图",
-      "label_encoding": {
-        "unique_values": [
-          "?",
-          "InternalMedicine",
-          "Family/GeneralPractice",
-          "Cardiology",
-          "Surgery-General",
-          "Orthopedics",
-          "Gastroenterology",
-          "Surgery-Cardiovascular/Thoracic",
-          "Nephrology",
-          "Orthopedics-Reconstructive",
-          "Psychiatry",
-          "Emergency/Trauma",
-          "Pulmonology",
-          "Surgery-Neuro",
-          "Obsterics&Gynecology-GynecologicOnco",
-          "ObstetricsandGynecology",
-          "Pediatrics",
-          "Pediatrics-Endocrinology",
-          "Hematology/Oncology",
-          "Otolaryngology",
-          "Surgery-Colon&Rectal",
-          "Pediatrics-CriticalCare",
-          "Endocrinology",
-          "Urology",
-          "Psychiatry-Child/Adolescent",
-          "Pediatrics-Pulmonology",
-          "Neurology",
-          "Anesthesiology-Pediatric",
-          "Radiology",
-          "Pediatrics-Hematology-Oncology",
-          "Psychology",
-          "Podiatry",
-          "Gynecology",
-          "Pediatrics-Neurology",
-          "Surgery-Plastic",
-          "Surgery-Thoracic",
-          "Surgery-PlasticwithinHeadandNeck",
-          "Ophthalmology",
-          "Surgery-Pediatric",
-          "Pediatrics-EmergencyMedicine",
-          "PhysicalMedicineandRehabilitation",
-          "InfectiousDiseases",
-          "Anesthesiology",
-          "Oncology",
-          "Rheumatology",
-          "AllergyandImmunology",
-          "Surgery-Maxillofacial",
-          "Pediatrics-InfectiousDiseases",
-          "Pediatrics-AllergyandImmunology",
-          "Dentistry",
-          "Surgeon",
-          "Surgery-Vascular",
-          "Osteopath",
-          "Psychiatry-Addictive",
-          "Surgery-Cardiovascular",
-          "PhysicianNotFound",
-          "Hematology",
-          "Proctology",
-          "Obstetrics",
-          "SurgicalSpecialty",
-          "Radiologist",
-          "Pathology",
-          "Dermatology",
-          "SportsMedicine",
-          "Speech",
-          "Hospitalist",
-          "OutreachServices",
-          "Cardiology-Pediatric",
-          "Perinatology",
-          "Neurophysiology",
-          "Endocrinology-Metabolism",
-          "DCPTEAM",
-          "Resident"
-        ],
-        "encoding_mapping": {
-          "?": 0,
-          "AllergyandImmunology": 1,
-          "Anesthesiology": 2,
-          "Anesthesiology-Pediatric": 3,
-          "Cardiology": 4,
-          "Cardiology-Pediatric": 5,
-          "DCPTEAM": 6,
-          "Dentistry": 7,
-          "Dermatology": 8,
-          "Emergency/Trauma": 9,
-          "Endocrinology": 10,
-          "Endocrinology-Metabolism": 11,
-          "Family/GeneralPractice": 12,
-          "Gastroenterology": 13,
-          "Gynecology": 14,
-          "Hematology": 15,
-          "Hematology/Oncology": 16,
-          "Hospitalist": 17,
-          "InfectiousDiseases": 18,
-          "InternalMedicine": 19,
-          "Nephrology": 20,
-          "Neurology": 21,
-          "Neurophysiology": 22,
-          "Obsterics&Gynecology-GynecologicOnco": 23,
-          "Obstetrics": 24,
-          "ObstetricsandGynecology": 25,
-          "Oncology": 26,
-          "Ophthalmology": 27,
-          "Orthopedics": 28,
-          "Orthopedics-Reconstructive": 29,
-          "Osteopath": 30,
-          "Otolaryngology": 31,
-          "OutreachServices": 32,
-          "Pathology": 33,
-          "Pediatrics": 34,
-          "Pediatrics-AllergyandImmunology": 35,
-          "Pediatrics-CriticalCare": 36,
-          "Pediatrics-EmergencyMedicine": 37,
-          "Pediatrics-Endocrinology": 38,
-          "Pediatrics-Hematology-Oncology": 39,
-          "Pediatrics-InfectiousDiseases": 40,
-          "Pediatrics-Neurology": 41,
-          "Pediatrics-Pulmonology": 42,
-          "Perinatology": 43,
-          "PhysicalMedicineandRehabilitation": 44,
-          "PhysicianNotFound": 45,
-          "Podiatry": 46,
-          "Proctology": 47,
-          "Psychiatry": 48,
-          "Psychiatry-Addictive": 49,
-          "Psychiatry-Child/Adolescent": 50,
-          "Psychology": 51,
-          "Pulmonology": 52,
-          "Radiologist": 53,
-          "Radiology": 54,
-          "Resident": 55,
-          "Rheumatology": 56,
-          "Speech": 57,
-          "SportsMedicine": 58,
-          "Surgeon": 59,
-          "Surgery-Cardiovascular": 60,
-          "Surgery-Cardiovascular/Thoracic": 61,
-          "Surgery-Colon&Rectal": 62,
-          "Surgery-General": 63,
-          "Surgery-Maxillofacial": 64,
-          "Surgery-Neuro": 65,
-          "Surgery-Pediatric": 66,
-          "Surgery-Plastic": 67,
-          "Surgery-PlasticwithinHeadandNeck": 68,
-          "Surgery-Thoracic": 69,
-          "Surgery-Vascular": 70,
-          "SurgicalSpecialty": 71,
-          "Urology": 72
-        }
-      }
-    },
-    "num_lab_procedures": {
-      "feature_id": 12,
-      "category": "numeric",
-      "type": "continuous",
-      "description": "实验室检查次数",
-      "visualization": "直方图"
-    },
-    "num_procedures": {
-      "feature_id": 13,
-      "category": "numeric",
-      "type": "continuous",
-      "description": "手术次数",
-      "visualization": "直方图"
-    },
-    "num_medications": {
-      "feature_id": 14,
-      "category": "numeric",
-      "type": "continuous",
-      "description": "药物数量",
-      "visualization": "直方图"
-    },
-    "number_outpatient": {
-      "feature_id": 15,
-      "category": "numeric",
-      "type": "continuous",
-      "description": "门诊次数",
-      "visualization": "直方图"
-    },
-    "number_emergency": {
-      "feature_id": 16,
-      "category": "numeric",
-      "type": "continuous",
-      "description": "急诊次数",
-      "visualization": "直方图"
-    },
-    "number_inpatient": {
-      "feature_id": 17,
-      "category": "numeric",
-      "type": "continuous",
-      "description": "住院次数",
-      "visualization": "直方图"
-    },
-    "diag_1": {
-      "feature_id": 18,
-      "category": "diagnosis",
-      "type": "categorical",
-      "description": "主要诊断",
-      "visualization": "水平条形图"
-    },
-    "diag_2": {
-      "feature_id": 19,
-      "category": "diagnosis",
-      "type": "categorical",
-      "description": "次要诊断",
-      "visualization": "水平条形图"
-    },
-    "diag_3": {
-      "feature_id": 20,
-      "category": "diagnosis",
-      "type": "categorical",
-      "description": "第三诊断",
-      "visualization": "水平条形图"
-    },
-    "number_diagnoses": {
-      "feature_id": 21,
-      "category": "numeric",
-      "type": "continuous",
-      "description": "诊断数量",
-      "visualization": "直方图"
-    },
-    "max_glu_serum": {
-      "feature_id": 22,
-      "category": "categorical",
-      "type": "categorical",
-      "description": "最大血糖血清",
-      "visualization": "水平条形图",
-      "label_encoding": {
-        "unique_values": [
-          "\"nan\"",
-          ">300",
-          "Norm",
-          ">200"
-        ],
-        "encoding_mapping": {
-          "\"nan\"": 0,
-          ">200": 1,
-          ">300": 2,
-          "Norm": 3
-        }
-      }
-    },
-    "A1Cresult": {
-      "feature_id": 23,
-      "category": "categorical",
-      "type": "categorical",
-      "description": "糖化血红蛋白结果",
-      "visualization": "水平条形图",
-      "label_encoding": {
-        "unique_values": [
-          "\"nan\"",
-          ">7",
-          ">8",
-          "Norm"
-        ],
-        "encoding_mapping": {
-          "\"nan\"": 0,
-          ">7": 1,
-          ">8": 2,
-          "Norm": 3
-        }
-      }
-    },
-    "metformin": {
-      "feature_id": 24,
-      "category": "medication",
-      "type": "categorical",
-      "description": "二甲双胍",
-      "visualization": "热力图"
-    },
-    "repaglinide": {
-      "feature_id": 25,
-      "category": "medication",
-      "type": "categorical",
-      "description": "瑞格列奈",
-      "visualization": "热力图"
-    },
-    "nateglinide": {
-      "feature_id": 26,
-      "category": "medication",
-      "type": "categorical",
-      "description": "那格列奈",
-      "visualization": "热力图"
-    },
-    "chlorpropamide": {
-      "feature_id": 27,
-      "category": "medication",
-      "type": "categorical",
-      "description": "氯磺丙脲",
-      "visualization": "热力图"
-    },
-    "glimepiride": {
-      "feature_id": 28,
-      "category": "medication",
-      "type": "categorical",
-      "description": "格列美脲",
-      "visualization": "热力图"
-    },
-    "acetohexamide": {
-      "feature_id": 29,
-      "category": "medication",
-      "type": "categorical",
-      "description": "醋磺己脲",
-      "visualization": "热力图"
-    },
-    "glipizide": {
-      "feature_id": 30,
-      "category": "medication",
-      "type": "categorical",
-      "description": "格列吡嗪",
-      "visualization": "热力图"
-    },
-    "glyburide": {
-      "feature_id": 31,
-      "category": "medication",
-      "type": "categorical",
-      "description": "格列本脲",
-      "visualization": "热力图"
-    },
-    "tolbutamide": {
-      "feature_id": 32,
-      "category": "medication",
-      "type": "categorical",
-      "description": "甲苯磺丁脲",
-      "visualization": "热力图"
-    },
-    "pioglitazone": {
-      "feature_id": 33,
-      "category": "medication",
-      "type": "categorical",
-      "description": "吡格列酮",
-      "visualization": "热力图"
-    },
-    "rosiglitazone": {
-      "feature_id": 34,
-      "category": "medication",
-      "type": "categorical",
-      "description": "罗格列酮",
-      "visualization": "热力图"
-    },
-    "acarbose": {
-      "feature_id": 35,
-      "category": "medication",
-      "type": "categorical",
-      "description": "阿卡波糖",
-      "visualization": "热力图"
-    },
-    "miglitol": {
-      "feature_id": 36,
-      "category": "medication",
-      "type": "categorical",
-      "description": "米格列醇",
-      "visualization": "热力图"
-    },
-    "troglitazone": {
-      "feature_id": 37,
-      "category": "medication",
-      "type": "categorical",
-      "description": "曲格列酮",
-      "visualization": "热力图"
-    },
-    "tolazamide": {
-      "feature_id": 38,
-      "category": "medication",
-      "type": "categorical",
-      "description": "妥拉磺脲",
-      "visualization": "热力图"
-    },
-    "examide": {
-      "feature_id": 39,
-      "category": "medication",
-      "type": "categorical",
-      "description": "依沙米德",
-      "visualization": "热力图"
-    },
-    "citoglipton": {
-      "feature_id": 40,
-      "category": "medication",
-      "type": "categorical",
-      "description": "西格列汀",
-      "visualization": "热力图"
-    },
-    "insulin": {
-      "feature_id": 41,
-      "category": "medication",
-      "type": "categorical",
-      "description": "胰岛素",
-      "visualization": "热力图"
-    },
-    "glyburide-metformin": {
-      "feature_id": 42,
-      "category": "medication",
-      "type": "categorical",
-      "description": "格列本脲-二甲双胍",
-      "visualization": "热力图"
-    },
-    "glipizide-metformin": {
-      "feature_id": 43,
-      "category": "medication",
-      "type": "categorical",
-      "description": "格列吡嗪-二甲双胍",
-      "visualization": "热力图"
-    },
-    "glimepiride-pioglitazone": {
-      "feature_id": 44,
-      "category": "medication",
-      "type": "categorical",
-      "description": "格列美脲-吡格列酮",
-      "visualization": "热力图"
-    },
-    "metformin-rosiglitazone": {
-      "feature_id": 45,
-      "category": "medication",
-      "type": "categorical",
-      "description": "二甲双胍-罗格列酮",
-      "visualization": "热力图"
-    },
-    "metformin-pioglitazone": {
-      "feature_id": 46,
-      "category": "medication",
-      "type": "categorical",
-      "description": "二甲双胍-吡格列酮",
-      "visualization": "热力图"
-    },
-    "change": {
-      "feature_id": 47,
-      "category": "categorical",
-      "type": "categorical",
-      "description": "药物变化",
-      "visualization": "水平条形图",
-      "label_encoding": {
-        "unique_values": [
-          "Ch",
-          "No"
-        ],
-        "encoding_mapping": {
-          "Ch": 0,
-          "No": 1
-        }
-      }
-    },
-    "diabetesMed": {
-      "feature_id": 48,
-      "category": "categorical",
-      "type": "categorical",
-      "description": "糖尿病药物",
-      "visualization": "水平条形图",
-      "label_encoding": {
-        "unique_values": [
-          "Yes",
-          "No"
-        ],
-        "encoding_mapping": {
-          "No": 0,
-          "Yes": 1
-        }
-      }
-    },
-    "readmitted": {
-      "feature_id": 49,
-      "category": "target",
-      "type": "categorical",
-      "description": "复诊情况",
-      "visualization": "饼图、条形图"
     }
-  }
 }
