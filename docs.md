@@ -7,11 +7,12 @@
 ### 项目结构
 ```
 coursework/
-├── Dataset/                    # 原始数据集
-├── src/                       # 源代码目录
-│   ├── data_visualization.py  # 数据可视化主程序
-│   ├── visualizations/       # 可视化输出目录
+├── config/                    # 配置文件目录
 │   └── feature.json          # 特征配置文件
+├── Dataset/                   # 原始数据集
+├── src/                      # 源代码目录
+│   ├── data_visualization.py # 数据可视化主程序
+│   └── visualizations/       # 可视化输出目录
 └── docs.md                   # 本文档
 ```
 
@@ -112,7 +113,7 @@ class DataVisualizer:
 - **其他**: 数值型、药物、目标特征、相关性、缺失值等
 
 ### 配置文件
-- `feature.json` - 特征配置文件（包含标签编码和映射信息）
+- `config/feature.json` - 特征配置文件（包含标签编码和映射信息）
 
 ## 已完成功能
 - [x] Demographic特征处理

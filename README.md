@@ -26,6 +26,8 @@ pip install -e .
 
 ```
 coursework/
+├── config/
+│   └── feature.json
 ├── Dataset/
 ├── src/
 ├── myutils/

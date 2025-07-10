@@ -23,7 +23,7 @@ class DataVisualizer:
         self.dataset_path = Path(__file__).parent.parent / "Dataset"
         self.train_data = None
         self.test_data = None
-        self.feature_file = Path(__file__).parent.parent / "feature.json"
+        self.feature_file = Path(__file__).parent.parent / "config" / "feature.json"
         self.feature_json = read_jsonl(str(self.feature_file))
         
     def load_data(self):
@@ -139,6 +139,8 @@ class DataVisualizer:
             if feature == 'age':
                 # 特殊处理age特征，让[0-10)编码为0
                 sorted_values = sorted(unique_values)
+                unique_values = sorted_values
+                label_encoding_data[feature]['unique_values'] = unique_values
                 # 将[0-10)移到第一位
                 if '[0-10)' in sorted_values:
                     sorted_values.remove('[0-10)')

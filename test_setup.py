@@ -86,8 +86,8 @@ def test_source_files():
         "data_visualization.py"
     ]
     
-    # 检查feature.json（在根目录）
-    feature_json_path = Path("feature.json")
+    # 检查feature.json（在config目录）
+    feature_json_path = Path("config/feature.json")
     if feature_json_path.exists():
         print("✓ feature.json 存在")
     else:
