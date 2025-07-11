@@ -8,9 +8,13 @@ import os
 from pathlib import Path
 import logging
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pickle
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,7 +23,7 @@ logging.basicConfig(
 
 class MissingDataHandler:
     def __init__(self):
-        self.output_dir = Path('Dataset/processed')
+        self.output_dir = Path('Dataset/processed/train_processed')
         self.feature_json = read_jsonl('config/feature.json')
         self.features_config = self.feature_json['features']  # 获取features字段
         self.train_data = None
@@ -374,8 +378,294 @@ class MissingDataHandler:
         imputer = KNNImputer(n_neighbors=5)
         data = imputer.fit_transform(data[columns])
         data = pd.DataFrame(data, columns=columns)
+        data.to_csv(self.output_dir/'knn_imputed_train.csv',index=False)
         return data
 
+    def logistic_regression_impute(self, data: pd.DataFrame, target_feature: str = None):
+        """
+        使用逻辑回归填补缺失值
+        对于每个有缺失值的特征，训练一个逻辑回归模型来预测缺失值
+        
+        Args:
+            data: 包含缺失值的数据
+            target_feature: 指定要填补的特征，如果为None则填补所有有缺失值的特征
+        """
+        logging.info("==========logistic_regression_impute==========")
+        
+        # 创建输出目录
+        imputed_dir = os.path.join(self.output_dir, 'logistic_imputed')
+        os.makedirs(imputed_dir, exist_ok=True)
+        
+        # 创建模型保存目录
+        models_dir = os.path.join(imputed_dir, 'models')
+        os.makedirs(models_dir, exist_ok=True)
+        
+        # 获取有缺失值的特征
+        missing_features = []
+        for col in data.columns:
+            if data[col].isna().sum() > 0:
+                missing_features.append(col)
+        
+        if target_feature:
+            if target_feature not in missing_features:
+                logging.warning(f"特征 '{target_feature}' 没有缺失值")
+                return data
+            missing_features = [target_feature]
+        
+        logging.info(f"需要填补的特征: {missing_features}")
+        
+        # 保存模型信息的字典
+        model_info = {
+            'imputation_method': 'logistic_regression',
+            'features_imputed': [],
+            'models': {},
+            'feature_stats': {},
+            'imputation_stats': {}
+        }
+        
+        imputed_data = data.copy()
+        
+        for feature in missing_features:
+            logging.info(f"正在填补特征: {feature}")
+            
+            # 获取该特征的缺失值位置
+            missing_mask = data[feature].isna()
+            missing_count = missing_mask.sum()
+            
+            if missing_count == 0:
+                continue
+            
+            # 获取非缺失值的数据作为训练集
+            train_mask = ~missing_mask
+            train_data = data[train_mask].copy()
+            
+            # 准备特征和目标变量
+            X_train = train_data.drop(columns=[feature])
+            y_train = train_data[feature]
+            
+            # 处理分类变量
+            categorical_features = X_train.select_dtypes(include=['object', 'category']).columns
+            label_encoders = {}
+            
+            for cat_feature in categorical_features:
+                le = LabelEncoder()
+                X_train[cat_feature] = le.fit_transform(X_train[cat_feature].astype(str))
+                label_encoders[cat_feature] = le
+            
+            # 处理数值型特征中的缺失值（用中位数填充）
+            numeric_features = X_train.select_dtypes(include=[np.number]).columns
+            for num_feature in numeric_features:
+                if X_train[num_feature].isna().sum() > 0:
+                    median_val = X_train[num_feature].median()
+                    X_train[num_feature] = X_train[num_feature].fillna(median_val)
+            
+            # 检查目标变量是否为分类变量
+            if y_train.dtype == 'object' or y_train.nunique() < 10:
+                # 分类变量，使用逻辑回归
+                target_encoder = LabelEncoder()
+                y_train_encoded = target_encoder.fit_transform(y_train.astype(str))
+                
+                # 训练逻辑回归模型
+                lr_model = LogisticRegression(random_state=42, max_iter=1000)
+                lr_model.fit(X_train, y_train_encoded)
+                
+                # 预测缺失值
+                missing_data = data[missing_mask].copy()
+                X_missing = missing_data.drop(columns=[feature])
+                
+                # 对缺失数据的特征进行相同的预处理
+                for cat_feature in categorical_features:
+                    if cat_feature in X_missing.columns:
+                        X_missing[cat_feature] = label_encoders[cat_feature].transform(
+                            X_missing[cat_feature].astype(str)
+                        )
+                
+                for num_feature in numeric_features:
+                    if num_feature in X_missing.columns and X_missing[num_feature].isna().sum() > 0:
+                        median_val = X_missing[num_feature].median()
+                        X_missing[num_feature] = X_missing[num_feature].fillna(median_val)
+                
+                # 预测
+                predictions_encoded = lr_model.predict(X_missing)
+                predictions = target_encoder.inverse_transform(predictions_encoded)
+                
+                # 填充缺失值
+                imputed_data.loc[missing_mask, feature] = predictions
+                
+                # 保存模型信息
+                model_info['models'][feature] = {
+                    'model_type': 'logistic_regression',
+                    'model': lr_model,
+                    'label_encoders': label_encoders,
+                    'target_encoder': target_encoder,
+                    'categorical_features': list(categorical_features),
+                    'numeric_features': list(numeric_features),
+                    'feature_median_values': {
+                        feat: X_train[feat].median() for feat in numeric_features
+                    }
+                }
+                
+            else:
+                # 数值变量，使用线性回归
+                from sklearn.linear_model import LinearRegression
+                
+                lr_model = LinearRegression()
+                lr_model.fit(X_train, y_train)
+                
+                # 预测缺失值
+                missing_data = data[missing_mask].copy()
+                X_missing = missing_data.drop(columns=[feature])
+                
+                # 对缺失数据的特征进行相同的预处理
+                for cat_feature in categorical_features:
+                    if cat_feature in X_missing.columns:
+                        X_missing[cat_feature] = label_encoders[cat_feature].transform(
+                            X_missing[cat_feature].astype(str)
+                        )
+                
+                for num_feature in numeric_features:
+                    if num_feature in X_missing.columns and X_missing[num_feature].isna().sum() > 0:
+                        median_val = X_missing[num_feature].median()
+                        X_missing[num_feature] = X_missing[num_feature].fillna(median_val)
+                
+                # 预测
+                predictions = lr_model.predict(X_missing)
+                
+                # 填充缺失值
+                imputed_data.loc[missing_mask, feature] = predictions
+                
+                # 保存模型信息
+                model_info['models'][feature] = {
+                    'model_type': 'linear_regression',
+                    'model': lr_model,
+                    'label_encoders': label_encoders,
+                    'categorical_features': list(categorical_features),
+                    'numeric_features': list(numeric_features),
+                    'feature_median_values': {
+                        feat: X_train[feat].median() for feat in numeric_features
+                    }
+                }
+            
+            # 记录统计信息
+            model_info['feature_stats'][feature] = {
+                'missing_count': missing_count,
+                'missing_percentage': (missing_count / len(data)) * 100,
+                'data_type': 'categorical' if y_train.dtype == 'object' or y_train.nunique() < 10 else 'numeric',
+                'unique_values_before': y_train.nunique(),
+                'unique_values_after': imputed_data[feature].nunique()
+            }
+            
+            model_info['features_imputed'].append(feature)
+            
+            logging.info(f"特征 '{feature}' 填补完成: {missing_count} 个缺失值")
+        
+        # 保存填补后的数据
+        imputed_data.to_csv(os.path.join(imputed_dir, 'logistic_imputed_train.csv'), index=False)
+        
+        # 保存模型信息（不包含模型对象，因为pickle可能有问题）
+        model_info_save = model_info.copy()
+        for feature in model_info_save['models']:
+            # 移除模型对象，只保存其他信息
+            model_info_save['models'][feature].pop('model', None)
+        
+        with open(os.path.join(imputed_dir, 'model_info.json'), 'w') as f:
+            json.dump(model_info_save, f, indent=4, default=str)
+        
+        # 单独保存每个模型
+        for feature, model_data in model_info['models'].items():
+            model_path = os.path.join(models_dir, f'{feature}_model.pkl')
+            with open(model_path, 'wb') as f:
+                pickle.dump(model_data, f)
+        
+        logging.info(f"逻辑回归填补完成，结果保存在: {imputed_dir}")
+        return imputed_data, model_info
+    
+    def logistic_regression_impute_test(self, test_data: pd.DataFrame, model_info_path: str = None):
+        """
+        使用训练好的逻辑回归模型对测试集进行缺失值填补
+        
+        Args:
+            test_data: 测试数据
+            model_info_path: 模型信息文件路径，如果为None则使用默认路径
+        """
+        logging.info("==========logistic_regression_impute_test==========")
+        
+        if model_info_path is None:
+            model_info_path = os.path.join(self.output_dir, 'logistic_imputed', 'model_info.json')
+        
+        if not os.path.exists(model_info_path):
+            raise FileNotFoundError(f"模型信息文件不存在: {model_info_path}")
+        
+        # 加载模型信息
+        with open(model_info_path, 'r') as f:
+            model_info = json.load(f)
+        
+        models_dir = os.path.join(self.output_dir, 'logistic_imputed', 'models')
+        imputed_test_data = test_data.copy()
+        
+        for feature in model_info['features_imputed']:
+            logging.info(f"正在填补测试集特征: {feature}")
+            
+            # 加载模型
+            model_path = os.path.join(models_dir, f'{feature}_model.pkl')
+            with open(model_path, 'rb') as f:
+                model_data = pickle.load(f)
+            
+            # 检查测试集中是否有该特征的缺失值
+            missing_mask = test_data[feature].isna()
+            missing_count = missing_mask.sum()
+            
+            if missing_count == 0:
+                logging.info(f"测试集中特征 '{feature}' 没有缺失值，跳过")
+                continue
+            
+            # 准备测试数据
+            X_test = test_data.drop(columns=[feature])
+            
+            # 对测试数据进行相同的预处理
+            categorical_features = model_data['categorical_features']
+            numeric_features = model_data['numeric_features']
+            label_encoders = model_data['label_encoders']
+            
+            for cat_feature in categorical_features:
+                if cat_feature in X_test.columns:
+                    # 处理训练时未见过的类别
+                    unique_train_values = set(label_encoders[cat_feature].classes_)
+                    unique_test_values = set(X_test[cat_feature].unique())
+                    new_values = unique_test_values - unique_train_values
+                    
+                    if new_values:
+                        logging.warning(f"特征 '{cat_feature}' 在测试集中有新的类别: {new_values}")
+                        # 将新类别映射为最常见的类别
+                        most_common = X_test[cat_feature].mode().iloc[0]
+                        X_test[cat_feature] = X_test[cat_feature].replace(list(new_values), most_common)
+                    
+                    X_test[cat_feature] = label_encoders[cat_feature].transform(X_test[cat_feature].astype(str))
+            
+            for num_feature in numeric_features:
+                if num_feature in X_test.columns and X_test[num_feature].isna().sum() > 0:
+                    median_val = model_data['feature_median_values'][num_feature]
+                    X_test[num_feature] = X_test[num_feature].fillna(median_val)
+            
+            # 预测缺失值
+            if model_data['model_type'] == 'logistic_regression':
+                predictions_encoded = model_data['model'].predict(X_test[missing_mask])
+                predictions = model_data['target_encoder'].inverse_transform(predictions_encoded)
+            else:  # linear_regression
+                predictions = model_data['model'].predict(X_test[missing_mask])
+            
+            # 填充缺失值
+            imputed_test_data.loc[missing_mask, feature] = predictions
+            
+            logging.info(f"测试集特征 '{feature}' 填补完成: {missing_count} 个缺失值")
+        
+        # 保存填补后的测试数据
+        test_output_dir = os.path.join(self.output_dir, 'logistic_imputed')
+        imputed_test_data.to_csv(os.path.join(test_output_dir, 'logistic_imputed_test.csv'), index=False)
+        
+        logging.info(f"测试集逻辑回归填补完成")
+        return imputed_test_data
+    
     def analyse_knn_impute(self):
         """
         分析KNN填补缺失值后的数据，统计每个特征的缺失值数量，填值前后的最大值，最小值，平均值，中位数，标准差，方差，偏度，峰度
@@ -387,8 +677,8 @@ class MissingDataHandler:
         os.makedirs(imputed_dir, exist_ok=True)
         
         # 获取原始数据（填补前）
-        original_data = pd.read_csv('Dataset/processed/normalized_train.csv',index_col=0)
-        imputed_data = pd.read_csv('Dataset/processed/knn_imputed_train.csv')
+        original_data = pd.read_csv(self.output_dir/'recoded_train.csv',index_col=0)
+        imputed_data = pd.read_csv(self.output_dir/'knn_imputed_train.csv',index_col=0)
         # 前后数据集的列明区别
         original_columns = original_data.columns
         imputed_columns = imputed_data.columns
@@ -507,6 +797,126 @@ class MissingDataHandler:
         
         return res
 
+    def analyze_logistic_imputation(self, original_data: pd.DataFrame = None):
+        """
+        分析逻辑回归填补缺失值后的数据
+        """
+        logging.info("==========analyze_logistic_imputation==========")
+        
+        # 创建输出目录
+        imputed_dir = os.path.join(self.output_dir, 'logistic_imputed')
+        os.makedirs(imputed_dir, exist_ok=True)
+        
+        # 获取原始数据（填补前）
+        if original_data is None:
+            original_data = pd.read_csv(self.output_dir/'recoded_train.csv', index_col=0)
+        
+        imputed_data = pd.read_csv(os.path.join(imputed_dir, 'logistic_imputed_train.csv'), index_col=0)
+        
+        # 初始化结果DataFrame
+        res = pd.DataFrame(columns=['feature','missing_count','max_value(before)','max_value(after)','min_value(before)','min_value(after)','mean_value(before)','mean_value(after)','median_value(before)','median_value(after)','std_value(before)','std_value(after)','var_value(before)','var_value(after)','skewness(before)','skewness(after)','kurtosis(before)','kurtosis(after)'])
+        
+        for feature in imputed_data.columns:
+            if feature not in original_data.columns:
+                logging.warning(f"特征 '{feature}' 在原始数据中不存在，跳过")
+                continue
+                
+            # 计算原始数据中的缺失值数量
+            missing_count = original_data[feature].isna().sum()
+            
+            # 如果该特征没有缺失值，跳过
+            if missing_count == 0:
+                continue
+            
+            # 获取填补前的数据（非缺失值）
+            before_data = original_data[feature].dropna()
+            
+            # 获取填补后的数据
+            after_data = imputed_data[feature]
+            
+            if len(before_data) == 0:
+                logging.warning(f"特征 '{feature}' 填补前没有有效数据")
+                continue
+            
+            # 计算填补前的统计量
+            max_value_before = float(before_data.max())
+            min_value_before = float(before_data.min())
+            mean_value_before = float(before_data.mean())
+            median_value_before = float(before_data.median())
+            std_value_before = float(before_data.std())
+            var_value_before = float(before_data.var())
+            skewness_before = float(before_data.skew())
+            kurtosis_before = float(before_data.kurtosis())
+            
+            # 计算填补后的统计量
+            max_value_after = float(after_data.max())
+            min_value_after = float(after_data.min())
+            mean_value_after = float(after_data.mean())
+            median_value_after = float(after_data.median())
+            std_value_after = float(after_data.std())
+            var_value_after = float(after_data.var())
+            skewness_after = float(after_data.skew())
+            kurtosis_after = float(after_data.kurtosis())
+            
+            # 添加到结果DataFrame
+            new_row = pd.DataFrame({
+                'feature': [feature],
+                'missing_count': [missing_count],
+                'max_value(before)': [max_value_before],
+                'max_value(after)': [max_value_after],
+                'min_value(before)': [min_value_before],
+                'min_value(after)': [min_value_after],
+                'mean_value(before)': [mean_value_before],
+                'mean_value(after)': [mean_value_after],
+                'median_value(before)': [median_value_before],
+                'median_value(after)': [median_value_after],
+                'std_value(before)': [std_value_before],
+                'std_value(after)': [std_value_after],
+                'var_value(before)': [var_value_before],
+                'var_value(after)': [var_value_after],
+                'skewness(before)': [skewness_before],
+                'skewness(after)': [skewness_after],
+                'kurtosis(before)': [kurtosis_before],
+                'kurtosis(after)': [kurtosis_after]
+            })
+            
+            res = pd.concat([res, new_row], ignore_index=True)
+            
+            logging.info(f"特征 '{feature}': {missing_count} 个缺失值")
+        
+        # 按缺失值数量排序
+        res = res.sort_values('missing_count', ascending=False)
+        
+        # 保存结果
+        output_path = os.path.join(imputed_dir, 'logistic_imputation_analysis.csv')
+        res.to_csv(output_path, index=False)
+        
+        # 保存详细统计信息
+        detailed_stats = {
+            'total_features_analyzed': len(res),
+            'total_missing_values_filled': res['missing_count'].sum(),
+            'features_with_missing_values': res['feature'].tolist(),
+            'missing_count_summary': res['missing_count'].describe().to_dict(),
+            'statistics_comparison': {
+                'max_value_change': (res['max_value(after)'] - res['max_value(before)']).describe().to_dict(),
+                'min_value_change': (res['min_value(after)'] - res['min_value(before)']).describe().to_dict(),
+                'mean_value_change': (res['mean_value(after)'] - res['mean_value(before)']).describe().to_dict(),
+                'std_value_change': (res['std_value(after)'] - res['std_value(before)']).describe().to_dict(),
+                'skewness_change': (res['skewness(after)'] - res['skewness(before)']).describe().to_dict(),
+                'kurtosis_change': (res['kurtosis(after)'] - res['kurtosis(before)']).describe().to_dict()
+            }
+        }
+        
+        detailed_output_path = os.path.join(imputed_dir, 'logistic_imputation_detailed_stats.json')
+        with open(detailed_output_path, 'w') as f:
+            json.dump(detailed_stats, f, indent=4)
+        
+        logging.info(f"逻辑回归填补分析完成，结果保存在: {imputed_dir}")
+        logging.info(f"分析了 {len(res)} 个有缺失值的特征")
+        logging.info(f"总共填补了 {res['missing_count'].sum()} 个缺失值")
+        
+        return res
+
     def create_complete_datasets(self):
         """
         为每个特征创建无缺失值的数据集
@@ -560,12 +970,11 @@ def main():
     handler.analyze_missing_values()
     # data = handler.train_data
     # # handler.pca_for_low_mid_missing_dataset() # 主成分分析
-    # handler.load_data(mode='normalized')
-    # data = handler.drop_high_missing_dataset(handler.train_data)
-    # # data = handler.drop_mid_missing_dataset(data)
-    # # data = handler.drop_low_missing_dataset(data)
-    # data = handler.knn_impute(data)
-    # data.to_csv(os.path.join(handler.output_dir, 'knn_imputed_train.csv'), index=False)
+    handler.load_data(mode='normalized')
+    # data = handler.drop_mid_missing_dataset(data)
+    # data = handler.drop_low_missing_dataset(data)
+    data = handler.knn_impute(data)
+    data.to_csv(os.path.join(handler.output_dir, 'knn_imputed_train.csv'), index=False)
     
     # 分析KNN填补结果
     analysis_result = handler.analyse_knn_impute()

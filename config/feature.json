@@ -72,7 +72,8 @@
             "missing_replace": null,
             "max_value": 4.0,
             "min_value": 0.0,
-            "missing_in_test": true
+            "missing_in_test": true,
+            "missing_in_test_num": 212
         },
         "gender": {
             "feature_id": 3,
@@ -217,7 +218,8 @@
             "missing_replace": null,
             "max_value": 4.0,
             "min_value": 0.0,
-            "missing_in_test": true
+            "missing_in_test": true,
+            "missing_in_test_num": 1036
         },
         "discharge_disposition_id": {
             "feature_id": 7,
@@ -285,7 +287,8 @@
             "missing_replace": null,
             "max_value": 20.0,
             "min_value": 0.0,
-            "missing_in_test": true
+            "missing_in_test": true,
+            "missing_in_test_num": 457
         },
         "admission_source_id": {
             "feature_id": 8,
@@ -340,7 +343,8 @@
             "missing_replace": null,
             "max_value": 13.0,
             "min_value": 0.0,
-            "missing_in_test": true
+            "missing_in_test": true,
+            "missing_in_test_num": 696
         },
         "time_in_hospital": {
             "feature_id": 9,
@@ -416,7 +420,8 @@
             "missing_replace": null,
             "max_value": 16.0,
             "min_value": 0.0,
-            "missing_in_test": true
+            "missing_in_test": true,
+            "missing_in_test_num": 3945
         },
         "medical_specialty": {
             "feature_id": 11,
@@ -585,7 +590,8 @@
             "missing_replace": null,
             "max_value": 71.0,
             "min_value": 0.0,
-            "missing_in_test": true
+            "missing_in_test": true,
+            "missing_in_test_num": 4870
         },
         "num_lab_procedures": {
             "feature_id": 12,
@@ -3613,7 +3619,8 @@
             "missing_replace": null,
             "max_value": 728.0,
             "min_value": 0.0,
-            "missing_in_test": true
+            "missing_in_test": true,
+            "missing_in_test_num": 38
         },
         "diag_3": {
             "feature_id": 20,
@@ -5184,7 +5191,8 @@
             "missing_replace": null,
             "max_value": 772.0,
             "min_value": 0.0,
-            "missing_in_test": true
+            "missing_in_test": true,
+            "missing_in_test_num": 157
         },
         "number_diagnoses": {
             "feature_id": 21,

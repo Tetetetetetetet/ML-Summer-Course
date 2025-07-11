@@ -38,5 +38,7 @@ Thumbs.db
 # Project specific
 src/visualizations/
 Dataset/processed/
-src/visualizations/
-Dataset/processed/
+
+# save - 例外规则必须在忽略规则之后
+!Dataset/processed/test_processed/recoded_test.csv
+!Dataset/processed/train_processed/recoded_train.csv

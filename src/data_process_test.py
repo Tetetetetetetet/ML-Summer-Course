@@ -42,12 +42,17 @@ class DataProcessTest:
             if not config['iskeep'] and feature_name in self.test_data.columns:
                 self.test_data = self.test_data.drop(columns=[feature_name])
                 logging.info(f"删除特征: {feature_name}")
-
         logging.info(f"删除特征后，剩余{len(self.test_data.columns)}特征")
+
+        origin_num = len(self.test_data)
+        self.test_data = self.test_data.drop(self.test_data[self.test_data['discharge_disposition_id'].isin([11,19,20,21])].index)
+
+        logging.info(f"删除已死亡的数据后，剩余{len(self.test_data)}行, 占比{len(self.test_data)/origin_num*100:.2f}%")
+
 
     def analyze_missing_values(self):
         """
-        统计缺失值
+        统计缺失值, 将nan_values中的值替换为None
         """
         logging.info("==========analyze_missing_values==========")
         mapping_features = self.ids_mapping.keys()
@@ -70,10 +75,12 @@ class DataProcessTest:
                     self.test_data_ = self.test_data.copy()
                     self.test_data_[feature] = self.test_data_[feature].astype(str).map(self.ids_mapping[feature])
                     mask = self.test_data_[feature].isin(nan_values)
+                    self.test_data[feature] = self.test_data[feature].astype(object)
                     self.test_data.loc[mask, feature] = None
                     replace_missing += mask.sum()
                 else:
                     replace_missing += (self.test_data[feature].isin(nan_values)).sum()
+                    self.test_data[feature] = self.test_data[feature].astype(object)
                     self.test_data.loc[self.test_data[feature].isin(nan_values), feature] = None
             
             total_missing = original_missing + replace_missing
@@ -85,6 +92,7 @@ class DataProcessTest:
             if total_missing > 0:
                 logging.info(f"特征: {feature} 有 {total_missing}({missing_percentage:.2f}%)个缺失值")
                 config['missing_in_test'] = True
+                config['missing_in_test_num'] = int(total_missing)
                 # self.test_data[feature].value_counts()
             else:
                 config['missing_in_test'] = False
@@ -98,6 +106,7 @@ class DataProcessTest:
         
         # 保存缺失值统计
         missing_stats_df = pd.DataFrame.from_dict(missing_stats, orient='index')
+        missing_stats_df.index.name = 'feature_name'
         missing_stats_df.to_csv(self.output_dir / 'test_missing_stats.csv')
         print(f"saved test missing stats to {self.output_dir / 'test_missing_stats.csv'}")
         write_jsonl(self.feature_json,self.feature_json_path)
@@ -106,41 +115,52 @@ class DataProcessTest:
 
     def encode_test_data(self):
         """
-        按照feature.json中记录的内容对数据进行编码
+        按照feature.json中记录的内容对数据进行编码, 假设已经将nan_values中的值替换为None
         """
         logging.info("==========encode_test_data==========")
         nan_values = self.feature_json['nan_values']
         
         for feature, config in self.features_config.items():
-            if not config['iskeep'] or feature not in self.test_data.columns:
+            if not config['iskeep'] or feature not in self.test_data.columns or config['type']!='categorical':
                 continue
-                
-            logging.info(f"处理特征: {feature}")
             
-            # 替换缺失值
-            if config['type'] == 'categorical':
-                # 将nan_values中的值替换为None
-                for nan_val in nan_values:
-                    self.test_data.loc[self.test_data[feature] == nan_val, feature] = None
-            
+            unseen_values = []
             # 应用编码映射
             if 'label_encoding' in config and 'encoding_mapping' in config['label_encoding']:
                 encoding_mapping = config['label_encoding']['encoding_mapping']
                 
-                # 创建反向映射（从字符串到编码）
-                reverse_mapping = {str(k): v for k, v in encoding_mapping.items()}
                 
                 # 应用编码
-                self.test_data[feature] = self.test_data[feature].astype(str).map(reverse_mapping)
-                
+                # if feature in self.ids_mapping.keys():
+                    # pdb.set_trace()
+                self.test_data[feature] = self.test_data[feature].astype(object)
+                train_unique_values = config['label_encoding']['unique_values']
+                for val in self.test_data[feature].unique():
+                    if val and str(val) not in train_unique_values:
+                        unseen_values.append(val)
+                        logging.error(f"特征 '{feature}' 有值 {val} 不在训练集的编码映射中")
+                self.test_data[feature] = self.test_data[feature].astype(str).map(encoding_mapping)
+                config['unseen_values'] = unseen_values
                 # 检查是否有未映射的值
-                unmapped_values = self.test_data[feature].isna().sum()
-                if unmapped_values > 0:
-                    logging.warning(f"特征 '{feature}' 有 {unmapped_values} 个值无法映射到编码")
+                nan_num = self.test_data[feature].isna().sum()
+                if nan_num > 0:
+                    logging.warning(f"特征 '{feature}' 有 {nan_num} 个值无法映射到编码")
+                    try:
+                        assert nan_num==config['missing_in_test_num']
+                    except:
+                        logging.error(f"特征 '{feature}' 有 {nan_num} 个值无法映射到编码")
+                        pdb.set_trace()
                     
                     # 显示未映射的值
                     unmapped_unique = self.test_data[self.test_data[feature].isna()][feature].unique()
                     logging.warning(f"未映射的值: {unmapped_unique}")
+            else:
+                logging.error(f"无编码信息, 错误: {feature}")
+                pdb.set_trace()
+                raise ValueError(f"特征 '{feature}' 无编码信息")
+        
+        write_jsonl(self.feature_json,self.feature_json_path)
+        self.test_data.to_csv(self.output_dir / 'recoded_test.csv', index=False)
 
     def save_results(self, missing_stats):
         """
@@ -181,8 +201,8 @@ def main():
     handler.load_data()
     handler.drop_features()
     missing_stats = handler.analyze_missing_values()
-    return
     handler.encode_test_data()
+    return
     handler.save_results(missing_stats)
     print(f"测试数据处理完成，处理了 {len(handler.test_data.columns)} 个特征")
 
