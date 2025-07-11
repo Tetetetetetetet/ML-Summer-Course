@@ -1,4 +1,6 @@
 import pandas as pd
+import pdb
+from sklearn.impute import KNNImputer
 from myutils import read_jsonl,write_jsonl
 import numpy as np
 import json
@@ -53,7 +55,7 @@ class MissingDataHandler:
         - high: 缺失率大于0.8
         - low: 缺失率小于0.1
         """
-        logging.info("\n缺失值分析:")
+        logging.info("==========缺失值分析==========")
         missing_stats = {}
         
         # 初始化missing_type字段
@@ -85,13 +87,14 @@ class MissingDataHandler:
         write_jsonl(self.feature_json,'config/feature.json')
         return missing_stats
         
-    def drop_low_missing_dataset(self):
+    def get_low_missing_complete_dataset(self):
         """
         1. 只保留低缺失率特征
         2. 删除这些特征中含有缺失值的行
         返回完整的数据集（无缺失值）
         """
         # 获取低缺失率特征
+        logging.info("==========get_low_missing_complete_dataset==========")
         low_missing_features = self.feature_json['missing_type']['low']
         
         # 只保留低缺失率特征
@@ -115,10 +118,13 @@ class MissingDataHandler:
         
         return complete_data
     
-    def drop_mid_missing_dataset(self):
+    def get_mid_missing_complete_dataset(self):
         """
-        删除中缺失率特征的行
+        1. 只保留中缺失率特征
+        2. 删除这些特征中含有缺失值的行
+        3. 删除其他缺失特征
         """
+        logging.info("==========get_mid_missing_complete_dataset==========")
         mid_missing_features = self.feature_json['missing_type']['mid']
         data = self.train_data.dropna(subset=mid_missing_features)
         data = data.drop(columns=self.feature_json['missing_type']['high']+self.feature_json['missing_type']['low'])
@@ -129,15 +135,41 @@ class MissingDataHandler:
         logging.info(f"删除缺失[中]缺失率特征的行 & [低,高]缺失率特征: {rows_dropped} 行 ({rows_dropped/len(self.train_data)*100:.2f}%)")
         logging.info(f"剩余数据集大小: {len(data)} 行")
         return data
-
-
     
+    def get_high_missing_complete_dataset(self):
+        """
+        1. 只保留高缺失率特征
+        2. 删除这些特征中含有缺失值的行
+        3. 删除其他缺失特征
+        """
+        logging.info("==========get_high_missing_complete_dataset==========")
+        high_missing_features = self.feature_json['missing_type']['high']
+        data = self.train_data.dropna(subset=high_missing_features)
+        data = data.drop(columns=self.feature_json['missing_type']['mid']+self.feature_json['missing_type']['low'])
+        complete_data = data.dropna()
+        assert len(complete_data) == len(data)
+        rows_dropped = len(self.train_data) - len(data)
+        logging.info(f"高缺失率特征: {high_missing_features}")
+        logging.info(f"删除缺失[高]缺失率特征的行 & [中,低]缺失率特征: {rows_dropped} 行 ({rows_dropped/len(self.train_data)*100:.2f}%)")
+        logging.info(f"剩余数据集大小: {len(data)} 行")
+        return data
+
+    def pca_for_low_mid_missing_dataset(self):
+        """
+        对于低缺失率和中缺失率特征，进行主成分分析
+        """
+        low_complete_data = handler.process_low_missing_features()
+        handler.pca(low_complete_data,'low_missing_complete')
+        mid_complete_data = handler.get_mid_missing_complete_dataset()
+        handler.pca(mid_complete_data,'mid_missing_complete')
+
     def pca(self, data: pd.DataFrame,exp_name:str='first_try'):
         '''
         对于数据集data做主成分分析
         args:
             - data: pd.DataFrame, 完整的数据集（无缺失值）
         '''
+        logging.info("==========pca==========")
         # 创建可视化输出目录
         vis_dir = self.output_dir /'pca_analysis'/f'{exp_name}'
         os.makedirs(vis_dir, exist_ok=True)
@@ -146,34 +178,88 @@ class MissingDataHandler:
         data = data.drop(columns=['readmitted'])
         
         # 数据预处理
-        # 1. 只保留数值型列
+        # 1. 分析特征类型
         numeric_cols = data.select_dtypes(include=[np.number]).columns
-        if len(numeric_cols) < len(data.columns):
-            logging.warning(f"移除了 {len(data.columns) - len(numeric_cols)} 个非数值型列")
-        data = data[numeric_cols]
+        logging.info(f"数值型特征 ({len(numeric_cols)}):")
+        for col in numeric_cols:
+            unique_vals = data[col].nunique()
+            val_range = data[col].describe()
+            logging.info(f"  - {col}: {unique_vals} 个唯一值, 范围[{val_range['min']:.2f}, {val_range['max']:.2f}]")
         
-        # 2. 检查无效值
-        if data.isna().any().any():
-            raise ValueError("数据中存在缺失值，请先处理缺失值")
+        categorical_cols = data.select_dtypes(exclude=[np.number]).columns
+        if len(categorical_cols) > 0:
+            logging.info(f"非数值型特征 ({len(categorical_cols)}):")
+            for col in categorical_cols:
+                logging.info(f"  - {col}: {data[col].nunique()} 个唯一值")
         
-        # 3. 检查常量列
-        constant_cols = [col for col in data.columns if data[col].nunique() == 1]
-        if constant_cols:
-            logging.warning(f"移除了 {len(constant_cols)} 个常量列: {constant_cols}")
-            data = data.drop(columns=constant_cols)
+        # 2. 检查每个数值特征的分布
+        for col in numeric_cols:
+            plt.figure(figsize=(10, 6))
+            plt.subplot(2, 1, 1)
+            plt.hist(data[col], bins=50)
+            plt.title(f'Distribution of {col}')
+            plt.subplot(2, 1, 2)
+            plt.boxplot(data[col])
+            plt.title(f'Boxplot of {col}')
+            plt.tight_layout()
+            plt.savefig(vis_dir / f'distribution_{col}.png')
+            plt.close()
         
-        # 4. 处理极端值（可选）
-        # 使用IQR方法检测极端值
-        Q1 = data.quantile(0.25)
-        Q3 = data.quantile(0.75)
-        IQR = Q3 - Q1
-        outlier_mask = ((data < (Q1 - 1.5 * IQR)) | (data > (Q3 + 1.5 * IQR))).any(axis=1)
-        if outlier_mask.sum() > 0:
-            logging.warning(f"检测到 {outlier_mask.sum()} 行包含极端值")
+        # 3. 检查是否有应该被当作分类变量的数值特征
+        potential_categorical = []
+        for col in numeric_cols:
+            if data[col].nunique() < 10:  # 如果唯一值少于10个，可能是分类变量
+                potential_categorical.append(col)
+                logging.warning(f"特征 '{col}' 可能是分类变量 (唯一值: {sorted(data[col].unique())})")
+        
+        # 4. 检查并处理极端值
+        outlier_stats = {}
+        cleaned_data = data.copy()
+        
+        for col in numeric_cols:
+            if col in potential_categorical:
+                continue  # 跳过可能的分类变量
+                
+            Q1 = data[col].quantile(0.25)
+            Q3 = data[col].quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+            
+            outliers = data[(data[col] < lower_bound) | (data[col] > upper_bound)][col]
+            if len(outliers) > 0:
+                outlier_stats[col] = {
+                    'count': len(outliers),
+                    'percentage': (len(outliers) / len(data)) * 100,
+                    'min': float(outliers.min()),
+                    'max': float(outliers.max()),
+                    'normal_range': {
+                        'lower': float(lower_bound),
+                        'upper': float(upper_bound)
+                    }
+                }
+                logging.warning(f"特征 '{col}' 有 {len(outliers)} 个极端值 ({(len(outliers)/len(data))*100:.2f}%)")
+                logging.warning(f"  - 正常范围: [{lower_bound:.2f}, {upper_bound:.2f}]")
+                logging.warning(f"  - 极端值范围: [{outliers.min():.2f}, {outliers.max():.2f}]")
+                
+                # 处理极端值：截断到上下界
+                cleaned_data.loc[data[col] < lower_bound, col] = lower_bound
+                cleaned_data.loc[data[col] > upper_bound, col] = upper_bound
+        
+        # 保存极端值统计
+        with open(vis_dir / 'outlier_stats.json', 'w') as f:
+            json.dump(outlier_stats, f, indent=4)
         
         # 5. 数据标准化
         scaler = StandardScaler()
-        scaled_data = scaler.fit_transform(data)
+        scaled_data = scaler.fit_transform(cleaned_data[numeric_cols])
+        scaled_df = pd.DataFrame(scaled_data, columns=numeric_cols)
+        
+        # 检查标准化后的数据
+        logging.info("标准化后的数据统计:")
+        for col in scaled_df.columns:
+            stats = scaled_df[col].describe()
+            logging.info(f"  - {col}: mean={stats['mean']:.2f}, std={stats['std']:.2f}")
         
         # 6. 验证标准化后的数据
         if np.isnan(scaled_data).any() or np.isinf(scaled_data).any():
@@ -185,7 +271,7 @@ class MissingDataHandler:
             pca_result = pca.fit_transform(scaled_data)
         except Exception as e:
             logging.error(f"PCA计算失败: {e}")
-            logging.error(f"数据统计: \n{pd.DataFrame(scaled_data, columns=data.columns).describe()}")
+            logging.error(f"数据统计: \n{scaled_df.describe()}")
             raise
         
         # 计算解释方差比
@@ -195,10 +281,12 @@ class MissingDataHandler:
         # 保存数据统计信息
         stats = {
             'n_samples': len(data),
-            'n_features': len(data.columns),
-            'n_outliers': int(outlier_mask.sum()),
-            'features': list(data.columns),
-            'feature_stats': data.describe().to_dict()
+            'n_features': len(numeric_cols),
+            'n_outliers_total': sum(s['count'] for s in outlier_stats.values()),
+            'features': list(numeric_cols),
+            'feature_stats': cleaned_data[numeric_cols].describe().to_dict(),
+            'outlier_stats': outlier_stats,
+            'potential_categorical': list(potential_categorical)
         }
         with open(vis_dir / 'data_stats.json', 'w') as f:
             json.dump(stats, f, indent=4)
@@ -219,13 +307,13 @@ class MissingDataHandler:
         loadings = pd.DataFrame(
             pca.components_.T,
             columns=[f'PC{i+1}' for i in range(pca.n_components_)],
-            index=data.columns
+            index=numeric_cols
         )
         
         # 绘制特征贡献热力图
         plt.figure(figsize=(12, 8))
         sns.heatmap(loadings.iloc[:, :20], annot=True, cmap='coolwarm', center=0)
-        plt.title('Feature Loadings (First 5 PCs)')
+        plt.title('Feature Loadings (First 20 PCs)')
         plt.tight_layout()
         plt.savefig(vis_dir / 'feature_loadings.png')
         plt.close()
@@ -237,7 +325,7 @@ class MissingDataHandler:
             'feature_loadings': loadings.to_dict(),
             'data_shape': {
                 'samples': len(data),
-                'features': len(data.columns)
+                'features': len(numeric_cols)
             }
         }
         
@@ -247,14 +335,142 @@ class MissingDataHandler:
         logging.info(f"PCA分析完成，结果保存在: {vis_dir}")
         return pca, loadings
 
-    def process_low_missing_features(self):
+    def drop_high_missing_dataset(self,data:pd.DataFrame):
         """
-        处理低缺失率特征
+        删除高缺失率特征
         """
+        logging.info("==========drop_high_missing_dataset==========")
+        high_missing_features = self.feature_json['missing_type']['high']
+        data = data.drop(columns=high_missing_features)
+        logging.info(f"删除高缺失率特征: {high_missing_features}, left {len(data)} rows")
+        return data
+
+    def drop_mid_missing_dataset(self,data:pd.DataFrame):
+        """
+        删除中缺失率特征
+        """
+        logging.info("==========drop_mid_missing_dataset==========")
+        mid_missing_features = self.feature_json['missing_type']['mid']
+        data = data.drop(columns=mid_missing_features)
+        logging.info(f"删除中缺失率特征: {mid_missing_features}, left {len(data)} rows")
+        return data
+
+    def drop_low_missing_dataset(self,data:pd.DataFrame):
+        """
+        删除低缺失率特征
+        """
+        logging.info("==========drop_low_missing_dataset==========")
         low_missing_features = self.feature_json['missing_type']['low']
-        new_data = self.drop_low_missing_dataset()
-        logging.info(f"删除低缺失率特征的行: {len(self.train_data) - len(new_data)} rows dropped")
-        return new_data
+        data = data.drop(columns=low_missing_features)
+        logging.info(f"删除低缺失率特征: {low_missing_features}, left {len(data)} rows")
+        return data
+
+    def knn_impute(self,data:pd.DataFrame):
+        """
+        使用KNN填补缺失值
+        """
+        logging.info("==========knn_impute==========")
+        columns = data.columns
+        imputer = KNNImputer(n_neighbors=5)
+        data = imputer.fit_transform(data[columns])
+        data = pd.DataFrame(data, columns=columns)
+        return data
+
+    def analyse_knn_impute(self,data:pd.DataFrame):
+        """
+        分析KNN填补缺失值后的数据，统计每个特征的缺失值数量，填值前后的最大值，最小值，平均值，中位数，标准差，方差，偏度，峰度
+        """
+        logging.info("==========analyse_knn_impute==========")
+        
+        # 创建输出目录
+        imputed_dir = os.path.join(self.output_dir, 'imputed')
+        os.makedirs(imputed_dir, exist_ok=True)
+        
+        # 获取原始数据（填补前）
+        original_data = pd.read_csv('Dataset/processed/recoded_train.csv')
+        
+        # 初始化结果DataFrame
+        res = pd.DataFrame(columns=['feature','missing_count','max_value','min_value','mean_value','median_value','std_value','var_value','skewness','kurtosis'])
+        
+        for feature in data.columns:
+            if feature not in original_data.columns:
+                logging.warning(f"特征 '{feature}' 在原始数据中不存在，跳过")
+                continue
+                
+            # 计算原始数据中的缺失值数量
+            missing_count = original_data[feature].isna().sum()
+            
+            # 如果该特征没有缺失值，跳过
+            if missing_count == 0:
+                continue
+            
+            # 计算填补后数据的统计量
+            feature_data = data[feature].dropna()  # 确保没有NaN值
+            
+            if len(feature_data) == 0:
+                logging.warning(f"特征 '{feature}' 填补后没有有效数据")
+                continue
+            
+            # 计算各种统计量
+            max_value = float(feature_data.max())
+            min_value = float(feature_data.min())
+            mean_value = float(feature_data.mean())
+            median_value = float(feature_data.median())
+            std_value = float(feature_data.std())
+            var_value = float(feature_data.var())
+            skewness = float(feature_data.skew())
+            kurtosis = float(feature_data.kurtosis())
+            
+            # 添加到结果DataFrame
+            new_row = pd.DataFrame({
+                'feature': [feature],
+                'missing_count': [missing_count],
+                'max_value': [max_value],
+                'min_value': [min_value],
+                'mean_value': [mean_value],
+                'median_value': [median_value],
+                'std_value': [std_value],
+                'var_value': [var_value],
+                'skewness': [skewness],
+                'kurtosis': [kurtosis]
+            })
+            
+            res = pd.concat([res, new_row], ignore_index=True)
+            
+            logging.info(f"特征 '{feature}': {missing_count} 个缺失值")
+        
+        # 按缺失值数量排序
+        res = res.sort_values('missing_count', ascending=False)
+        
+        # 保存结果
+        output_path = os.path.join(imputed_dir, 'knn_imputation_analysis.csv')
+        res.to_csv(output_path, index=False)
+        
+        # 保存详细统计信息
+        detailed_stats = {
+            'total_features_analyzed': len(res),
+            'total_missing_values_filled': res['missing_count'].sum(),
+            'features_with_missing_values': res['feature'].tolist(),
+            'missing_count_summary': res['missing_count'].describe().to_dict(),
+            'statistics_summary': {
+                'max_values': res['max_value'].describe().to_dict(),
+                'min_values': res['min_value'].describe().to_dict(),
+                'mean_values': res['mean_value'].describe().to_dict(),
+                'std_values': res['std_value'].describe().to_dict(),
+                'skewness': res['skewness'].describe().to_dict(),
+                'kurtosis': res['kurtosis'].describe().to_dict()
+            }
+        }
+        
+        detailed_output_path = os.path.join(imputed_dir, 'knn_imputation_detailed_stats.json')
+        with open(detailed_output_path, 'w') as f:
+            json.dump(detailed_stats, f, indent=4)
+        
+        logging.info(f"分析完成，结果保存在: {imputed_dir}")
+        logging.info(f"分析了 {len(res)} 个有缺失值的特征")
+        logging.info(f"总共填补了 {res['missing_count'].sum()} 个缺失值")
+        
+        return res
 
     def create_complete_datasets(self):
         """
@@ -302,15 +518,23 @@ class MissingDataHandler:
         logging.info(f"完整数据集大小: {complete_data.shape}")
         logging.info(f"删除的行数: {len(self.train_data) - len(complete_data)}")
 
+
 def main():
     handler = MissingDataHandler()
-    # handler.load_normalized_data()
     handler.load_data(mode='recoded')
     handler.analyze_missing_values()
-    low_complete_data = handler.process_low_missing_features()
-    handler.pca(low_complete_data,'low_missing_complete')
-    mid_complete_data = handler.drop_mid_missing_dataset()
-    handler.pca(mid_complete_data,'mid_missing_complete')
+    data = handler.train_data
+    # handler.pca_for_low_mid_missing_dataset() # 主成分分析
+    data = handler.drop_high_missing_dataset(handler.train_data)
+    # data = handler.drop_mid_missing_dataset(data)
+    # data = handler.drop_low_missing_dataset(data)
+    data = handler.knn_impute(data)
+    data.to_csv(os.path.join(handler.output_dir, 'knn_imputed_train_complete.csv'), index=False)
+    
+    # 分析KNN填补结果
+    analysis_result = handler.analyse_knn_impute(data)
+    print(f"KNN填补分析完成，分析了 {len(analysis_result)} 个特征")
+
 
 if __name__ == '__main__':
     main()
