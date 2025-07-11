@@ -556,10 +556,11 @@ class MissingDataHandler:
 
 def main():
     handler = MissingDataHandler()
-    handler.load_data(mode='normalized')
-    # handler.analyze_missing_values()
+    handler.load_data(mode='recoded')
+    handler.analyze_missing_values()
     # data = handler.train_data
     # # handler.pca_for_low_mid_missing_dataset() # 主成分分析
+    # handler.load_data(mode='normalized')
     # data = handler.drop_high_missing_dataset(handler.train_data)
     # # data = handler.drop_mid_missing_dataset(data)
     # # data = handler.drop_low_missing_dataset(data)

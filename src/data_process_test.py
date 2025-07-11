@@ -1,4 +1,6 @@
 import pandas as pd
+from myutils import write_jsonl
+import pdb
 import numpy as np
 import json
 import os
@@ -48,6 +50,7 @@ class DataProcessTest:
         统计缺失值
         """
         logging.info("==========analyze_missing_values==========")
+        mapping_features = self.ids_mapping.keys()
         missing_stats = {}
         nan_values = self.feature_json['nan_values']
         
@@ -62,11 +65,29 @@ class DataProcessTest:
             replace_missing = 0
             if config['type'] == 'categorical':
                 # 对于分类变量，检查是否在nan_values中
-                for nan_val in nan_values:
-                    replace_missing += (self.test_data[feature] == nan_val).sum()
+                # 替换为None
+                if feature in mapping_features:
+                    self.test_data_ = self.test_data.copy()
+                    self.test_data_[feature] = self.test_data_[feature].astype(str).map(self.ids_mapping[feature])
+                    mask = self.test_data_[feature].isin(nan_values)
+                    self.test_data.loc[mask, feature] = None
+                    replace_missing += mask.sum()
+                else:
+                    replace_missing += (self.test_data[feature].isin(nan_values)).sum()
+                    self.test_data.loc[self.test_data[feature].isin(nan_values), feature] = None
             
             total_missing = original_missing + replace_missing
+            try:
+                assert total_missing == self.test_data[feature].isna().sum()
+            except:
+                pdb.set_trace()
             missing_percentage = (total_missing / len(self.test_data)) * 100
+            if total_missing > 0:
+                logging.info(f"特征: {feature} 有 {total_missing}({missing_percentage:.2f}%)个缺失值")
+                config['missing_in_test'] = True
+                # self.test_data[feature].value_counts()
+            else:
+                config['missing_in_test'] = False
             
             missing_stats[feature] = {
                 'original_missing': int(original_missing),
@@ -74,12 +95,12 @@ class DataProcessTest:
                 'total_missing': int(total_missing),
                 'missing_percentage': float(missing_percentage)
             }
-            
-            logging.info(f"  {feature}: {total_missing} 个缺失值 ({missing_percentage:.2f}%)")
         
         # 保存缺失值统计
         missing_stats_df = pd.DataFrame.from_dict(missing_stats, orient='index')
         missing_stats_df.to_csv(self.output_dir / 'test_missing_stats.csv')
+        print(f"saved test missing stats to {self.output_dir / 'test_missing_stats.csv'}")
+        write_jsonl(self.feature_json,self.feature_json_path)
         
         return missing_stats
 
@@ -160,6 +181,7 @@ def main():
     handler.load_data()
     handler.drop_features()
     missing_stats = handler.analyze_missing_values()
+    return
     handler.encode_test_data()
     handler.save_results(missing_stats)
     print(f"测试数据处理完成，处理了 {len(handler.test_data.columns)} 个特征")

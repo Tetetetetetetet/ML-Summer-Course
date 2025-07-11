@@ -184,8 +184,11 @@ class DataProcess:
             - encoding_mapping
         - missing
         '''
+        logging.info(f'==========transfer_all_nan==========')
         nan_values = self.feature_json['nan_values']
         final_nan = None
+        replaced_features = []
+        id_features = self.ids_mapping.keys()
         for feature,config in tqdm(self.features_config.items(),total=len(self.features_config),desc=f'Processing features'):
             if config['category']=='identifier' or config['type']!='categorical' or config['iskeep']==False:
                 continue
@@ -194,16 +197,16 @@ class DataProcess:
             config['missing_values'] = []
             
             # 使用布尔索引一次性替换所有匹配的值
-            mask = self.train_data[feature].isin(nan_values)
+            if feature in id_features:
+                mask = self.train_data[feature].astype(str).map(self.ids_mapping[feature]).isin(nan_values)
+            else:
+                mask = self.train_data[feature].isin(nan_values)
             
             # 收集所有的缺失值类型
             missing_vals = set(self.train_data.loc[mask, feature].unique())
             for val in missing_vals:
                 try:
-                    if isinstance(val, int):
-                        val = str(val)
-                    elif isinstance(val, str):
-                        val = val.strip()
+                    val = str(val).strip()
                     if val not in config['missing_values']:
                         config['missing_values'].append(val)
                         if val in config['label_encoding']['unique_values']:
@@ -213,10 +216,11 @@ class DataProcess:
                     raise ValueError(f"Feature '{feature}' has invalid value: {val}")
             
             # 替换缺失值
+            self.train_data.loc[mask, feature] = self.train_data.loc[mask, feature].astype(object)
             self.train_data.loc[mask, feature] = final_nan
-            config['missing_values_num'] = int(mask.sum())
-            if config['missing_values_num']==0:
-                config['missing_values_num'] = int(self.train_data[feature].isna().sum())
+            config['missing_values_num'] = int(self.train_data[feature].isna().sum())
+            if config['missing_values_num']>0:
+                replaced_features.append(feature)
             config['missing_values_p'] = float(config['missing_values_num']/len(self.train_data[feature]))
             config['missing'] = bool(config['missing_values_num']>0)
             config['label_encoding']['unique_values'] = [str(key) for key in config['label_encoding']['encoding_mapping'].keys()]
@@ -230,73 +234,23 @@ class DataProcess:
                 pdb.set_trace()
                 print(f'{feature} has invalid value')
                 
+        if len(replaced_features)>0:
+            logging.info(f'replaced {len(replaced_features)} features: {replaced_features}')
+        else:
+            logging.info('no features replaced')
         logging.info(f'all nan(except id) transferred to {final_nan} in {self.output_dir}/train.csv')
 
-    def transfer_all_nan_for_id(self):
-        """
-        处理 admission_type_id、discharge_disposition_id、admission_source_id 三个特征：
-        1. 根据 ids_mapping 判断含义为未知/空值的 id，将其统一替换为 'missing'
-        2. 统计缺失数量与比例
-        3. 重新生成 unique_values 与 encoding_mapping，确保二者顺序一致
-        """
-        id_features = ['admission_type_id', 'discharge_disposition_id', 'admission_source_id']
-        nan_meanings = self.feature_json['nan_values']
-        final_nan = None
-
-        ids_mapping = self.ids_mapping
-
-        for feature in id_features:
-            if feature not in self.features_config:
-                print(f"Warning: {feature} not in features_config, skip")
-                continue
-
-            config = self.features_config[feature]
-            # 获取 id -> 描述 的映射
-            id2meaning: dict = ids_mapping.get(feature, {})
-            # 找出描述属于 nan_meanings 的 id
-            invalid_ids = {
-                str(id_) for id_, meaning in id2meaning.items()
-                if str(meaning).strip() in nan_meanings
-            }
-
-            # 初始化统计字段
-            config.setdefault('missing_values', [])
-            config['missing_values_num'] = 0
-
-            # 替换无效 id
-            col_series = self.train_data[feature]
-            replaced_indices = []
-            for idx, val in tqdm(col_series.items(),total=len(col_series),desc=f'Processing {feature}'):
-                # val 可能为 float/nan 等，统一转 str 方便比较
-                val_str = str(int(val)) if pd.notna(val) and str(val).isdigit() else str(val)
-                if (pd.isna(val) or val_str in invalid_ids):
-                    replaced_indices.append(idx)
-                    config['missing']=True
-            # 进行替换
-            self.train_data.loc[replaced_indices, feature] = final_nan
-            config['missing_values_num'] = len(replaced_indices)
-            config['missing_values'] = list(invalid_ids) if invalid_ids else []
-
-            # 重新生成 unique_values
-            unique_values = [str(v) for v in self.train_data[feature].unique() if pd.notna(v)]
-
-            # 生成新的 encoding_mapping，确保顺序一致
-            encoding_mapping = {val: idx for idx, val in enumerate(unique_values)}
-            config['label_encoding'] = {
-                'unique_values': unique_values,
-                'encoding_mapping': encoding_mapping
-            }
-            config['value_num'] = len(unique_values)
-            config['missing_values_p'] = config['missing_values_num'] / len(self.train_data)
-            config['missing_replace'] = final_nan
-
-            # 更新回features_config
-            self.features_config[feature] = config
-
-        # 保存修改后的 feature.json
-        write_jsonl(self.feature_json, self.feature_json_path)
-        print(f"Invalid ids in {id_features} have been converted to '{final_nan}' and label encodings updated.")
     
+    def count_nan(self):
+        logging.info(f'==========count_nan==========')
+        for feature,config in self.features_config.items():
+            if config['category']=='identifier' or config['type']!='categorical' or config['iskeep']==False:
+                continue
+            nan_num = self.train_data[feature].isna().sum()
+            assert config['missing_values_num']==nan_num
+            if nan_num>0:
+                logging.info(f'{feature}: {nan_num}({nan_num/len(self.train_data)*100:.2f}%)')
+
     def recode_train_data(self):
         """将所有保留的分类特征根据 label_encoding 映射为整数编码，并保存 CSV。"""
 
@@ -327,14 +281,13 @@ class DataProcess:
             missing_num = config.get('missing_values_num',0)
             missing_count = data[feature].isna().sum()
             if missing_num!=missing_count:
-                print(f'=========={feature}========== value_num: {len(vc)}, data_num: {len(data[feature])}')
+                print(f'{feature}: value_num: {len(vc)}, data_num: {len(data[feature])}')
                 print(vc)
                 print(f'missing_num: {missing_num} / {missing_count}(counted)')
                 print(f'Warning: {feature} has {missing_num} missing values, but {missing_count} counted')
                 print('--------------------------------')
                 check_flag = False
                 error_features.append(feature)
-                pdb.set_trace()
         if check_flag:
             logging.info('recoded_train.csv check passed')
             logging.info(f'>>>>>>>>>>>after recode, remained {len(self.train_data)} rows, {len(self.train_data.columns)} features')
@@ -485,15 +438,16 @@ class DataProcess:
 
 def main():
     dp = DataProcess()
+    # p dp.train_data['admission_type_id'].value_counts()
     dp.config_features()
     dp.clean_invalid_data()
     dp.mark_extream_features()
     dp.drop_features()
     dp.reencode()
     dp.transfer_all_nan()
-    dp.transfer_all_nan_for_id()
     # dp.show_feature_config()
     dp.save_train_data('missing_replaced_train')
+    dp.count_nan()
     dp.recode_train_data()
     dp.save_train_data('recoded_train')
     dp.check_recoded_data()

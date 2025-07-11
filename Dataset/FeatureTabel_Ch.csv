@@ -22,7 +22,7 @@ diag_2,次诊断代码,Categorical,yes,与本次住院相关的第二诊断（IC
 diag_3,第三诊断代码,Categorical,yes,与本次住院相关的第三诊断（ICD9编码前3位）,同上，构建疾病多标签信息,speical,
 number_diagnoses,诊断数,Integer,no,本次住院记录输入系统的诊断总数,可直接使用或归一化，表示共病情况,yes,
 max_glu_serum,最大血糖水平,Categorical,no,住院期间最大血糖值范围，未检测为none,可用One-Hot编码，或映射为顺序特征,no,
-A1Cresult,糖化血红蛋白结果,Categorical,no,糖化血红蛋白检测值的范围，反映长期血糖控制,One-Hot编码或映射为等级值（正常/偏高等）,uncertain(83.3% miss),
+A1Cresult,糖化血红蛋白结果,Categorical,no,糖化血红蛋白检测值的范围，反映长期血糖控制,One-Hot编码或映射为等级值（正常/偏高等）,no,
 metformin,二甲双胍用药情况,Categorical,no,表示是否使用二甲双胍以及剂量变化情况,映射为剂量趋势（up/down/steady/no），或embedding,yes,
 repaglinide,瑞格列奈用药情况,Categorical,no,同上，是否使用瑞格列奈,同上,no,
 nateglinide,那格列奈用药情况,Categorical,no,同上,同上,no,
