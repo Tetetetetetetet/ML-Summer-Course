@@ -224,7 +224,7 @@ class MissingDataHandler:
         
         # 绘制特征贡献热力图
         plt.figure(figsize=(12, 8))
-        sns.heatmap(loadings.iloc[:, :5], annot=True, cmap='coolwarm', center=0)
+        sns.heatmap(loadings.iloc[:, :20], annot=True, cmap='coolwarm', center=0)
         plt.title('Feature Loadings (First 5 PCs)')
         plt.tight_layout()
         plt.savefig(vis_dir / 'feature_loadings.png')

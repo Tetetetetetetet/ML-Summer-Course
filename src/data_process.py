@@ -52,20 +52,20 @@ class DataProcess:
         all_hospice = self.train_data[self.train_data['discharge_disposition_id'].isin([13,14])]
         hospice_readmitted = all_hospice[all_hospice['readmitted']!='NO']
         if len(hospice_readmitted)>0:
-            print(f'{len(hospice_readmitted)}/{len(all_hospice)} hospice but readmitted')
+            logging.info(f'{len(hospice_readmitted)}/{len(all_hospice)} hospice but readmitted')
         else:
-            print('no hospice readmitted')
+            logging.info('no hospice readmitted')
         # 是否存在已死亡而再次入院的
         all_dead = self.train_data[self.train_data['discharge_disposition_id'].isin([11,19,20,21])]
         dead_readmitted = all_dead[all_dead['readmitted']!='NO']
         if len(dead_readmitted)>0:
-            print(f'{len(dead_readmitted)}/{len(all_dead)} died but readmitted')
+            logging.info(f'{len(dead_readmitted)}/{len(all_dead)} died but readmitted')
         else:
-            print('no died readmitted')
+            logging.info('no died readmitted')
         self.train_data = self.train_data[~self.train_data['discharge_disposition_id'].isin([11,19,20,21])]
-        print(f'remained {len(self.train_data)} rows')
+        logging.info(f'>>>>>>>>>>>after clean invalid data, remained {len(self.train_data)} rows')
 
-    def drop_extream_features(self):
+    def mark_extream_features(self):
         '''
         统计单一值占比极高的特征，并删除
         '''
@@ -74,18 +74,25 @@ class DataProcess:
                 continue
             vc = self.train_data[feature].value_counts()
             if vc.iloc[0]/len(self.train_data)>0.95:
-                print(f'{feature} has {vc.iloc[0]/len(self.train_data)}% of single value')
-                self.train_data.drop(columns=[feature], inplace=True)
-                input()
+                logging.info(f'{feature} has {vc.iloc[0]}/{len(self.train_data)}({vc.iloc[0]/len(self.train_data)*100:.2f}%) of single value {vc.index[0]}')
+                if vc.iloc[0]/len(self.train_data)>0.98:
+                    config['iskeep'] = False
+                    logging.info(f'{feature} should dropp')
+                    input()
+        write_jsonl(self.feature_json,self.feature_json_path)
 
     def drop_features(self):
         '''
         根据feature_tabel中的keep列，删除train_data中的特征
         '''
+        logging.info(f'==========drop extream features==========')
+        drop_features = []
         for feature,config in self.features_config.items():
             if config['iskeep']==False:
-                self.train_data.drop(columns=[feature], inplace=True)
-                print(f'{feature} dropped')
+                drop_features.append(feature)
+        logging.info(f'drop {len(drop_features)} features: {drop_features}')
+        self.train_data.drop(columns=drop_features, inplace=True)
+        write_jsonl(self.feature_json,self.feature_json_path)
 
     def reencode(self):
         '''
@@ -101,11 +108,13 @@ class DataProcess:
         for feature, config in self.features_config.items():
             # 跳过没有在train_data中的特征,identifier,非categorical
             # 获取唯一值（包括nan，nan转为字符串'nan'）
+            if config['iskeep']==False:
+                continue
             values = self.train_data[feature]
             unique_values = []
             for v in values.unique():
                 if pd.isna(v):
-                    print(f'{feature} has nan: {v}')
+                    logging.info(f'{feature} has nan: {v}')
                 else:
                     unique_values.append(str(v))
             # 保证顺序一致
@@ -178,7 +187,6 @@ class DataProcess:
         nan_values = self.feature_json['nan_values']
         final_nan = None
         for feature,config in tqdm(self.features_config.items(),total=len(self.features_config),desc=f'Processing features'):
-            print(f'Processing {feature}, {len(self.train_data[feature])} rows')
             if config['category']=='identifier' or config['type']!='categorical' or config['iskeep']==False:
                 continue
             config['missing_values_num'] = 0
@@ -222,7 +230,7 @@ class DataProcess:
                 pdb.set_trace()
                 print(f'{feature} has invalid value')
                 
-        print(f'all nan(except id) transferred to {final_nan} in {self.output_dir}/train.csv')
+        logging.info(f'all nan(except id) transferred to {final_nan} in {self.output_dir}/train.csv')
 
     def transfer_all_nan_for_id(self):
         """
@@ -314,7 +322,7 @@ class DataProcess:
         for feature,config in self.features_config.items():
             if config['category']=='identifier' or config['type']!='categorical' or config['iskeep']==False:
                 continue
-            print(f'{feature}: {len([int(v) for v in sorted(data[feature].unique()) if pd.notna(v)])}')
+            # print(f'{feature}: {len([int(v) for v in sorted(data[feature].unique()) if pd.notna(v)])}')
             vc = data[feature].value_counts()
             missing_num = config.get('missing_values_num',0)
             missing_count = data[feature].isna().sum()
@@ -329,7 +337,7 @@ class DataProcess:
                 pdb.set_trace()
         if check_flag:
             logging.info('recoded_train.csv check passed')
-            logging.info(f'remained {len(self.train_data)} rows')
+            logging.info(f'>>>>>>>>>>>after recode, remained {len(self.train_data)} rows, {len(self.train_data.columns)} features')
         else:
             logging.error('recoded_train.csv check failed')
             logging.error(f'error_features: {error_features}')
@@ -432,7 +440,7 @@ class DataProcess:
             if not feature_info.get('iskeep', True):
                 continue
                 
-            print(f"处理特征: {feature_name}")
+            # print(f"处理特征: {feature_name}")
             
             # 获取特征数据
             if feature_name not in data.columns:
@@ -479,12 +487,12 @@ def main():
     dp = DataProcess()
     dp.config_features()
     dp.clean_invalid_data()
-    dp.drop_extream_features()
+    dp.mark_extream_features()
+    dp.drop_features()
     dp.reencode()
     dp.transfer_all_nan()
     dp.transfer_all_nan_for_id()
     # dp.show_feature_config()
-    dp.drop_features()
     dp.save_train_data('missing_replaced_train')
     dp.recode_train_data()
     dp.save_train_data('recoded_train')
