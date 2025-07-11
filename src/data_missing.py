@@ -376,7 +376,7 @@ class MissingDataHandler:
         data = pd.DataFrame(data, columns=columns)
         return data
 
-    def analyse_knn_impute(self,data:pd.DataFrame):
+    def analyse_knn_impute(self):
         """
         分析KNN填补缺失值后的数据，统计每个特征的缺失值数量，填值前后的最大值，最小值，平均值，中位数，标准差，方差，偏度，峰度
         """
@@ -387,12 +387,26 @@ class MissingDataHandler:
         os.makedirs(imputed_dir, exist_ok=True)
         
         # 获取原始数据（填补前）
-        original_data = pd.read_csv('Dataset/processed/recoded_train.csv')
+        original_data = pd.read_csv('Dataset/processed/normalized_train.csv',index_col=0)
+        imputed_data = pd.read_csv('Dataset/processed/knn_imputed_train.csv')
+        # 前后数据集的列明区别
+        original_columns = original_data.columns
+        imputed_columns = imputed_data.columns
+
+        for col in original_columns:
+            if col not in imputed_columns:
+                logging.warning(f"特征 '{col}' 在填补后的数据中不存在，跳过")
+                continue
         
+        for col in imputed_columns:
+            if col not in original_columns:
+                logging.warning(f"特征 '{col}' 在原始数据中不存在，跳过")
+                continue
+
         # 初始化结果DataFrame
-        res = pd.DataFrame(columns=['feature','missing_count','max_value','min_value','mean_value','median_value','std_value','var_value','skewness','kurtosis'])
+        res = pd.DataFrame(columns=['feature','missing_count','max_value(before)','max_value(after)','min_value(before)','min_value(after)','mean_value(before)','mean_value(after)','median_value(before)','median_value(after)','std_value(before)','std_value(after)','var_value(before)','var_value(after)','skewness(before)','skewness(after)','kurtosis(before)','kurtosis(after)'])
         
-        for feature in data.columns:
+        for feature in imputed_data.columns:
             if feature not in original_data.columns:
                 logging.warning(f"特征 '{feature}' 在原始数据中不存在，跳过")
                 continue
@@ -404,35 +418,56 @@ class MissingDataHandler:
             if missing_count == 0:
                 continue
             
-            # 计算填补后数据的统计量
-            feature_data = data[feature].dropna()  # 确保没有NaN值
+            # 获取填补前的数据（非缺失值）
+            before_data = original_data[feature].dropna()
             
-            if len(feature_data) == 0:
-                logging.warning(f"特征 '{feature}' 填补后没有有效数据")
+            # 获取填补后的数据
+            after_data = imputed_data[feature]
+            
+            if len(before_data) == 0:
+                logging.warning(f"特征 '{feature}' 填补前没有有效数据")
                 continue
             
-            # 计算各种统计量
-            max_value = float(feature_data.max())
-            min_value = float(feature_data.min())
-            mean_value = float(feature_data.mean())
-            median_value = float(feature_data.median())
-            std_value = float(feature_data.std())
-            var_value = float(feature_data.var())
-            skewness = float(feature_data.skew())
-            kurtosis = float(feature_data.kurtosis())
+            # 计算填补前的统计量
+            max_value_before = float(before_data.max())
+            min_value_before = float(before_data.min())
+            mean_value_before = float(before_data.mean())
+            median_value_before = float(before_data.median())
+            std_value_before = float(before_data.std())
+            var_value_before = float(before_data.var())
+            skewness_before = float(before_data.skew())
+            kurtosis_before = float(before_data.kurtosis())
+            
+            # 计算填补后的统计量
+            max_value_after = float(after_data.max())
+            min_value_after = float(after_data.min())
+            mean_value_after = float(after_data.mean())
+            median_value_after = float(after_data.median())
+            std_value_after = float(after_data.std())
+            var_value_after = float(after_data.var())
+            skewness_after = float(after_data.skew())
+            kurtosis_after = float(after_data.kurtosis())
             
             # 添加到结果DataFrame
             new_row = pd.DataFrame({
                 'feature': [feature],
                 'missing_count': [missing_count],
-                'max_value': [max_value],
-                'min_value': [min_value],
-                'mean_value': [mean_value],
-                'median_value': [median_value],
-                'std_value': [std_value],
-                'var_value': [var_value],
-                'skewness': [skewness],
-                'kurtosis': [kurtosis]
+                'max_value(before)': [max_value_before],
+                'max_value(after)': [max_value_after],
+                'min_value(before)': [min_value_before],
+                'min_value(after)': [min_value_after],
+                'mean_value(before)': [mean_value_before],
+                'mean_value(after)': [mean_value_after],
+                'median_value(before)': [median_value_before],
+                'median_value(after)': [median_value_after],
+                'std_value(before)': [std_value_before],
+                'std_value(after)': [std_value_after],
+                'var_value(before)': [var_value_before],
+                'var_value(after)': [var_value_after],
+                'skewness(before)': [skewness_before],
+                'skewness(after)': [skewness_after],
+                'kurtosis(before)': [kurtosis_before],
+                'kurtosis(after)': [kurtosis_after]
             })
             
             res = pd.concat([res, new_row], ignore_index=True)
@@ -452,13 +487,13 @@ class MissingDataHandler:
             'total_missing_values_filled': res['missing_count'].sum(),
             'features_with_missing_values': res['feature'].tolist(),
             'missing_count_summary': res['missing_count'].describe().to_dict(),
-            'statistics_summary': {
-                'max_values': res['max_value'].describe().to_dict(),
-                'min_values': res['min_value'].describe().to_dict(),
-                'mean_values': res['mean_value'].describe().to_dict(),
-                'std_values': res['std_value'].describe().to_dict(),
-                'skewness': res['skewness'].describe().to_dict(),
-                'kurtosis': res['kurtosis'].describe().to_dict()
+            'statistics_comparison': {
+                'max_value_change': (res['max_value(after)'] - res['max_value(before)']).describe().to_dict(),
+                'min_value_change': (res['min_value(after)'] - res['min_value(before)']).describe().to_dict(),
+                'mean_value_change': (res['mean_value(after)'] - res['mean_value(before)']).describe().to_dict(),
+                'std_value_change': (res['std_value(after)'] - res['std_value(before)']).describe().to_dict(),
+                'skewness_change': (res['skewness(after)'] - res['skewness(before)']).describe().to_dict(),
+                'kurtosis_change': (res['kurtosis(after)'] - res['kurtosis(before)']).describe().to_dict()
             }
         }
         
@@ -521,18 +556,18 @@ class MissingDataHandler:
 
 def main():
     handler = MissingDataHandler()
-    handler.load_data(mode='recoded')
-    handler.analyze_missing_values()
-    data = handler.train_data
-    # handler.pca_for_low_mid_missing_dataset() # 主成分分析
-    data = handler.drop_high_missing_dataset(handler.train_data)
-    # data = handler.drop_mid_missing_dataset(data)
-    # data = handler.drop_low_missing_dataset(data)
-    data = handler.knn_impute(data)
-    data.to_csv(os.path.join(handler.output_dir, 'knn_imputed_train_complete.csv'), index=False)
+    handler.load_data(mode='normalized')
+    # handler.analyze_missing_values()
+    # data = handler.train_data
+    # # handler.pca_for_low_mid_missing_dataset() # 主成分分析
+    # data = handler.drop_high_missing_dataset(handler.train_data)
+    # # data = handler.drop_mid_missing_dataset(data)
+    # # data = handler.drop_low_missing_dataset(data)
+    # data = handler.knn_impute(data)
+    # data.to_csv(os.path.join(handler.output_dir, 'knn_imputed_train.csv'), index=False)
     
     # 分析KNN填补结果
-    analysis_result = handler.analyse_knn_impute(data)
+    analysis_result = handler.analyse_knn_impute()
     print(f"KNN填补分析完成，分析了 {len(analysis_result)} 个特征")
 
 

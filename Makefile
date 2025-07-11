@@ -1,4 +1,4 @@
-all: missing
+all: ptest
 
 process:
 	python src/data_process.py
@@ -14,3 +14,5 @@ missing:
 	python src/data_missing.py
 res:
 	git restore config/feature.json
+ptest:
+	python src/data_process_test.py
