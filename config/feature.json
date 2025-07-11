@@ -16,7 +16,6 @@
             "category": "identifier",
             "type": "categorical",
             "description": "就诊ID",
-            "visualization": "不适用",
             "label_encoding": {
                 "unique_values": [],
                 "encoding_mapping": {}
@@ -31,7 +30,6 @@
             "category": "identifier",
             "type": "categorical",
             "description": "患者ID",
-            "visualization": "不适用",
             "label_encoding": {
                 "unique_values": [],
                 "encoding_mapping": {}
@@ -46,7 +44,6 @@
             "category": "demographic",
             "type": "categorical",
             "description": "种族",
-            "visualization": "饼图",
             "label_encoding": {
                 "unique_values": [
                     "AfricanAmerican",
@@ -81,7 +78,6 @@
             "category": "demographic",
             "type": "categorical",
             "description": "性别",
-            "visualization": "条形图",
             "label_encoding": {
                 "unique_values": [
                     "Female",
@@ -110,7 +106,6 @@
             "category": "demographic",
             "type": "categorical",
             "description": "年龄组",
-            "visualization": "条形图",
             "label_encoding": {
                 "unique_values": [
                     "[0-10)",
@@ -153,7 +148,6 @@
             "category": "demographic",
             "type": "categorical",
             "description": "体重",
-            "visualization": "饼图",
             "label_encoding": {
                 "unique_values": [
                     ">200",
@@ -190,7 +184,6 @@
             "category": "categorical",
             "type": "categorical",
             "description": "入院类型ID",
-            "visualization": "水平条形图",
             "label_encoding": {
                 "unique_values": [
                     "1.0",
@@ -215,8 +208,8 @@
             "missing_values_p": 0.1020428217362347,
             "missing_values": [
                 "5",
-                "6",
-                "8"
+                "8",
+                "6"
             ],
             "missing_replace": null,
             "max_value": 4.0,
@@ -227,7 +220,6 @@
             "category": "categorical",
             "type": "categorical",
             "description": "出院状态ID",
-            "visualization": "水平条形图",
             "label_encoding": {
                 "unique_values": [
                     "1.0",
@@ -302,7 +294,6 @@
             "category": "categorical",
             "type": "categorical",
             "description": "入院来源ID",
-            "visualization": "水平条形图",
             "label_encoding": {
                 "unique_values": [
                     "7.0",
@@ -344,9 +335,9 @@
             "missing_values_num": 6361,
             "missing_values_p": 0.06945157169529093,
             "missing_values": [
-                "20",
-                "17",
                 "15",
+                "17",
+                "20",
                 "9",
                 "21"
             ],
@@ -359,7 +350,6 @@
             "category": "numeric",
             "type": "continuous",
             "description": "住院时间",
-            "visualization": "直方图",
             "label_encoding": {
                 "unique_values": [],
                 "encoding_mapping": {}
@@ -376,7 +366,6 @@
             "category": "categorical",
             "type": "categorical",
             "description": "支付方代码",
-            "visualization": "水平条形图",
             "label_encoding": {
                 "unique_values": [
                     "BC",
@@ -435,7 +424,6 @@
             "category": "categorical",
             "type": "categorical",
             "description": "医疗专业",
-            "visualization": "水平条形图",
             "label_encoding": {
                 "unique_values": [
                     "AllergyandImmunology",
@@ -604,7 +592,6 @@
             "category": "numeric",
             "type": "continuous",
             "description": "实验室检查次数",
-            "visualization": "直方图",
             "label_encoding": {
                 "unique_values": [],
                 "encoding_mapping": {}
@@ -621,7 +608,6 @@
             "category": "numeric",
             "type": "continuous",
             "description": "手术次数",
-            "visualization": "直方图",
             "label_encoding": {
                 "unique_values": [],
                 "encoding_mapping": {}
@@ -638,7 +624,6 @@
             "category": "numeric",
             "type": "continuous",
             "description": "药物数量",
-            "visualization": "直方图",
             "label_encoding": {
                 "unique_values": [],
                 "encoding_mapping": {}
@@ -655,7 +640,6 @@
             "category": "numeric",
             "type": "continuous",
             "description": "门诊次数",
-            "visualization": "直方图",
             "label_encoding": {
                 "unique_values": [],
                 "encoding_mapping": {}
@@ -672,7 +656,6 @@
             "category": "numeric",
             "type": "continuous",
             "description": "急诊次数",
-            "visualization": "直方图",
             "label_encoding": {
                 "unique_values": [],
                 "encoding_mapping": {}
@@ -689,7 +672,6 @@
             "category": "numeric",
             "type": "continuous",
             "description": "住院次数",
-            "visualization": "直方图",
             "label_encoding": {
                 "unique_values": [],
                 "encoding_mapping": {}
@@ -706,7 +688,6 @@
             "category": "diagnosis",
             "type": "categorical",
             "description": "主要诊断",
-            "visualization": "水平条形图",
             "label_encoding": {
                 "unique_values": [
                     "10",
@@ -2151,7 +2132,6 @@
             "category": "diagnosis",
             "type": "categorical",
             "description": "次要诊断",
-            "visualization": "水平条形图",
             "label_encoding": {
                 "unique_values": [
                     "11",
@@ -3636,7 +3616,6 @@
             "category": "diagnosis",
             "type": "categorical",
             "description": "第三诊断",
-            "visualization": "水平条形图",
             "label_encoding": {
                 "unique_values": [
                     "11",
@@ -5211,7 +5190,6 @@
             "category": "numeric",
             "type": "continuous",
             "description": "诊断数量",
-            "visualization": "直方图",
             "label_encoding": {
                 "unique_values": [],
                 "encoding_mapping": {}
@@ -5228,7 +5206,6 @@
             "category": "categorical",
             "type": "categorical",
             "description": "最大血糖血清",
-            "visualization": "水平条形图",
             "label_encoding": {
                 "unique_values": [
                     ">200",
@@ -5251,7 +5228,6 @@
             "category": "categorical",
             "type": "categorical",
             "description": "糖化血红蛋白结果",
-            "visualization": "水平条形图",
             "label_encoding": {
                 "unique_values": [
                     ">7",
@@ -5280,7 +5256,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "二甲双胍",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "Down",
@@ -5311,7 +5286,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "瑞格列奈",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "Down",
@@ -5342,7 +5316,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "那格列奈",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "Down",
@@ -5373,7 +5346,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "氯磺丙脲",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "No",
@@ -5402,7 +5374,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "格列美脲",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "Down",
@@ -5433,7 +5404,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "醋磺己脲",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "No",
@@ -5460,7 +5430,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "格列吡嗪",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "Down",
@@ -5491,7 +5460,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "格列本脲",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "Down",
@@ -5522,7 +5490,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "甲苯磺丁脲",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "No",
@@ -5549,7 +5516,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "吡格列酮",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "Down",
@@ -5580,7 +5546,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "罗格列酮",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "Down",
@@ -5611,7 +5576,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "阿卡波糖",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "Down",
@@ -5642,7 +5606,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "米格列醇",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "Down",
@@ -5673,7 +5636,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "曲格列酮",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "No",
@@ -5700,7 +5662,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "妥拉磺脲",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "No",
@@ -5727,7 +5688,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "依沙米德",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "No"
@@ -5746,7 +5706,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "西格列汀",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "No"
@@ -5765,7 +5724,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "胰岛素",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "Down",
@@ -5796,7 +5754,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "格列本脲-二甲双胍",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "Down",
@@ -5827,7 +5784,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "格列吡嗪-二甲双胍",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "No",
@@ -5854,7 +5810,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "格列美脲-吡格列酮",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "No"
@@ -5879,7 +5834,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "二甲双胍-罗格列酮",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "No",
@@ -5906,7 +5860,6 @@
             "category": "medication",
             "type": "categorical",
             "description": "二甲双胍-吡格列酮",
-            "visualization": "热力图",
             "label_encoding": {
                 "unique_values": [
                     "No",
@@ -5933,7 +5886,6 @@
             "category": "categorical",
             "type": "categorical",
             "description": "药物变化",
-            "visualization": "水平条形图",
             "label_encoding": {
                 "unique_values": [
                     "Ch",
@@ -5960,7 +5912,6 @@
             "category": "categorical",
             "type": "categorical",
             "description": "糖尿病药物",
-            "visualization": "水平条形图",
             "label_encoding": {
                 "unique_values": [
                     "No",
@@ -5987,7 +5938,6 @@
             "category": "target",
             "type": "categorical",
             "description": "复诊情况",
-            "visualization": "饼图、条形图",
             "label_encoding": {
                 "unique_values": [
                     "<30",

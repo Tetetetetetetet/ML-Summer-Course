@@ -5,9 +5,9 @@ race,2,demographic,categorical,种族,5,True,normal,True,2059,0.0224808656061317
 gender,3,demographic,categorical,性别,2,True,normal,True,3,3.275502516677767e-05,['Unknown/Invalid'],,1.0,0.0
 age,4,demographic,categorical,年龄组,10,True,normal,False,0,0.0,[],,9.0,0.0
 weight,5,demographic,categorical,体重,10,False,no,True,,,,,,
-admission_type_id,6,categorical,categorical,入院类型ID,5,True,normal,True,9346,0.1020428217362347,"['5', '6', '8']",,4.0,0.0
+admission_type_id,6,categorical,categorical,入院类型ID,5,True,normal,True,9346,0.1020428217362347,"['5', '8', '6']",,4.0,0.0
 discharge_disposition_id,7,categorical,categorical,出院状态ID,24,True,normal,True,4223,0.0461081570931007,"['18', '25', '26']",,23.0,0.0
-admission_source_id,8,categorical,categorical,入院来源ID,14,True,normal,True,6361,0.06945157169529093,"['20', '17', '15', '9', '21']",,13.0,0.0
+admission_source_id,8,categorical,categorical,入院来源ID,14,True,normal,True,6361,0.06945157169529093,"['15', '17', '20', '9', '21']",,13.0,0.0
 time_in_hospital,9,numeric,continuous,住院时间,14,True,normal,False,,,,,14.0,1.0
 payer_code,10,categorical,categorical,支付方代码,17,True,special,True,36247,0.39575713240673005,['?'],,16.0,0.0
 medical_specialty,11,categorical,categorical,医疗专业,72,True,special,True,44992,0.49123803076788697,['?'],,71.0,0.0

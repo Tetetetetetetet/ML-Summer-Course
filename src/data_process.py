@@ -101,7 +101,7 @@ class DataProcess:
         transfer feature.json to FeatureConfigTabel.csv，便于查看
         '''
         feature_tabel = pd.DataFrame(self.features_config).T
-        feature_tabel.drop(columns=['visualization','label_encoding'], inplace=True)
+        feature_tabel.drop(columns=['label_encoding'], inplace=True)
         feature_tabel.index.name = 'feature_name'
         feature_tabel.to_csv(self.output_dir/'FeatureConfigTabel.csv', index=True)
         print(f'feature.json transferred to {self.output_dir}/FeatureConfigTabel.csv')

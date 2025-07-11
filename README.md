@@ -59,19 +59,19 @@ feature.json包含了数据集的所有特征配置信息，主要包括以下�
    - `iskeep`: 是否保留该特征
    - `process`: 处理方式（"normal"/"no"）
 
-2. 编码信息（categorical特征）
+2. 编码信息（type==categorical特征）
    - `label_encoding`: 标签编码信息
      - `unique_values`: 所有唯一值列表
      - `encoding_mapping`: 值到编码的映射字典
 
-3. 缺失值信息
+3. 缺失值信息(type==categorical特征才有缺失)
    - `missing`: 是否存在缺失值
    - `missing_values_num`: 缺失值数量
    - `missing_values_p`: 缺失值比例
    - `missing_values`: 特征特有的缺失值列表
    - `missing_replace`: 缺失值替换值
 
-4. 数值范围（normalized后）
+4. 数值范围（normalized前）
    - `max_value`: 特征最大值
    - `min_value`: 特征最小值
 
@@ -82,6 +82,9 @@ feature.json包含了数据集的所有特征配置信息，主要包括以下�
 conda activate diabetes_analysis
 python src/data_visualization.py
 ```
+
+## 数据处理流程(data_process.py)：
+1. 对原始数据做
 
 ## 常见问题
 
