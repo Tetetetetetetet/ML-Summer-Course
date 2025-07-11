@@ -1,4 +1,4 @@
-all: process missing
+all: missing
 
 process:
 	python src/data_process.py

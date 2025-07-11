@@ -83,17 +83,42 @@ conda activate diabetes_analysis
 python src/data_visualization.py
 ```
 
-## 数据处理流程(src/data_process.py)：
+## 数据处理流程
+
+### 特征重编码(src/data_process.py)：
 1. 对原始数据中的离散feature重新编码(类别编码,0,1,...)
 2. 找出所有等价于缺失的值，转换为None -> Dataset/processed/missing_replaced_train.csv
 3. 重新编码(类别编码,0,1,...) -> Dataset/processed/recoded_train
 4. 归一化 -> Dataset/processed/normalizaed_train.csv
 (5.) (todo) 对某些特征做one-hot编码？
 
-## 缺失值处理(src/data_missing.py)
-1. 分离出各个feature完整的子数据集
-2. 
+### 缺失值处理(src/data_missing.py)：
+1. 主要步骤：
+   - 去除完全缺失的特征
+   - 对每个"≤5%缺失"的特征中存在缺失值的样本进行PPCQ分析
 
+2. PPCQ分析流程：
+   a. 处理"50-50特征"（缺失值比例接近50%的特征）：
+      - 分析"≤5%缺失"特征对这些特征的重要度
+      - 对不重要的特征：进行急救方向探空
+      - 对重要的特征：与其他特征进行关联分析
+   
+   b. 处理含有"50-50"特征缺失的样本：
+      - 分析缺失难度的重要度
+      - 对有医学显著性的条件使用逻辑回归
+      
+3. 缺失值填充决策：
+   - 判断特征是否与其他"50-50"特征相关：
+     - 相关：按照特征分布进行预估填充
+     - 不相关：待定
+   - 判断特征是否存在相关性：
+     - 存在：使用回归模型预测缺失值
+     - 不存在：待定
+
+4. 输出文件：
+   - complete_features/：每个特征的完整数据集
+   - all_features_complete.csv：所有特征完整的数据集
+   - missing_stats.json：缺失值统计信息
 
 ## 常见问题
 

@@ -5961,5 +5961,43 @@
             "max_value": 2.0,
             "min_value": 0.0
         }
+    },
+    "missing_process_type": {
+        "50-50": [
+            "admission_type_id",
+            "payer_code",
+            "medical_specialty"
+        ],
+        "low": [
+            "race",
+            "gender",
+            "discharge_disposition_id",
+            "admission_source_id",
+            "diag_1",
+            "diag_2",
+            "diag_3"
+        ],
+        "high": [
+            "A1Cresult"
+        ]
+    },
+    "missing_type": {
+        "mid": [
+            "admission_type_id",
+            "payer_code",
+            "medical_specialty"
+        ],
+        "low": [
+            "race",
+            "gender",
+            "discharge_disposition_id",
+            "admission_source_id",
+            "diag_1",
+            "diag_2",
+            "diag_3"
+        ],
+        "high": [
+            "A1Cresult"
+        ]
     }
 }
