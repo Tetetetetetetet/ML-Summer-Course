@@ -1,13 +1,14 @@
-all:
-	python src/data_process.py
+all: process missing
+
 process:
-	python src/data_processing.py
+	python src/data_process.py
 visualize:
 	python src/data_visualization.py
 e:
 	python src/exp.py
-
 r:
 	git restore .
 clean:
 	rm -rf src/visualizations/*
+missing:
+	python src/data_missing.py

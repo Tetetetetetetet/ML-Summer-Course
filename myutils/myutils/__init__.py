@@ -40,7 +40,7 @@ def write_jsonl(data, file_path:str):
     Returns:
         None
     '''
-    if file_path.endswith('.jsonl'):
+    if file_path.endswith('.jsonl') and isinstance(data,list):
         with open(file_path, "w", encoding="utf-8") as f:
             for item in data:
                 json.dump(item, f, ensure_ascii=False)
