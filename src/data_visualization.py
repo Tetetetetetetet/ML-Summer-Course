@@ -338,7 +338,7 @@ class DataVisualizer:
             axes[i].set_ylabel('数量')
             axes[i].set_xticks(range(len(value_counts)))
             axes[i].set_xticklabels(value_counts.index, rotation=45, ha='right')
-            
+        
             # 添加数量和比例标签
             for j, (value, count) in enumerate(value_counts.items()):
                 percentage = (count / total_count) * 100
@@ -549,8 +549,8 @@ class DataVisualizer:
                    transform=ax.transAxes, 
                    verticalalignment='top', fontsize=10,
                    bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
-            
-            plt.tight_layout()
+        
+        plt.tight_layout()
             plt.savefig(f'src/visualizations/{feature}_diagnosis_features_histogram.png', dpi=300, bbox_inches='tight')
             plt.close()
         

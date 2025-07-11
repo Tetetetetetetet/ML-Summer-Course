@@ -151,6 +151,12 @@ class DataProcess:
             # 获取唯一值（包括nan，nan转为字符串'nan'）
             if config['iskeep']==False:
                 continue
+                
+            # 跳过诊断特征，它们将在recode_train_data中特殊处理
+            if feature in ['diag_1', 'diag_2', 'diag_3']:
+                logging.info(f"跳过诊断特征 {feature} 的重新编码，将在后续特殊处理")
+                continue
+                
             values = self.train_data[feature]
             unique_values = []
             for v in values.unique():
@@ -239,26 +245,44 @@ class DataProcess:
             
             # 使用布尔索引一次性替换所有匹配的值
             if feature in id_features:
-                mask = self.train_data[feature].astype(str).map(self.ids_mapping[feature]).isin(nan_values)
+                # 对于ID特征，先转换为文本进行检查，然后替换缺失值，最后转换回ID
+                temp_values = self.train_data[feature].astype(str).map(self.ids_mapping[feature])
+                mask = temp_values.isin(nan_values)
+                
+                # 收集所有的缺失值类型（使用原始ID值）
+                missing_vals = set(self.train_data.loc[mask, feature].unique())
+                for val in missing_vals:
+                    try:
+                        val = str(val).strip()
+                        if val not in config['missing_values']:
+                            config['missing_values'].append(val)
+                            if val in config['label_encoding']['unique_values']:
+                                config['label_encoding']['unique_values'].remove(val)
+                                del config['label_encoding']['encoding_mapping'][val]
+                    except:
+                        raise ValueError(f"Feature '{feature}' has invalid value: {val}")
+                
+                # 替换缺失值，保持为ID格式
+                self.train_data.loc[mask, feature] = final_nan
             else:
                 mask = self.train_data[feature].isin(nan_values)
-            
-            # 收集所有的缺失值类型
-            missing_vals = set(self.train_data.loc[mask, feature].unique())
-            for val in missing_vals:
-                try:
-                    val = str(val).strip()
-                    if val not in config['missing_values']:
-                        config['missing_values'].append(val)
-                        if val in config['label_encoding']['unique_values']:
-                            config['label_encoding']['unique_values'].remove(val)
-                            del config['label_encoding']['encoding_mapping'][val]
-                except:
-                    raise ValueError(f"Feature '{feature}' has invalid value: {val}")
-            
-            # 替换缺失值
-            self.train_data.loc[mask, feature] = self.train_data.loc[mask, feature].astype(object)
-            self.train_data.loc[mask, feature] = final_nan
+                
+                # 收集所有的缺失值类型
+                missing_vals = set(self.train_data.loc[mask, feature].unique())
+                for val in missing_vals:
+                    try:
+                        val = str(val).strip()
+                        if val not in config['missing_values']:
+                            config['missing_values'].append(val)
+                            if val in config['label_encoding']['unique_values']:
+                                config['label_encoding']['unique_values'].remove(val)
+                                del config['label_encoding']['encoding_mapping'][val]
+                    except:
+                        raise ValueError(f"Feature '{feature}' has invalid value: {val}")
+                
+                # 替换缺失值
+                self.train_data.loc[mask, feature] = self.train_data.loc[mask, feature].astype(object)
+                self.train_data.loc[mask, feature] = final_nan
             config['missing_values_num'] = int(self.train_data[feature].isna().sum())
             if config['missing_values_num']>0:
                 replaced_features.append(feature)
@@ -299,6 +323,13 @@ class DataProcess:
             if config.get('category') == 'identifier' or config.get('type') != 'categorical' or config.get('iskeep') is False:
                 continue
 
+            # 特殊处理诊断特征：使用categorize_diagnosis进行分组
+            if feature in ['diag_1', 'diag_2', 'diag_3']:
+                logging.info(f"使用categorize_diagnosis处理诊断特征: {feature}")
+                self._categorize_diagnosis_feature(feature)
+                continue
+
+            # 其他特征使用原有的标签编码方式
             enc_map = config['label_encoding']['encoding_mapping']
             # 先统一转成 str 便于匹配
             self.train_data[feature] = self.train_data[feature].astype(str).map(enc_map)
@@ -308,6 +339,96 @@ class DataProcess:
         # 保存结果
         self.train_data.to_csv(self.output_dir/'recoded_train.csv', index=False)
         print(f'recoded_train.csv saved to {self.output_dir}/recoded_train.csv')
+
+    def _categorize_diagnosis_feature(self, feature_name):
+        """
+        对单个诊断特征使用categorize_diagnosis进行分组处理
+        
+        Args:
+            feature_name: 诊断特征名称 (diag_1, diag_2, diag_3)
+        """
+        # 创建新的分类列名
+        new_feature_name = f'new_{feature_name}'
+        
+        # 复制原始数据
+        self.train_data[new_feature_name] = self.train_data[feature_name]
+        
+        # 保持NaN值为None，不填充为-1
+        # self.train_data[new_feature_name] = self.train_data[new_feature_name].fillna(-1)
+        
+        # 处理包含V或E的编码（外部原因和补充因素）
+        # 只处理非NaN的值
+        non_null_mask = self.train_data[new_feature_name].notna()
+        v_mask = self.train_data.loc[non_null_mask, new_feature_name].astype(str).str.contains('V', na=False)
+        e_mask = self.train_data.loc[non_null_mask, new_feature_name].astype(str).str.contains('E', na=False)
+        
+        self.train_data.loc[non_null_mask & v_mask, new_feature_name] = 0
+        self.train_data.loc[non_null_mask & e_mask, new_feature_name] = 0
+        
+        # 转换为float类型，保持NaN值
+        self.train_data[new_feature_name] = pd.to_numeric(self.train_data[new_feature_name], errors='coerce')
+        
+        # 根据ICD-9编码范围进行分类
+        for index, row in self.train_data.iterrows():
+            code = row[new_feature_name]
+            
+            # 跳过NaN值
+            if pd.isna(code):
+                continue
+                
+            # 类别1: 循环系统疾病 (390-459, 785)
+            if (code >= 390 and code < 460) or (np.floor(code) == 785):
+                self.train_data.loc[index, new_feature_name] = 1
+            # 类别2: 呼吸系统疾病 (460-519, 786)
+            elif (code >= 460 and code < 520) or (np.floor(code) == 786):
+                self.train_data.loc[index, new_feature_name] = 2
+            # 类别3: 消化系统疾病 (520-579, 787)
+            elif (code >= 520 and code < 580) or (np.floor(code) == 787):
+                self.train_data.loc[index, new_feature_name] = 3
+            # 类别4: 糖尿病 (250)
+            elif np.floor(code) == 250:
+                self.train_data.loc[index, new_feature_name] = 4
+            # 类别5: 损伤和中毒 (800-999)
+            elif code >= 800 and code < 1000:
+                self.train_data.loc[index, new_feature_name] = 5
+            # 类别6: 肌肉骨骼系统疾病 (710-739)
+            elif code >= 710 and code < 740:
+                self.train_data.loc[index, new_feature_name] = 6
+            # 类别7: 泌尿生殖系统疾病 (580-629, 788)
+            elif (code >= 580 and code < 630) or (np.floor(code) == 788):
+                self.train_data.loc[index, new_feature_name] = 7
+            # 类别8: 肿瘤 (140-239)
+            elif code >= 140 and code < 240:
+                self.train_data.loc[index, new_feature_name] = 8
+            # 类别0: 其他疾病
+            elif code > 0:
+                self.train_data.loc[index, new_feature_name] = 0
+        
+        # 删除原始诊断列，保留分类后的列
+        self.train_data.drop(columns=[feature_name], inplace=True)
+        
+        # 重命名新列为原始列名
+        self.train_data.rename(columns={new_feature_name: feature_name}, inplace=True)
+        
+        # 更新feature配置
+        config = self.features_config[feature_name]
+        config['label_encoding']['unique_values'] = ['0', '1', '2', '3', '4', '5', '6', '7', '8']
+        config['label_encoding']['encoding_mapping'] = {
+            '0': 0,   # 其他疾病
+            '1': 1,   # 循环系统疾病
+            '2': 2,   # 呼吸系统疾病
+            '3': 3,   # 消化系统疾病
+            '4': 4,   # 糖尿病
+            '5': 5,   # 损伤和中毒
+            '6': 6,   # 肌肉骨骼系统疾病
+            '7': 7,   # 泌尿生殖系统疾病
+            '8': 8    # 肿瘤
+        }
+        config['value_num'] = 9  # 不包括缺失值
+        config['process'] = 'diagnosis_categorized'
+        config['missing'] = True  # 标记为有缺失值
+        
+        logging.info(f"诊断特征 {feature_name} 已分类为9个疾病类别，缺失值保持为None")
 
     def check_recoded_data(self):
         logging.info('==========check recoded_train.csv==========')
