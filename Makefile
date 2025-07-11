@@ -12,3 +12,5 @@ clean:
 	rm -rf src/visualizations/*
 missing:
 	python src/data_missing.py
+res:
+	git restore config/feature.json

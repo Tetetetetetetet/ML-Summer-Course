@@ -15,7 +15,6 @@ from typing import Dict
 logging.basicConfig(
     level=logging.INFO,
     format="[%(levelname)s] %(message)s",  # 日志格式
-    filename="unzip.log",
 )
 
 class DataProcess:
@@ -30,6 +29,55 @@ class DataProcess:
         self.ids_mapping = read_jsonl('config/id_mapping.json')
         self.visualization_dir = 'Dataset/processed/visualization'
 
+    def load_train_data(self,mode:str='origin'):
+        if mode=='origin':
+            self.train_data = pd.read_csv('Dataset/diabetic_data_training.csv')
+        elif mode=='missing_replaced':
+            self.train_data = pd.read_csv('Dataset/missing_replaced_train.csv')
+        elif mode=='recoded':
+            self.train_data = pd.read_csv('Dataset/recoded_train.csv')
+        elif mode=='normalized':
+            self.train_data = pd.read_csv('Dataset/normalized_train.csv')
+
+    def exp_json(self):
+        dic = {"exist":True,"name":"mine"}
+        write_jsonl(dic,'config/exp.json')
+
+    def clean_invalid_data(self):
+        '''
+        有些数据应当被删除：
+        - 已死亡的/转入临终关怀的：discharge_disposition_id=[11,19,20,21]/[13,14]
+        '''
+        # 是否存在转入临终关怀而再次入院的
+        all_hospice = self.train_data[self.train_data['discharge_disposition_id'].isin([13,14])]
+        hospice_readmitted = all_hospice[all_hospice['readmitted']!='NO']
+        if len(hospice_readmitted)>0:
+            print(f'{len(hospice_readmitted)}/{len(all_hospice)} hospice but readmitted')
+        else:
+            print('no hospice readmitted')
+        # 是否存在已死亡而再次入院的
+        all_dead = self.train_data[self.train_data['discharge_disposition_id'].isin([11,19,20,21])]
+        dead_readmitted = all_dead[all_dead['readmitted']!='NO']
+        if len(dead_readmitted)>0:
+            print(f'{len(dead_readmitted)}/{len(all_dead)} died but readmitted')
+        else:
+            print('no died readmitted')
+        self.train_data = self.train_data[~self.train_data['discharge_disposition_id'].isin([11,19,20,21])]
+        print(f'remained {len(self.train_data)} rows')
+
+    def drop_extream_features(self):
+        '''
+        统计单一值占比极高的特征，并删除
+        '''
+        for feature,config in self.features_config.items():
+            if config['category']=='identifier' or config['type']!='categorical' or config['iskeep']==False:
+                continue
+            vc = self.train_data[feature].value_counts()
+            if vc.iloc[0]/len(self.train_data)>0.95:
+                print(f'{feature} has {vc.iloc[0]/len(self.train_data)}% of single value')
+                self.train_data.drop(columns=[feature], inplace=True)
+                input()
+
     def drop_features(self):
         '''
         根据feature_tabel中的keep列，删除train_data中的特征
@@ -41,7 +89,14 @@ class DataProcess:
 
     def reencode(self):
         '''
-        读取原始数据，做encoding，确保对于每一个非缺失值，都有对应的encoding_mapping
+        based on:
+            - self.train_data: 做encoding，确保对于每一个非缺失值，都有对应的encoding_mapping
+            - self.feature_json
+
+        side_effect:
+            - self.feature_json['label_encoding']['unique_values']
+            - self.feature_json['label_encoding']['encoding_mapping']
+            - self.feature_json['value_num']
         '''
         for feature, config in self.features_config.items():
             # 跳过没有在train_data中的特征,identifier,非categorical
@@ -122,42 +177,51 @@ class DataProcess:
         '''
         nan_values = self.feature_json['nan_values']
         final_nan = None
-        for feature,config in self.features_config.items():
+        for feature,config in tqdm(self.features_config.items(),total=len(self.features_config),desc=f'Processing features'):
+            print(f'Processing {feature}, {len(self.train_data[feature])} rows')
             if config['category']=='identifier' or config['type']!='categorical' or config['iskeep']==False:
                 continue
             config['missing_values_num'] = 0
             config['missing_values_p'] = 0
             config['missing_values'] = []
-            for idx,data in tqdm(enumerate(self.train_data[feature]),total=len(self.train_data[feature]),desc=f'Processing {feature}'):
-                if data in nan_values:
-                    try:
-                        if isinstance(data,int):
-                            data = str(data)
-                        elif isinstance(data,str):
-                            data = data.strip()
-                        if data not in config['missing_values']:
-                            config['missing_values'].append(data)
-                            config['label_encoding']['unique_values'].remove(data)
-                            # config['label_encoding']['encoding_mapping'][final_nan] = config['label_encoding']['encoding_mapping'][data]
-                            del config['label_encoding']['encoding_mapping'][data]
-                    except:
-                        raise ValueError(f"Feature '{feature}' has invalid value: {data}")
-                    config['missing_values_num']+=1
-                    self.train_data.loc[idx,feature] = final_nan
-            config['value_num'] = len(config['label_encoding']['unique_values'])
+            
+            # 使用布尔索引一次性替换所有匹配的值
+            mask = self.train_data[feature].isin(nan_values)
+            
+            # 收集所有的缺失值类型
+            missing_vals = set(self.train_data.loc[mask, feature].unique())
+            for val in missing_vals:
+                try:
+                    if isinstance(val, int):
+                        val = str(val)
+                    elif isinstance(val, str):
+                        val = val.strip()
+                    if val not in config['missing_values']:
+                        config['missing_values'].append(val)
+                        if val in config['label_encoding']['unique_values']:
+                            config['label_encoding']['unique_values'].remove(val)
+                            del config['label_encoding']['encoding_mapping'][val]
+                except:
+                    raise ValueError(f"Feature '{feature}' has invalid value: {val}")
+            
+            # 替换缺失值
+            self.train_data.loc[mask, feature] = final_nan
+            config['missing_values_num'] = int(mask.sum())
             if config['missing_values_num']==0:
                 config['missing_values_num'] = int(self.train_data[feature].isna().sum())
-            config['missing_values_p'] = config['missing_values_num']/len(self.train_data[feature])
-            config['missing'] = config['missing_values_num']>0
-            config['label_encoding']['unique_values'] = [key for key in config['label_encoding']['encoding_mapping'].keys()]
+            config['missing_values_p'] = float(config['missing_values_num']/len(self.train_data[feature]))
+            config['missing'] = bool(config['missing_values_num']>0)
+            config['label_encoding']['unique_values'] = [str(key) for key in config['label_encoding']['encoding_mapping'].keys()]
             config['label_encoding']['encoding_mapping'] = {val:ind for ind,val in enumerate(config['label_encoding']['unique_values'])}
             config['missing_replace'] = final_nan
-        try:
-            write_jsonl(self.feature_json,self.feature_json_path)
-        except Exception as e:
-            print(f"Error writing feature.json: {e}")
-            pdb.set_trace()
-            write_jsonl(self.feature_json,self.feature_json_path)
+
+            try:
+                write_jsonl(self.feature_json, self.feature_json_path)
+            except Exception as e:
+                print(f"Error writing feature.json: {e}")
+                pdb.set_trace()
+                print(f'{feature} has invalid value')
+                
         print(f'all nan(except id) transferred to {final_nan} in {self.output_dir}/train.csv')
 
     def transfer_all_nan_for_id(self):
@@ -227,7 +291,6 @@ class DataProcess:
     
     def recode_train_data(self):
         """将所有保留的分类特征根据 label_encoding 映射为整数编码，并保存 CSV。"""
-        self.train_data = pd.read_csv(self.output_dir/'missing_replaced_train.csv')
 
         for feature, config in self.features_config.items():
             if config.get('category') == 'identifier' or config.get('type') != 'categorical' or config.get('iskeep') is False:
@@ -244,13 +307,14 @@ class DataProcess:
         print(f'recoded_train.csv saved to {self.output_dir}/recoded_train.csv')
 
     def check_recoded_data(self):
+        logging.info('==========check recoded_train.csv==========')
         check_flag = True
         data = pd.read_csv(self.output_dir/'recoded_train.csv')
         error_features = []
         for feature,config in self.features_config.items():
             if config['category']=='identifier' or config['type']!='categorical' or config['iskeep']==False:
                 continue
-            print(f'{feature}: {[int(v) for v in sorted(data[feature].unique()) if pd.notna(v)]}')
+            print(f'{feature}: {len([int(v) for v in sorted(data[feature].unique()) if pd.notna(v)])}')
             vc = data[feature].value_counts()
             missing_num = config.get('missing_values_num',0)
             missing_count = data[feature].isna().sum()
@@ -264,10 +328,11 @@ class DataProcess:
                 error_features.append(feature)
                 pdb.set_trace()
         if check_flag:
-            print('recoded_train.csv check passed')
+            logging.info('recoded_train.csv check passed')
+            logging.info(f'remained {len(self.train_data)} rows')
         else:
-            print('recoded_train.csv check failed')
-            print(f'error_features: {error_features}')
+            logging.error('recoded_train.csv check failed')
+            logging.error(f'error_features: {error_features}')
 
     def show_feature_config(self):
         for feature,config in self.features_config.items():
@@ -291,6 +356,7 @@ class DataProcess:
         从recoded_train.csv读取数据，使用features_config中的特征信息。
         图表保存在visualization_dir目录下。
         """
+        logging.info(f'==========visualize_recoded_features==========')
         # 确保配置和输出目录存在
         os.makedirs(self.visualization_dir, exist_ok=True)
         
@@ -389,7 +455,7 @@ class DataProcess:
                 # 验证归一化结果
                 normalized_max = float(data[feature_name].max())
                 normalized_min = float(data[feature_name].min())
-                print(f"归一化后范围: [{normalized_min}, {normalized_max}]")
+                # print(f"归一化后范围: [{normalized_min}, {normalized_max}]")
                 if not (abs(normalized_max - 1.0) < 1e-6 and abs(normalized_min) < 1e-6):
                     print(f"警告: 特征 {feature_name} 归一化可能不成功")
                     input()
@@ -411,8 +477,10 @@ class DataProcess:
 
 def main():
     dp = DataProcess()
-    dp.reencode()
     dp.config_features()
+    dp.clean_invalid_data()
+    dp.drop_extream_features()
+    dp.reencode()
     dp.transfer_all_nan()
     dp.transfer_all_nan_for_id()
     # dp.show_feature_config()

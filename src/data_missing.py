@@ -12,7 +12,7 @@ import seaborn as sns
 
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(levelname)s] - %(message)s'
+    format='[%(levelname)s] %(message)s'
 )
 
 class MissingDataHandler:
@@ -22,11 +22,16 @@ class MissingDataHandler:
         self.features_config = self.feature_json['features']  # 获取features字段
         self.train_data = None
         
-    def load_recoded_data(self):
+    def load_data(self,mode:str='recoded'):
         """
         加载recoded后的数据
         """
-        data_path = os.path.join(self.output_dir, 'recoded_train.csv')
+        if mode=='recoded':
+            data_path = os.path.join(self.output_dir, 'recoded_train.csv')
+        elif mode=='normalized':
+            data_path = os.path.join(self.output_dir, 'normalized_train.csv')
+        else:
+            raise ValueError(f"不支持的加载模式: {mode}")
         if not os.path.exists(data_path):
             raise FileNotFoundError(f"recoded后的数据文件不存在: {data_path}")
         self.train_data = pd.read_csv(data_path)
@@ -103,9 +108,9 @@ class MissingDataHandler:
             raise AssertionError
         
         # 记录删除的行数
-        rows_dropped = len(data) - len(complete_data)
-        logging.info(f"保留的特征: {low_missing_features}")
-        logging.info(f"删除含缺失值的行: {rows_dropped} 行 ({rows_dropped/len(data)*100:.2f}%)")
+        rows_dropped = len(self.train_data) - len(complete_data)
+        logging.info(f"低缺失率特征: {low_missing_features}")
+        logging.info(f"删除缺失[低]缺失率特征的行 & [中,高]缺失率特征: {rows_dropped} 行 ({rows_dropped/len(data)*100:.2f}%)")
         logging.info(f"剩余数据集大小: {len(complete_data)} 行")
         
         return complete_data
@@ -115,33 +120,88 @@ class MissingDataHandler:
         删除中缺失率特征的行
         """
         mid_missing_features = self.feature_json['missing_type']['mid']
-        return self.train_data.dropna(subset=mid_missing_features)
+        data = self.train_data.dropna(subset=mid_missing_features)
+        data = data.drop(columns=self.feature_json['missing_type']['high']+self.feature_json['missing_type']['low'])
+        complete_data = data.dropna()
+        assert len(complete_data) == len(data)
+        rows_dropped = len(self.train_data) - len(data)
+        logging.info(f"中缺失率特征: {mid_missing_features}")
+        logging.info(f"删除缺失[中]缺失率特征的行 & [低,高]缺失率特征: {rows_dropped} 行 ({rows_dropped/len(self.train_data)*100:.2f}%)")
+        logging.info(f"剩余数据集大小: {len(data)} 行")
+        return data
+
+
     
-    def pca(self, data: pd.DataFrame):
+    def pca(self, data: pd.DataFrame,exp_name:str='first_try'):
         '''
         对于数据集data做主成分分析
         args:
             - data: pd.DataFrame, 完整的数据集（无缺失值）
         '''
-        exp_name = 'first_try'
         # 创建可视化输出目录
         vis_dir = self.output_dir /'pca_analysis'/f'{exp_name}'
         os.makedirs(vis_dir, exist_ok=True)
         
         # 去掉label
         data = data.drop(columns=['readmitted'])
-        # 数据标准化
+        
+        # 数据预处理
+        # 1. 只保留数值型列
+        numeric_cols = data.select_dtypes(include=[np.number]).columns
+        if len(numeric_cols) < len(data.columns):
+            logging.warning(f"移除了 {len(data.columns) - len(numeric_cols)} 个非数值型列")
+        data = data[numeric_cols]
+        
+        # 2. 检查无效值
+        if data.isna().any().any():
+            raise ValueError("数据中存在缺失值，请先处理缺失值")
+        
+        # 3. 检查常量列
+        constant_cols = [col for col in data.columns if data[col].nunique() == 1]
+        if constant_cols:
+            logging.warning(f"移除了 {len(constant_cols)} 个常量列: {constant_cols}")
+            data = data.drop(columns=constant_cols)
+        
+        # 4. 处理极端值（可选）
+        # 使用IQR方法检测极端值
+        Q1 = data.quantile(0.25)
+        Q3 = data.quantile(0.75)
+        IQR = Q3 - Q1
+        outlier_mask = ((data < (Q1 - 1.5 * IQR)) | (data > (Q3 + 1.5 * IQR))).any(axis=1)
+        if outlier_mask.sum() > 0:
+            logging.warning(f"检测到 {outlier_mask.sum()} 行包含极端值")
+        
+        # 5. 数据标准化
         scaler = StandardScaler()
         scaled_data = scaler.fit_transform(data)
-        scaled_df = pd.DataFrame(scaled_data, columns=data.columns)
         
-        # 执行PCA
+        # 6. 验证标准化后的数据
+        if np.isnan(scaled_data).any() or np.isinf(scaled_data).any():
+            raise ValueError("标准化后的数据包含无效值(NaN或Inf)")
+        
+        # 7. 执行PCA
         pca = PCA()
-        pca_result = pca.fit_transform(scaled_data)
+        try:
+            pca_result = pca.fit_transform(scaled_data)
+        except Exception as e:
+            logging.error(f"PCA计算失败: {e}")
+            logging.error(f"数据统计: \n{pd.DataFrame(scaled_data, columns=data.columns).describe()}")
+            raise
         
         # 计算解释方差比
         explained_variance_ratio = pca.explained_variance_ratio_
         cumulative_variance_ratio = np.cumsum(explained_variance_ratio)
+        
+        # 保存数据统计信息
+        stats = {
+            'n_samples': len(data),
+            'n_features': len(data.columns),
+            'n_outliers': int(outlier_mask.sum()),
+            'features': list(data.columns),
+            'feature_stats': data.describe().to_dict()
+        }
+        with open(vis_dir / 'data_stats.json', 'w') as f:
+            json.dump(stats, f, indent=4)
         
         # 绘制碎石图
         plt.figure(figsize=(10, 6))
@@ -245,14 +305,12 @@ class MissingDataHandler:
 def main():
     handler = MissingDataHandler()
     # handler.load_normalized_data()
-    handler.load_recoded_data()
+    handler.load_data(mode='recoded')
     handler.analyze_missing_values()
     low_complete_data = handler.process_low_missing_features()
-    handler.pca(low_complete_data)
-    return
-    mid_complete_data = handler.process_mid_missing_features()
-    handler.create_complete_datasets()
-    handler.create_all_complete_dataset()
+    handler.pca(low_complete_data,'low_missing_complete')
+    mid_complete_data = handler.drop_mid_missing_dataset()
+    handler.pca(mid_complete_data,'mid_missing_complete')
 
 if __name__ == '__main__':
     main()
