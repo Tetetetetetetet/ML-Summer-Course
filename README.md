@@ -83,8 +83,17 @@ conda activate diabetes_analysis
 python src/data_visualization.py
 ```
 
-## 数据处理流程(data_process.py)：
-1. 对原始数据做
+## 数据处理流程(src/data_process.py)：
+1. 对原始数据中的离散feature重新编码(类别编码,0,1,...)
+2. 找出所有等价于缺失的值，转换为None -> Dataset/processed/missing_replaced_train.csv
+3. 重新编码(类别编码,0,1,...) -> Dataset/processed/recoded_train
+4. 归一化 -> Dataset/processed/normalizaed_train.csv
+(5.) (todo) 对某些特征做one-hot编码？
+
+## 缺失值处理(src/data_missing.py)
+1. 分离出各个feature完整的子数据集
+2. 
+
 
 ## 常见问题
 

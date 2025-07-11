@@ -392,9 +392,11 @@ class DataProcess:
                 print(f"归一化后范围: [{normalized_min}, {normalized_max}]")
                 if not (abs(normalized_max - 1.0) < 1e-6 and abs(normalized_min) < 1e-6):
                     print(f"警告: 特征 {feature_name} 归一化可能不成功")
+                    input()
             else:
                 print(f"警告: 特征 {feature_name} 的所有值相同 ({feature_max})，设置为0")
                 data[feature_name] = 0
+                input()
                 
         # 保存归一化后的数据
         output_path = os.path.join(self.output_dir, 'normalized_train.csv')
