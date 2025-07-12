@@ -64,7 +64,7 @@
             "iskeep": true,
             "process": "normal",
             "missing": true,
-            "missing_values_num": 212,
+            "missing_values_num": 2027,
             "missing_values_p": 0.02249597691582043,
             "missing_values": [
                 "?"
@@ -95,7 +95,7 @@
             "iskeep": true,
             "process": "normal",
             "missing": false,
-            "missing_values_num": 0,
+            "missing_values_num": 3,
             "missing_values_p": 3.3294489761944396e-05,
             "missing_values": [
                 "Unknown/Invalid"
@@ -104,7 +104,8 @@
             "max_value": 1.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "unseen_values": []
+            "unseen_values": [],
+            "missing_in_test_num": 0
         },
         "age": {
             "feature_id": 4,
@@ -148,7 +149,8 @@
             "max_value": 9.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "unseen_values": []
+            "unseen_values": [],
+            "missing_in_test_num": 0
         },
         "weight": {
             "feature_id": 5,
@@ -211,7 +213,7 @@
             "iskeep": true,
             "process": "normal",
             "missing": false,
-            "missing_values_num": 1036,
+            "missing_values_num": 9201,
             "missing_values_p": 0.10211420009988346,
             "missing_values": [
                 "8",
@@ -284,7 +286,7 @@
             "iskeep": true,
             "process": "normal",
             "missing": false,
-            "missing_values_num": 457,
+            "missing_values_num": 4223,
             "missing_values_p": 0.04686754342156373,
             "missing_values": [
                 "25",
@@ -342,7 +344,7 @@
             "iskeep": true,
             "process": "normal",
             "missing": false,
-            "missing_values_num": 696,
+            "missing_values_num": 6233,
             "missing_values_p": 0.06917485156206647,
             "missing_values": [
                 "17",
@@ -374,7 +376,8 @@
             "max_value": 14.0,
             "min_value": 1.0,
             "missing_in_test": false,
-            "missing_values_num": 0
+            "missing_values_num": 0,
+            "missing_in_test_num": 0
         },
         "payer_code": {
             "feature_id": 10,
@@ -425,7 +428,7 @@
             "iskeep": true,
             "process": "special",
             "missing": true,
-            "missing_values_num": 3945,
+            "missing_values_num": 35646,
             "missing_values_p": 0.39560512735142334,
             "missing_values": [
                 "?"
@@ -596,7 +599,7 @@
             "iskeep": true,
             "process": "special",
             "missing": true,
-            "missing_values_num": 4870,
+            "missing_values_num": 44259,
             "missing_values_p": 0.4911936074579657,
             "missing_values": [
                 "?"
@@ -624,7 +627,8 @@
             "max_value": 132.0,
             "min_value": 1.0,
             "missing_in_test": false,
-            "missing_values_num": 0
+            "missing_values_num": 0,
+            "missing_in_test_num": 0
         },
         "num_procedures": {
             "feature_id": 13,
@@ -642,7 +646,8 @@
             "max_value": 6.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "missing_values_num": 0
+            "missing_values_num": 0,
+            "missing_in_test_num": 0
         },
         "num_medications": {
             "feature_id": 14,
@@ -660,7 +665,8 @@
             "max_value": 81.0,
             "min_value": 1.0,
             "missing_in_test": false,
-            "missing_values_num": 0
+            "missing_values_num": 0,
+            "missing_in_test_num": 0
         },
         "number_outpatient": {
             "feature_id": 15,
@@ -678,7 +684,8 @@
             "max_value": 42.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "missing_values_num": 0
+            "missing_values_num": 0,
+            "missing_in_test_num": 0
         },
         "number_emergency": {
             "feature_id": 16,
@@ -696,7 +703,8 @@
             "max_value": 76.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "missing_values_num": 0
+            "missing_values_num": 0,
+            "missing_in_test_num": 0
         },
         "number_inpatient": {
             "feature_id": 17,
@@ -714,7 +722,8 @@
             "max_value": 21.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "missing_values_num": 0
+            "missing_values_num": 0,
+            "missing_in_test_num": 0
         },
         "diag_1": {
             "feature_id": 18,
@@ -749,7 +758,7 @@
             "iskeep": true,
             "process": "special",
             "missing": true,
-            "missing_values_num": 0,
+            "missing_values_num": 21,
             "missing_values_p": 0.00023306142833361078,
             "missing_values": [
                 "?"
@@ -757,7 +766,8 @@
             "missing_replace": null,
             "max_value": 8.0,
             "min_value": 0.0,
-            "missing_in_test": false
+            "missing_in_test": false,
+            "missing_in_test_num": 0
         },
         "diag_2": {
             "feature_id": 19,
@@ -792,7 +802,7 @@
             "iskeep": true,
             "process": "special",
             "missing": true,
-            "missing_values_num": 38,
+            "missing_values_num": 320,
             "missing_values_p": 0.003551412241274069,
             "missing_values": [
                 "?"
@@ -836,7 +846,7 @@
             "iskeep": true,
             "process": "special",
             "missing": true,
-            "missing_values_num": 157,
+            "missing_values_num": 1264,
             "missing_values_p": 0.014028078353032573,
             "missing_values": [
                 "?"
@@ -863,7 +873,8 @@
             "max_value": 16.0,
             "min_value": 1.0,
             "missing_in_test": false,
-            "missing_values_num": 0
+            "missing_values_num": 0,
+            "missing_in_test_num": 0
         },
         "max_glu_serum": {
             "feature_id": 22,
@@ -946,7 +957,8 @@
             "max_value": 3.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "unseen_values": []
+            "unseen_values": [],
+            "missing_in_test_num": 0
         },
         "repaglinide": {
             "feature_id": 25,
@@ -1066,7 +1078,8 @@
             "max_value": 3.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "unseen_values": []
+            "unseen_values": [],
+            "missing_in_test_num": 0
         },
         "acetohexamide": {
             "feature_id": 29,
@@ -1124,7 +1137,8 @@
             "max_value": 3.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "unseen_values": []
+            "unseen_values": [],
+            "missing_in_test_num": 0
         },
         "glyburide": {
             "feature_id": 31,
@@ -1156,7 +1170,8 @@
             "max_value": 3.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "unseen_values": []
+            "unseen_values": [],
+            "missing_in_test_num": 0
         },
         "tolbutamide": {
             "feature_id": 32,
@@ -1214,7 +1229,8 @@
             "max_value": 3.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "unseen_values": []
+            "unseen_values": [],
+            "missing_in_test_num": 0
         },
         "rosiglitazone": {
             "feature_id": 34,
@@ -1246,7 +1262,8 @@
             "max_value": 3.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "unseen_values": []
+            "unseen_values": [],
+            "missing_in_test_num": 0
         },
         "acarbose": {
             "feature_id": 35,
@@ -1426,7 +1443,8 @@
             "max_value": 3.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "unseen_values": []
+            "unseen_values": [],
+            "missing_in_test_num": 0
         },
         "glyburide-metformin": {
             "feature_id": 42,
@@ -1586,7 +1604,8 @@
             "max_value": 1.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "unseen_values": []
+            "unseen_values": [],
+            "missing_in_test_num": 0
         },
         "diabetesMed": {
             "feature_id": 48,
@@ -1614,7 +1633,8 @@
             "max_value": 1.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "unseen_values": []
+            "unseen_values": [],
+            "missing_in_test_num": 0
         },
         "readmitted": {
             "feature_id": 49,
@@ -1644,7 +1664,8 @@
             "max_value": 2.0,
             "min_value": 0.0,
             "missing_in_test": false,
-            "unseen_values": []
+            "unseen_values": [],
+            "missing_in_test_num": 0
         }
     },
     "missing_process_type": {

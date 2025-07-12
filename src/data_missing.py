@@ -438,16 +438,37 @@ class MissingDataHandler:
             # 获取非缺失值的数据作为训练集
             train_mask = ~missing_mask
             train_data = data[train_mask].copy()
+
+            # 如果没有可用样本，跳过
+            if train_data.shape[0] == 0:
+                logging.warning(f"特征 {feature} 没有可用样本，跳过填补")
+                continue
             
             # 准备特征和目标变量
             X_train = train_data.drop(columns=[feature])
             y_train = train_data[feature]
+            
+            # 对所有特征做缺失值填充
+            for col in X_train.columns:
+                if X_train[col].isna().sum() > 0:
+                    if X_train[col].dtype in [np.float64, np.int64]:
+                        median_val = X_train[col].median()
+                        X_train[col] = X_train[col].fillna(median_val)
+                    else:
+                        most_common = X_train[col].mode().iloc[0]
+                        X_train[col] = X_train[col].fillna(most_common)
             
             # 处理分类变量
             categorical_features = X_train.select_dtypes(include=['object', 'category']).columns
             label_encoders = {}
             
             for cat_feature in categorical_features:
+                # 处理分类特征的缺失值
+                if X_train[cat_feature].isna().sum() > 0:
+                    # 用最常见的值填充缺失值
+                    most_common = X_train[cat_feature].mode().iloc[0]
+                    X_train[cat_feature] = X_train[cat_feature].fillna(most_common)
+                
                 le = LabelEncoder()
                 X_train[cat_feature] = le.fit_transform(X_train[cat_feature].astype(str))
                 label_encoders[cat_feature] = le
@@ -459,8 +480,33 @@ class MissingDataHandler:
                     median_val = X_train[num_feature].median()
                     X_train[num_feature] = X_train[num_feature].fillna(median_val)
             
+            # 改进的分类变量判断逻辑
+            def is_categorical_feature(series, max_categories=20):
+                """
+                判断特征是否为分类变量
+                """
+                # 如果是object类型，直接认为是分类变量
+                if series.dtype == 'object' or series.dtype == 'category':
+                    return True
+                
+                # 如果是数值型，检查唯一值数量
+                unique_count = series.nunique()
+                if unique_count <= max_categories:
+                    # 进一步检查：如果唯一值数量很少，且都是整数，很可能是分类变量
+                    if unique_count <= 10:
+                        return True
+                    # 检查是否都是整数（允许少量小数，可能是编码后的分类变量）
+                    non_null_values = series.dropna()
+                    if len(non_null_values) > 0:
+                        # 检查是否大部分都是整数
+                        integer_count = sum(1 for x in non_null_values if x == int(x))
+                        if integer_count / len(non_null_values) > 0.8:
+                            return True
+                
+                return False
+            
             # 检查目标变量是否为分类变量
-            if y_train.dtype == 'object' or y_train.nunique() < 10:
+            if is_categorical_feature(y_train):
                 # 分类变量，使用逻辑回归
                 target_encoder = LabelEncoder()
                 y_train_encoded = target_encoder.fit_transform(y_train.astype(str))
@@ -476,6 +522,10 @@ class MissingDataHandler:
                 # 对缺失数据的特征进行相同的预处理
                 for cat_feature in categorical_features:
                     if cat_feature in X_missing.columns:
+                        # 处理分类特征的缺失值
+                        if X_missing[cat_feature].isna().sum() > 0:
+                            most_common = X_missing[cat_feature].mode().iloc[0]
+                            X_missing[cat_feature] = X_missing[cat_feature].fillna(most_common)
                         X_missing[cat_feature] = label_encoders[cat_feature].transform(
                             X_missing[cat_feature].astype(str)
                         )
@@ -494,7 +544,8 @@ class MissingDataHandler:
                     # 尝试转换为与原始列相同的数据类型
                     original_dtype = data[feature].dtype
                     if pd.api.types.is_numeric_dtype(original_dtype):
-                        predictions_converted = pd.to_numeric(predictions, errors='coerce')
+                        # 对于分类变量，确保预测结果是整数
+                        predictions_converted = pd.to_numeric(predictions, errors='coerce').astype(int)
                     else:
                         predictions_converted = predictions.astype(str)
                     
@@ -572,7 +623,7 @@ class MissingDataHandler:
             model_info['feature_stats'][feature] = {
                 'missing_count': missing_count,
                 'missing_percentage': (missing_count / len(data)) * 100,
-                'data_type': 'categorical' if y_train.dtype == 'object' or y_train.nunique() < 10 else 'numeric',
+                'data_type': 'categorical' if is_categorical_feature(y_train) else 'numeric',
                 'unique_values_before': y_train.nunique(),
                 'unique_values_after': imputed_data[feature].nunique()
             }
@@ -715,6 +766,12 @@ class MissingDataHandler:
                     predictions = model_data['target_encoder'].inverse_transform(predictions_encoded)
                 else:
                     predictions = predictions_encoded
+                
+                # 对于逻辑回归预测的分类变量，确保结果是整数
+                try:
+                    predictions = pd.to_numeric(predictions, errors='coerce').astype(int)
+                except Exception as e:
+                    logging.warning(f"分类变量预测结果转换为整数失败: {e}")
             else:  # linear_regression
                 predictions = model_data['model'].predict(X_test[missing_mask])
             

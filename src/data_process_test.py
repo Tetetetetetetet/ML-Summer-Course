@@ -158,7 +158,7 @@ class DataProcessTest:
                     missing_count += mask.sum()
             
             # 记录缺失值数量
-            config['missing_values_num'] = int(missing_count)
+            config['missing_in_test_num'] = int(missing_count)
             
         write_jsonl(self.feature_json, self.feature_json_path)
         logging.info("所有无意义值已转换为缺失值")
@@ -268,14 +268,11 @@ class DataProcessTest:
             # 检查是否有未映射的值
             nan_num = self.test_data[feature].isna().sum()
             if nan_num > 0 and int(config['missing_in_test_num'])==int(nan_num):
-                logging.info(f"特征 '{feature}' 有 {nan_num} 个值[因为缺失]无法映射到编码")
+                unmapped_unique = self.test_data[self.test_data[feature].isna()][feature].unique()
+                logging.info(f"特征 '{feature}' 有 {nan_num} 个值[因为缺失]无法映射到编码: {unmapped_unique}")
             elif nan_num > 0:
-                logging.error(f"无法映射数不等于缺失值数: {nan_num} != {config['missing_in_test_num']}")
+                logging.error(f"无法映射数不等于缺失值数: {nan_num} != {config['missing_in_test_num']}, 未映射的值: {unmapped_unique}")
                 pdb.set_trace()
-            # 显示未映射的值
-            unmapped_unique = self.test_data[self.test_data[feature].isna()][feature].unique()
-            logging.warning(f"未映射的值: {unmapped_unique}")
-
         
         write_jsonl(self.feature_json,self.feature_json_path)
         self.test_data.to_csv(self.output_dir / 'recoded_test.csv', index=False)

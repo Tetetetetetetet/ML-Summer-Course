@@ -263,6 +263,7 @@ class DataProcess:
                         raise ValueError(f"Feature '{feature}' has invalid value: {val}")
                 
                 # 替换缺失值，保持为ID格式
+                self.train_data[feature] = self.train_data[feature].astype(object)
                 self.train_data.loc[mask, feature] = final_nan
             else:
                 mask = self.train_data[feature].isin(nan_values)
@@ -329,6 +330,7 @@ class DataProcess:
                 self._categorize_diagnosis_feature(feature)
                 continue
 
+            # p self.train_data[feature].value_counts()
             # 其他特征使用原有的标签编码方式
             enc_map = config['label_encoding']['encoding_mapping']
             # 先统一转成 str 便于匹配
@@ -615,7 +617,6 @@ def main():
     dp.check_recoded_data()
     # dp.visualize_recoded_features()
     dp.transfer_to_feature_tabel()
-    dp.normalize_data()
 
 if __name__ == '__main__':
     main()
