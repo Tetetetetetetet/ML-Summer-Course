@@ -489,8 +489,19 @@ class MissingDataHandler:
                 predictions_encoded = lr_model.predict(X_missing)
                 predictions = target_encoder.inverse_transform(predictions_encoded)
                 
-                # 填充缺失值
-                imputed_data.loc[missing_mask, feature] = predictions
+                # 填充缺失值，确保数据类型兼容
+                try:
+                    # 尝试转换为与原始列相同的数据类型
+                    original_dtype = data[feature].dtype
+                    if pd.api.types.is_numeric_dtype(original_dtype):
+                        predictions_converted = pd.to_numeric(predictions, errors='coerce')
+                    else:
+                        predictions_converted = predictions.astype(str)
+                    
+                    imputed_data.loc[missing_mask, feature] = predictions_converted
+                except Exception as e:
+                    logging.warning(f"数据类型转换失败，使用原始预测值: {e}")
+                    imputed_data.loc[missing_mask, feature] = predictions
                 
                 # 保存模型信息
                 model_info['models'][feature] = {
@@ -531,8 +542,19 @@ class MissingDataHandler:
                 # 预测
                 predictions = lr_model.predict(X_missing)
                 
-                # 填充缺失值
-                imputed_data.loc[missing_mask, feature] = predictions
+                # 填充缺失值，确保数据类型兼容
+                try:
+                    # 尝试转换为与原始列相同的数据类型
+                    original_dtype = data[feature].dtype
+                    if pd.api.types.is_numeric_dtype(original_dtype):
+                        predictions_converted = pd.to_numeric(predictions, errors='coerce')
+                    else:
+                        predictions_converted = predictions.astype(str)
+                    
+                    imputed_data.loc[missing_mask, feature] = predictions_converted
+                except Exception as e:
+                    logging.warning(f"数据类型转换失败，使用原始预测值: {e}")
+                    imputed_data.loc[missing_mask, feature] = predictions
                 
                 # 保存模型信息
                 model_info['models'][feature] = {
@@ -562,20 +584,55 @@ class MissingDataHandler:
         # 保存填补后的数据
         imputed_data.to_csv(os.path.join(imputed_dir, 'logistic_imputed_train.csv'), index=False)
         
-        # 保存模型信息（不包含模型对象，因为pickle可能有问题）
-        model_info_save = model_info.copy()
+        # 单独保存每个模型（在移除模型对象之前）
+        for feature, model_data in model_info['models'].items():
+            model_path = os.path.join(models_dir, f'{feature}_model.pkl')
+            try:
+                # 确保模型对象存在
+                if 'model' not in model_data:
+                    logging.error(f"模型数据中缺少 'model' 键: {list(model_data.keys())}")
+                    continue
+                
+                # 创建完整的模型数据副本
+                model_data_to_save = {
+                    'model': model_data['model'],
+                    'model_type': model_data.get('model_type', 'unknown'),
+                    'categorical_features': model_data.get('categorical_features', []),
+                    'numeric_features': model_data.get('numeric_features', []),
+                    'feature_median_values': model_data.get('feature_median_values', {})
+                }
+                
+                # 添加编码器（如果存在）
+                if 'label_encoders' in model_data:
+                    model_data_to_save['label_encoders'] = model_data['label_encoders']
+                if 'target_encoder' in model_data:
+                    model_data_to_save['target_encoder'] = model_data['target_encoder']
+                
+                with open(model_path, 'wb') as f:
+                    pickle.dump(model_data_to_save, f)
+                logging.info(f"模型 {feature} 保存成功")
+            except Exception as e:
+                logging.error(f"模型 {feature} 保存失败: {e}")
+                # 如果保存失败，尝试只保存模型对象
+                try:
+                    model_only = {'model': model_data['model']}
+                    if 'target_encoder' in model_data:
+                        model_only['target_encoder'] = model_data['target_encoder']
+                    with open(model_path, 'wb') as f:
+                        pickle.dump(model_only, f)
+                    logging.info(f"模型 {feature} 简化保存成功")
+                except Exception as e2:
+                    logging.error(f"模型 {feature} 简化保存也失败: {e2}")
+        
+        # 保存模型信息（不包含模型对象，因为JSON不能序列化模型对象）
+        import copy
+        model_info_save = copy.deepcopy(model_info)
         for feature in model_info_save['models']:
             # 移除模型对象，只保存其他信息
             model_info_save['models'][feature].pop('model', None)
         
         with open(os.path.join(imputed_dir, 'model_info.json'), 'w') as f:
             json.dump(model_info_save, f, indent=4, default=str)
-        
-        # 单独保存每个模型
-        for feature, model_data in model_info['models'].items():
-            model_path = os.path.join(models_dir, f'{feature}_model.pkl')
-            with open(model_path, 'wb') as f:
-                pickle.dump(model_data, f)
         
         logging.info(f"逻辑回归填补完成，结果保存在: {imputed_dir}")
         return imputed_data, model_info
@@ -648,9 +705,16 @@ class MissingDataHandler:
                     X_test[num_feature] = X_test[num_feature].fillna(median_val)
             
             # 预测缺失值
-            if model_data['model_type'] == 'logistic_regression':
+            if 'model' not in model_data:
+                logging.error(f"模型数据中缺少 'model' 键: {list(model_data.keys())}")
+                continue
+                
+            if model_data.get('model_type') == 'logistic_regression':
                 predictions_encoded = model_data['model'].predict(X_test[missing_mask])
-                predictions = model_data['target_encoder'].inverse_transform(predictions_encoded)
+                if 'target_encoder' in model_data:
+                    predictions = model_data['target_encoder'].inverse_transform(predictions_encoded)
+                else:
+                    predictions = predictions_encoded
             else:  # linear_regression
                 predictions = model_data['model'].predict(X_test[missing_mask])
             
