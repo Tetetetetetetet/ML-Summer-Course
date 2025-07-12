@@ -15,13 +15,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
 from argparse import ArgumentParser
+from imblearn.over_sampling import SMOTE
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 warnings.filterwarnings('ignore')
 
 class DataFit:
-    def __init__(self, data_source='logistic_imputed',mode='normal'):
+    def __init__(self, data_source='logistic_imputed',mode='normal',isoversample=False):
         """
         初始化DataFit类
         
@@ -37,6 +38,7 @@ class DataFit:
         self.X_test = None
         self.y_train = None
         self.y_test = None
+        self.isoversample = isoversample
         self.models = {}
         self.scaler = StandardScaler()
         self.feature_selector = None
@@ -45,11 +47,11 @@ class DataFit:
         self.results = {}
         self.mode2dataset = {
             'normal': {'train': 'logistic_imputed/logistic_imputed_train_final.csv','test': 'logistic_imputed/logistic_imputed_test_final.csv'},
-            '2class': {'train': 'logistic_imputed/logistic_imputed_train_final_2class.csv','test': 'logistic_imputed/logistic_imputed_test_final_2class.csv'}
+            '2class': {'train': 'logistic_imputed/logistic_imputed_train_final_2class.csv','test': 'logistic_imputed/logistic_imputed_test_final_2class.csv'},
         }
         
         # 创建结果保存目录
-        self.results_dir = os.path.join(self.output_dir, 'modeling_results')
+        self.results_dir = os.path.join(self.output_dir, 'modeling_results' if not self.isoversample else 'modeling_oversample_results')
         os.makedirs(self.results_dir, exist_ok=True)
         
         logging.info(f"DataFit初始化完成，数据源: {data_source}")
@@ -163,6 +165,11 @@ class DataFit:
         # 数据标准化
         X_train_scaled = self.scaler.fit_transform(X_train_selected)
         X_test_scaled = self.scaler.transform(X_test_selected)
+        
+        
+        if self.isoversample:
+            smt = SMOTE()
+            X_train_scaled, y_train_full = smt.fit_resample(X_train_scaled, y_train_full)
         
         # 转换为DataFrame
         self.X_train = pd.DataFrame(X_train_scaled, columns=selected_features)
@@ -488,15 +495,13 @@ def main():
     """
     主函数
     """
-    # 创建DataFit实例
-    data_fit = DataFit(data_source='logistic_imputed',mode='normal')
-    # 运行完整流程
-    data_fit.run_complete_pipeline()
     parser = ArgumentParser()
-    parser.add_argument('--mode', type=str, default='normal', help='数据集模式')
+    parser.add_argument('-m','--mode', type=str, default='normal', help='数据集模式')
+    parser.add_argument('-s','--isoversample', type=bool, default=False, help='数据集模式',action='store_true')
     args = parser.parse_args()
-    data_fit = DataFit(data_source='logistic_imputed',mode=args.mode)
+    data_fit = DataFit(data_source='logistic_imputed',mode=args.mode,isoversample=args.isoversample)
     data_fit.run_complete_pipeline()
+
 
 if __name__ == "__main__":
     main()
