@@ -1,4 +1,5 @@
-all: ptest
+all: 
+	python src/data_fit.py
 
 process:
 	python src/data_process.py
