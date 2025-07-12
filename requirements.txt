@@ -18,6 +18,7 @@ google-pasta==0.2.0
 grpcio==1.73.1
 h5py==3.14.0
 idna==3.10
+imbalanced-learn @ file:///croot/imbalanced-learn_1718132237102/work
 importlib_metadata==8.7.0
 importlib_resources==6.5.2
 ipykernel==6.29.5
@@ -35,7 +36,11 @@ MarkupSafe==3.0.2
 matplotlib==3.9.4
 matplotlib-inline==0.1.7
 mdurl==0.1.2
+mkl-service==2.4.0
+mkl_fft @ file:///io/mkl313/mkl_fft_1730824109137/work
+mkl_random @ file:///io/mkl313/mkl_random_1730823916628/work
 ml_dtypes==0.5.1
+-e git+ssh://git@github.com/Tetetetetetetet/ML-Summer-Course.git@8d364d00a1d0f3380fd253152808bac63e228f83#egg=myutils&subdirectory=myutils
 namex==0.1.0
 nest-asyncio==1.6.0
 numpy==2.0.2
@@ -59,8 +64,8 @@ pytz==2025.2
 pyzmq==27.0.0
 requests==2.32.4
 rich==14.0.0
-scikit-learn==1.6.1
-scipy==1.13.1
+scikit-learn @ file:///croot/scikit-learn_1737988764076/work
+scipy @ file:///croot/scipy_1733756309941/work/dist/scipy-1.13.1-cp39-cp39-linux_x86_64.whl#sha256=a4372e07d982a377bda57ec71fd74ac403442571e1d717de47325a14dea5c278
 seaborn==0.13.2
 six==1.17.0
 stack-data==0.6.3
