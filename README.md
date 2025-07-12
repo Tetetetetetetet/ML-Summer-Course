@@ -4,7 +4,7 @@
 
 ## 环境配置
 
-### 快速安装（推荐）
+### 快速安装（推荐）(linux/macos)
 
 ```bash
 ./setup.sh
@@ -21,6 +21,42 @@ conda activate diabetes_analysis
 cd myutils
 pip install -e .
 ```
+
+## 运行
+数据预处理
+```
+make
+```
+预期结果：
+```
+[INFO] ==========保存最终结果==========
+[INFO] 训练集保存到: Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_final.csv
+[INFO] 测试集保存到: Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_final.csv
+[INFO] 处理报告保存到: Dataset/processed/train_processed/logistic_imputed/imputation_report.json
+[INFO] ==========逻辑回归填充完成==========
+[INFO] 训练集: (90105, 29) -> (90105, 29)
+[INFO] 测试集: (10009, 29) -> (10009, 29)
+[INFO] 训练集缺失值: 103197 -> 0
+[INFO] 测试集缺失值: 11411 -> 0
+[INFO] ==========逻辑回归缺失值填充流程完成==========
+```
+训练，测试
+```
+make train
+```
+预期结果
+```
+[INFO] ==========save_model==========
+[INFO] 模型保存到: Dataset/processed/train_processed/modeling_results/best_model_20250712_144301.pkl
+[INFO] ==========generate_report==========
+[INFO] 建模报告保存到: Dataset/processed/train_processed/modeling_results/modeling_report.json
+[INFO] ==========建模总结==========
+[INFO] 数据源: logistic_imputed
+[INFO] 最佳模型: GradientBoosting
+[INFO] 最佳准确率: 0.5821
+[INFO] ==========建模流程完成==========
+```
+
 
 ## 项目结构
 

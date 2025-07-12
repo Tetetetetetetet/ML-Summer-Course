@@ -1,4 +1,4 @@
-.PHONY: all pipeline process impute clean
+.PHONY: all pipeline process impute clean train
 
 all: pipeline
 
@@ -17,7 +17,14 @@ Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_final.
 	Dataset/processed/train_processed/recoded_train.csv Dataset/processed/test_processed/recoded_test.csv
 	python src/logistic_imputation_pipeline.py
 
+# 3. 模型训练
+Dataset/processed/train_processed/modeling_results/modeling_report.json: \
+	Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_final.csv Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_final.csv
+	python src/data_fit.py
+
 impute: Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_final.csv Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_final.csv
+
+train: Dataset/processed/train_processed/modeling_results/modeling_report.json
 
 check:
 	python src/test_recoded_data.py
@@ -26,5 +33,6 @@ process: Dataset/processed/train_processed/recoded_train.csv Dataset/processed/t
 
 clean:
 	rm -rf Dataset/processed/train_processed/logistic_imputed/*
+	rm -rf Dataset/processed/train_processed/modeling_results/*
 	rm -f Dataset/processed/train_processed/recoded_train.csv
 	rm -f Dataset/processed/test_processed/recoded_test.csv
