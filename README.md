@@ -1,6 +1,3 @@
-# 糖尿病数据集分析项目
-
-本项目对糖尿病数据集进行特征分析和可视化，为机器学习模型训练提供数据预处理支持。
 
 ## 环境配置
 
@@ -32,6 +29,7 @@ cd myutils && pip install -e .
 ```
 
 ## 运行
+### for linux/macos
 数据预处理
 ```
 make
@@ -65,6 +63,39 @@ make train
 [INFO] 最佳准确率: 0.5821
 [INFO] ==========建模流程完成==========
 ```
+
+### for windows
+处理数据
+```
+python src/data_process.py
+python src/data_process_test.py
+python src/logistic_imputation_pipeline.py
+```
+训练
+```
+python src/data_fit.py
+```
+
+### 结果文件
+- Dataset/train_processed/recoded_train.csv: 重新编码后的train数据集，缺失值记为None
+- Dataset/test_processed/recoded_test.csv: 重新编码后的test数据集，缺失值记为None
+- Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_final.csv: 逻辑回归填值后的train数据集，可直接用于训练
+- Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_final.csv: 逻辑回归填值后的test数据集，可直接用于测试
+
+## 如何修改
+### 尝试新的数据预处理方式
+在`recoded_train.csv`基础上对数据做降纬/embedding/过采样/..., 然后保存为新的结果文件放在`Dataset/processed/train_processed`下，然后在`data_fit` `46-48`行中类似如下
+```python
+self.mode2dataset = {
+   'normal': {'train': 'logistic_imputed/logistic_imputed_train_final.csv','test': 'logistic_imputed/logistic_imputed_test_final.csv'},
+   '2class': {'train': 'logistic_imputed/logistic_imputed_train_final_2class.csv','test': 'logistic_imputed/logistic_imputed_test_final_2class.csv'}
+}
+```
+增加一项
+```python
+'my_mode': {'train':'path/to/train_dataset','test':'path/to/test_dataset'}
+```
+路径是相对于`train_processed/`的相对路径
 
 
 ## 项目结构
@@ -115,6 +146,7 @@ feature.json包含了数据集的所有特征配置信息，主要包括以下�
    - `missing_values_p`: 缺失值比例
    - `missing_values`: 特征特有的缺失值列表
    - `missing_replace`: 缺失值替换值
+   - `missing_in_test_num`: 测试集中的缺失数量
 
 4. 数值范围（normalized前）
    - `max_value`: 特征最大值

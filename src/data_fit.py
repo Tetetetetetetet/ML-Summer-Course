@@ -14,6 +14,7 @@ from sklearn.feature_selection import SelectKBest, f_classif, RFE
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
+from argparse import ArgumentParser
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
@@ -42,6 +43,10 @@ class DataFit:
         self.best_model = None
         self.best_model_name = None
         self.results = {}
+        self.mode2dataset = {
+            'normal': {'train': 'logistic_imputed/logistic_imputed_train_final.csv','test': 'logistic_imputed/logistic_imputed_test_final.csv'},
+            '2class': {'train': 'logistic_imputed/logistic_imputed_train_final_2class.csv','test': 'logistic_imputed/logistic_imputed_test_final_2class.csv'}
+        }
         
         # 创建结果保存目录
         self.results_dir = os.path.join(self.output_dir, 'modeling_results')
@@ -57,12 +62,9 @@ class DataFit:
         
         try:
             # 加载训练集和测试集
-            if self.mode == 'normal':
-                train_path = os.path.join(self.output_dir, f'{self.data_source}', f'{self.data_source}_train_final.csv')
-                test_path = os.path.join(self.output_dir, f'{self.data_source}', f'{self.data_source}_test_final.csv')
-            elif self.mode == '2class':
-                train_path = os.path.join(self.output_dir, f'{self.data_source}', f'{self.data_source}_train_final_2class.csv')
-                test_path = os.path.join(self.output_dir, f'{self.data_source}', f'{self.data_source}_test_final_2class.csv')
+            if self.mode in self.mode2dataset:
+                train_path = os.path.join(self.output_dir, self.mode2dataset[self.mode]['train'])
+                test_path = os.path.join(self.output_dir, self.mode2dataset[self.mode]['test'])
             else:
                 raise ValueError(f"Invalid mode: {self.mode}")
             
@@ -489,6 +491,11 @@ def main():
     # 创建DataFit实例
     data_fit = DataFit(data_source='logistic_imputed',mode='normal')
     # 运行完整流程
+    data_fit.run_complete_pipeline()
+    parser = ArgumentParser()
+    parser.add_argument('--mode', type=str, default='normal', help='数据集模式')
+    args = parser.parse_args()
+    data_fit = DataFit(data_source='logistic_imputed',mode=args.mode)
     data_fit.run_complete_pipeline()
 
 if __name__ == "__main__":
