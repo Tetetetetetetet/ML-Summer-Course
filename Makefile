@@ -26,8 +26,10 @@ impute: Dataset/processed/train_processed/logistic_imputed/logistic_imputed_trai
 
 train: Dataset/processed/train_processed/modeling_results/modeling_report.json
 
-check:
+checkr:
 	python src/test_recoded_data.py
+checki:
+	python src/test_imputed_data.py
 
 process: Dataset/processed/train_processed/recoded_train.csv Dataset/processed/test_processed/recoded_test.csv
 
@@ -36,3 +38,6 @@ clean:
 	rm -rf Dataset/processed/train_processed/modeling_results/*
 	rm -f Dataset/processed/train_processed/recoded_train.csv
 	rm -f Dataset/processed/test_processed/recoded_test.csv
+
+merge_target:
+	python src/merge_target.py

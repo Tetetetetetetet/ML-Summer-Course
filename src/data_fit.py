@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 warnings.filterwarnings('ignore')
 
 class DataFit:
-    def __init__(self, data_source='logistic_imputed'):
+    def __init__(self, data_source='logistic_imputed',mode='normal'):
         """
         初始化DataFit类
         
@@ -29,6 +29,7 @@ class DataFit:
         """
         self.output_dir = 'Dataset/processed/train_processed'
         self.data_source = data_source
+        self.mode = mode
         self.train_data = None
         self.test_data = None
         self.X_train = None
@@ -56,8 +57,14 @@ class DataFit:
         
         try:
             # 加载训练集和测试集
-            train_path = os.path.join(self.output_dir, f'{self.data_source}', f'{self.data_source}_train_final.csv')
-            test_path = os.path.join(self.output_dir, f'{self.data_source}', f'{self.data_source}_test_final.csv')
+            if self.mode == 'normal':
+                train_path = os.path.join(self.output_dir, f'{self.data_source}', f'{self.data_source}_train_final.csv')
+                test_path = os.path.join(self.output_dir, f'{self.data_source}', f'{self.data_source}_test_final.csv')
+            elif self.mode == '2class':
+                train_path = os.path.join(self.output_dir, f'{self.data_source}', f'{self.data_source}_train_final_2class.csv')
+                test_path = os.path.join(self.output_dir, f'{self.data_source}', f'{self.data_source}_test_final_2class.csv')
+            else:
+                raise ValueError(f"Invalid mode: {self.mode}")
             
             self.train_data = pd.read_csv(train_path)
             self.test_data = pd.read_csv(test_path)
@@ -480,7 +487,7 @@ def main():
     主函数
     """
     # 创建DataFit实例
-    data_fit = DataFit(data_source='logistic_imputed')
+    data_fit = DataFit(data_source='logistic_imputed',mode='normal')
     # 运行完整流程
     data_fit.run_complete_pipeline()
 

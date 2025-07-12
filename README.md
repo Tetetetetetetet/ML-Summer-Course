@@ -11,6 +11,7 @@
 ```
 
 ### 手动安装
+#### 通过 environment.yml
 
 ```bash
 # 1. 创建环境
@@ -20,6 +21,14 @@ conda activate diabetes_analysis
 # 2. 安装自定义工具包
 cd myutils
 pip install -e .
+```
+
+#### 通过 requirements.txt
+```
+conda create -n ml python=3.9
+conda install pip
+pip install -r requirements.txt
+cd myutils && pip install -e .
 ```
 
 ## 运行
