@@ -138,6 +138,7 @@ class DataProcess:
             - self.feature_json['label_encoding']['encoding_mapping']
             - self.feature_json['value_num']
         '''
+        logging.info(f'==========3. reencode features==========')
         for feature, config in self.features_config.items():
             # 跳过诊断特征，它们将在recode_train_data中特殊处理
             if feature in ['diag_1', 'diag_2', 'diag_3']:
@@ -154,6 +155,8 @@ class DataProcess:
                     unique_values.append(str(v))
             # 保证顺序一致
             unique_values = sorted(list(dict.fromkeys(unique_values)))
+            if feature == 'readmitted':
+                unique_values = ['NO','<30','>30']
             config['value_num'] = len(unique_values)
             encoding_mapping = {val: idx for idx, val in enumerate(unique_values)}
             config['label_encoding']['unique_values'] = unique_values
@@ -192,7 +195,7 @@ class DataProcess:
         replaced_features = []
         id_features = self.ids_mapping.keys()
         for feature,config in tqdm(self.features_config.items(),total=len(self.features_config),desc=f'Processing features'):
-            if config['category']=='identifier' or config['type']!='categorical' or config['iskeep']==False:
+            if config['category']=='identifier' or config['type']!='categorical':
                 continue
             config['missing_values_num'] = 0
             config['missing_values_p'] = 0
@@ -244,6 +247,8 @@ class DataProcess:
                 replaced_features.append(feature)
             config['missing_values_p'] = float(config['missing_values_num']/len(self.train_data[feature]))
             config['missing'] = bool(config['missing_values_num']>0)
+            if config['missing_values_p'] > 0.5 and config.get('drop_reason','Unknown')=='Unknown':
+                config['drop_reason'] = 'missing'
             config['label_encoding']['unique_values'] = [str(key) for key in config['label_encoding']['encoding_mapping'].keys()]
             config['label_encoding']['encoding_mapping'] = {val:ind for ind,val in enumerate(config['label_encoding']['unique_values'])}
             config['missing_replace'] = final_nan
@@ -259,13 +264,13 @@ class DataProcess:
             logging.info(f'replaced {len(replaced_features)} features: {replaced_features}')
         else:
             logging.info('no features replaced')
-        logging.info(f'all nan(except id) transferred to {final_nan} in {self.output_dir}/train.csv')
-
+        logging.info(f'all nan transferred to {final_nan} in {self.output_dir}/train.csv')
+        self.show_unkeep_features()
     
     def count_nan(self):
         logging.info(f'==========count_nan==========')
         for feature,config in self.features_config.items():
-            if config['category']=='identifier' or config['type']!='categorical' or config['iskeep']==False:
+            if config['category']=='identifier' or config['type']!='categorical':
                 continue
             nan_num = self.train_data[feature].isna().sum()
             assert config['missing_values_num']==nan_num
@@ -276,7 +281,7 @@ class DataProcess:
         """将所有保留的分类特征根据 label_encoding 映射为整数编码，并保存 CSV。"""
 
         for feature, config in self.features_config.items():
-            if config.get('category') == 'identifier' or config.get('type') != 'categorical' or config.get('iskeep') is False:
+            if config.get('category') == 'identifier' or config.get('type') != 'categorical':
                 continue
 
             # 特殊处理诊断特征：使用categorize_diagnosis进行分组
@@ -292,10 +297,6 @@ class DataProcess:
             self.train_data[feature] = self.train_data[feature].astype(str).map(enc_map)
             # 未映射成功的视为缺失，不填充
             # self.train_data[feature] = self.train_data[feature].fillna(-1).astype('Int64')
-
-        # 保存结果
-        self.train_data.to_csv(self.output_dir/'recoded_train.csv', index=False)
-        print(f'recoded_train.csv saved to {self.output_dir}/recoded_train.csv')
 
     def _categorize_diagnosis_feature(self, feature_name):
         """
@@ -428,7 +429,7 @@ class DataProcess:
 
     def save_train_data(self,name):
         self.train_data.to_csv(self.output_dir/f'{name}.csv', index=False)
-        print(f'train.csv saved to {self.output_dir}/{name}.csv')
+        print(f'train_data saved to {self.output_dir}/{name}.csv')
 
     def visualize_recoded_features(self):
         """
@@ -560,7 +561,6 @@ def main():
     # p dp.train_data['admission_type_id'].value_counts()
     dp.clean_invalid_data()
     dp.mark_extreme_features()
-    return
     dp.reencode()
     dp.transfer_all_nan()
     # dp.show_feature_config()

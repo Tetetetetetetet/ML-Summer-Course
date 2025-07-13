@@ -96,7 +96,7 @@
             "value_num": 3,
             "iskeep": true,
             "process": "normal",
-            "missing": false,
+            "missing": true,
             "missing_values_num": 3,
             "missing_values_p": 3.3294489761944396e-05,
             "missing_values": [
@@ -162,7 +162,6 @@
             "label_encoding": {
                 "unique_values": [
                     ">200",
-                    "?",
                     "[0-25)",
                     "[100-125)",
                     "[125-150)",
@@ -174,15 +173,14 @@
                 ],
                 "encoding_mapping": {
                     ">200": 0,
-                    "?": 1,
-                    "[0-25)": 2,
-                    "[100-125)": 3,
-                    "[125-150)": 4,
-                    "[150-175)": 5,
-                    "[175-200)": 6,
-                    "[25-50)": 7,
-                    "[50-75)": 8,
-                    "[75-100)": 9
+                    "[0-25)": 1,
+                    "[100-125)": 2,
+                    "[125-150)": 3,
+                    "[150-175)": 4,
+                    "[175-200)": 5,
+                    "[25-50)": 6,
+                    "[50-75)": 7,
+                    "[75-100)": 8
                 }
             },
             "value_num": 10,
@@ -192,7 +190,13 @@
             "drop_reason": "extreme",
             "extream_value": "?",
             "extream_value_num": 87307,
-            "extream_value_p": 0.9689473392153598
+            "extream_value_p": 0.9689473392153598,
+            "missing_values_num": 87307,
+            "missing_values_p": 0.9689473392153598,
+            "missing_values": [
+                "?"
+            ],
+            "missing_replace": null
         },
         "admission_type_id": {
             "feature_id": 6,
@@ -218,7 +222,7 @@
             "value_num": 8,
             "iskeep": true,
             "process": "normal",
-            "missing": false,
+            "missing": true,
             "missing_values_num": 9201,
             "missing_values_p": 0.10211420009988346,
             "missing_values": [
@@ -291,7 +295,7 @@
             "value_num": 23,
             "iskeep": true,
             "process": "normal",
-            "missing": false,
+            "missing": true,
             "missing_values_num": 4223,
             "missing_values_p": 0.04686754342156373,
             "missing_values": [
@@ -349,7 +353,7 @@
             "value_num": 17,
             "iskeep": true,
             "process": "normal",
-            "missing": false,
+            "missing": true,
             "missing_values_num": 6233,
             "missing_values_p": 0.06917485156206647,
             "missing_values": [
@@ -902,7 +906,12 @@
             "value_num": 3,
             "iskeep": false,
             "process": "no",
-            "missing": false
+            "missing": true,
+            "missing_values_num": 85420,
+            "missing_values_p": 0.9480051051550968,
+            "missing_values": [],
+            "drop_reason": "missing",
+            "missing_replace": null
         },
         "A1Cresult": {
             "feature_id": 23,
@@ -924,14 +933,15 @@
             "value_num": 3,
             "iskeep": false,
             "process": "no",
-            "missing": false,
+            "missing": true,
             "missing_values_num": 74928,
             "missing_values_p": 0.8315631762943233,
             "missing_values": [],
             "missing_replace": null,
             "max_value": 2.0,
             "min_value": 0.0,
-            "missing_in_test": true
+            "missing_in_test": true,
+            "drop_reason": "missing"
         },
         "metformin": {
             "feature_id": 24,
@@ -1439,7 +1449,11 @@
             "drop_reason": "extreme",
             "extream_value": "No",
             "extream_value_num": 90105,
-            "extream_value_p": 1.0
+            "extream_value_p": 1.0,
+            "missing_values_num": 0,
+            "missing_values_p": 0.0,
+            "missing_values": [],
+            "missing_replace": null
         },
         "citoglipton": {
             "feature_id": 40,
@@ -1461,7 +1475,11 @@
             "drop_reason": "extreme",
             "extream_value": "No",
             "extream_value_num": 90105,
-            "extream_value_p": 1.0
+            "extream_value_p": 1.0,
+            "missing_values_num": 0,
+            "missing_values_p": 0.0,
+            "missing_values": [],
+            "missing_replace": null
         },
         "insulin": {
             "feature_id": 41,
@@ -1713,14 +1731,14 @@
             "description": "复诊情况",
             "label_encoding": {
                 "unique_values": [
+                    "NO",
                     "<30",
-                    ">30",
-                    "NO"
+                    ">30"
                 ],
                 "encoding_mapping": {
-                    "<30": 0,
-                    ">30": 1,
-                    "NO": 2
+                    "NO": 0,
+                    "<30": 1,
+                    ">30": 2
                 }
             },
             "value_num": 3,
