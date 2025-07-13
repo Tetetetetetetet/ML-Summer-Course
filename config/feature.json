@@ -22,6 +22,7 @@
             },
             "value_num": 90105,
             "iskeep": false,
+            "drop_reason": "ID",
             "process": "no",
             "missing": false
         },
@@ -36,6 +37,7 @@
             },
             "value_num": 64927,
             "iskeep": false,
+            "drop_reason": "ID",
             "process": "no",
             "missing": false
         },
@@ -186,7 +188,11 @@
             "value_num": 10,
             "iskeep": false,
             "process": "no",
-            "missing": true
+            "missing": true,
+            "drop_reason": "extreme",
+            "extream_value": "?",
+            "extream_value_num": 87307,
+            "extream_value_p": 0.9689473392153598
         },
         "admission_type_id": {
             "feature_id": 6,
@@ -988,7 +994,11 @@
             "missing_values": [],
             "missing_replace": null,
             "max_value": 3.0,
-            "min_value": 0.0
+            "min_value": 0.0,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 88724,
+            "extream_value_p": 0.9846734365462516
         },
         "nateglinide": {
             "feature_id": 26,
@@ -1018,7 +1028,11 @@
             "missing_values": [],
             "missing_replace": null,
             "max_value": 3.0,
-            "min_value": 0.0
+            "min_value": 0.0,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 89483,
+            "extream_value_p": 0.9930969424560235
         },
         "chlorpropamide": {
             "feature_id": 27,
@@ -1046,7 +1060,11 @@
             "missing_values": [],
             "missing_replace": null,
             "max_value": 2.0,
-            "min_value": 0.0
+            "min_value": 0.0,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 90033,
+            "extream_value_p": 0.9992009322457134
         },
         "glimepiride": {
             "feature_id": 28,
@@ -1105,7 +1123,11 @@
             "missing_values": [],
             "missing_replace": null,
             "max_value": 1.0,
-            "min_value": 0.0
+            "min_value": 0.0,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 90104,
+            "extream_value_p": 0.999988901836746
         },
         "glipizide": {
             "feature_id": 30,
@@ -1197,7 +1219,11 @@
             "missing_values": [],
             "missing_replace": null,
             "max_value": 1.0,
-            "min_value": 0.0
+            "min_value": 0.0,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 90087,
+            "extream_value_p": 0.9998002330614283
         },
         "pioglitazone": {
             "feature_id": 33,
@@ -1293,7 +1319,11 @@
             "missing_values": [],
             "missing_replace": null,
             "max_value": 3.0,
-            "min_value": 0.0
+            "min_value": 0.0,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 89831,
+            "extream_value_p": 0.9969591032684091
         },
         "miglitol": {
             "feature_id": 36,
@@ -1323,7 +1353,11 @@
             "missing_values": [],
             "missing_replace": null,
             "max_value": 3.0,
-            "min_value": 0.0
+            "min_value": 0.0,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 90073,
+            "extream_value_p": 0.9996448587758726
         },
         "troglitazone": {
             "feature_id": 37,
@@ -1349,7 +1383,11 @@
             "missing_values": [],
             "missing_replace": null,
             "max_value": 1.0,
-            "min_value": 0.0
+            "min_value": 0.0,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 90102,
+            "extream_value_p": 0.999966705510238
         },
         "tolazamide": {
             "feature_id": 38,
@@ -1375,7 +1413,11 @@
             "missing_values": [],
             "missing_replace": null,
             "max_value": 1.0,
-            "min_value": 0.0
+            "min_value": 0.0,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 90070,
+            "extream_value_p": 0.9996115642861106
         },
         "examide": {
             "feature_id": 39,
@@ -1393,7 +1435,11 @@
             "value_num": 1,
             "iskeep": false,
             "process": "no",
-            "missing": false
+            "missing": false,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 90105,
+            "extream_value_p": 1.0
         },
         "citoglipton": {
             "feature_id": 40,
@@ -1411,7 +1457,11 @@
             "value_num": 1,
             "iskeep": false,
             "process": "no",
-            "missing": false
+            "missing": false,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 90105,
+            "extream_value_p": 1.0
         },
         "insulin": {
             "feature_id": 41,
@@ -1474,7 +1524,11 @@
             "missing_values": [],
             "missing_replace": null,
             "max_value": 3.0,
-            "min_value": 0.0
+            "min_value": 0.0,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 89485,
+            "extream_value_p": 0.9931191387825314
         },
         "glipizide-metformin": {
             "feature_id": 43,
@@ -1500,7 +1554,11 @@
             "missing_values": [],
             "missing_replace": null,
             "max_value": 1.0,
-            "min_value": 0.0
+            "min_value": 0.0,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 90092,
+            "extream_value_p": 0.9998557238776983
         },
         "glimepiride-pioglitazone": {
             "feature_id": 44,
@@ -1524,7 +1582,11 @@
             "missing_values": [],
             "missing_replace": null,
             "max_value": 0.0,
-            "min_value": 0.0
+            "min_value": 0.0,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 90105,
+            "extream_value_p": 1.0
         },
         "metformin-rosiglitazone": {
             "feature_id": 45,
@@ -1550,7 +1612,11 @@
             "missing_values": [],
             "missing_replace": null,
             "max_value": 1.0,
-            "min_value": 0.0
+            "min_value": 0.0,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 90104,
+            "extream_value_p": 0.999988901836746
         },
         "metformin-pioglitazone": {
             "feature_id": 46,
@@ -1576,7 +1642,11 @@
             "missing_values": [],
             "missing_replace": null,
             "max_value": 1.0,
-            "min_value": 0.0
+            "min_value": 0.0,
+            "drop_reason": "extreme",
+            "extream_value": "No",
+            "extream_value_num": 90104,
+            "extream_value_p": 0.999988901836746
         },
         "change": {
             "feature_id": 47,

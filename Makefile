@@ -2,7 +2,7 @@
 
 OVERSAMPLE = false
 
-all: pipeline
+all: pipeline src/data_process.py src/data_process_test.py src/data_missing.py src/logistic_imputation_pipeline.py
 
 pipeline: impute
 

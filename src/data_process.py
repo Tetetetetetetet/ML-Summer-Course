@@ -17,49 +17,6 @@ logging.basicConfig(
     format="[%(levelname)s] %(message)s",  # 日志格式
 )
 
-"""
-def categorize_diagnosis(new,old):
-  '''
-  The diagnosis columns are converted from icd9 codes to one of the 9 categories.
-  The function creates a new column which consists of one of the 10 categories of disease.
-  Nan values are considered as a new category
-  '''
-  #copying old column into new column
-  data[new] = data[old]
-  #filling NaN values with -1 category
-  data[new] = data[new].fillna(-1)
-  #if the code contians V or E then it is considered as category 0.
-  data.loc[data[new].str.contains('V',na=False), [new]] = 0
-  data.loc[data[new].str.contains('E',na=False), [new]] = 0
-  #converting string column to float.
-  data[new] = data[new].astype(float)
-  #iterating through all the rows of the dataframe
-  for index, row in data.iterrows():
-      #checking if the code of the row belong to category 1,
-      if (row[new] >= 390 and row[new] < 460) or (np.floor(row[new]) == 785):
-          #assigning category 1 to the new column of the row.
-          data.loc[index, new] = 1
-      #checking if the code of the row belong to category 2,
-      elif (row[new] >= 460 and row[new] < 520) or (np.floor(row[new]) == 786):
-          #assigning category 2 to the new column of the row.
-          data.loc[index, new] = 2
-      elif (row[new] >= 520 and row[new] < 580) or (np.floor(row['new_diag1']) == 787):
-          data.loc[index, new] = 3
-      elif (np.floor(row[new]) == 250):
-          data.loc[index, new] = 4
-      elif (row[new] >= 800 and row[new] < 1000):
-          data.loc[index, new] = 5
-      elif (row[new] >= 710 and row[new] < 740):
-          data.loc[index, new] = 6
-      elif (row[new] >= 580 and row[new] < 630) or (np.floor(row[new]) == 788):
-          data.loc[index, new] = 7
-      elif (row[new] >= 140 and row[new] < 240):
-          data.loc[index, new] = 8
-      elif row[new] > 0 :
-        #if the code of the row does not belong to any category then it is given 0.
-          data.loc[index, new] = 0
-"""
-
 class DataProcess:
     def __init__(self):
         self.feature_json_path = 'config/feature.json'
@@ -82,6 +39,17 @@ class DataProcess:
         elif mode=='normalized':
             self.train_data = pd.read_csv('Dataset/normalized_train.csv')
 
+    def show_unkeep_features(self):
+        unkeep_features = {}
+        for feature,config in self.features_config.items():
+            if config['iskeep']==False:
+                unkeep_reason = config.get('drop_reason','Unknown')
+                if unkeep_reason not in unkeep_features:
+                    unkeep_features[unkeep_reason] = []
+                unkeep_features[unkeep_reason].append(feature)
+        for reason,features in unkeep_features.items():
+            logging.info(f'{reason}: {features}')
+
     def exp_json(self):
         dic = {"exist":True,"name":"mine"}
         write_jsonl(dic,'config/exp.json')
@@ -89,8 +57,9 @@ class DataProcess:
     def clean_invalid_data(self):
         '''
         有些数据应当被删除：
-        - 已死亡的/转入临终关怀的：discharge_disposition_id=[11,19,20,21]/[13,14]
+        - 已死亡的/转入临终关怀的: discharge_disposition_id=[11,19,20,21]/[13,14]
         '''
+        logging.info(f'==========1. drop invalid data==========')
         # 是否存在转入临终关怀而再次入院的
         all_hospice = self.train_data[self.train_data['discharge_disposition_id'].isin([13,14])]
         hospice_readmitted = all_hospice[all_hospice['readmitted']!='NO']
@@ -106,36 +75,57 @@ class DataProcess:
         else:
             logging.info('no died readmitted')
         self.train_data = self.train_data[~self.train_data['discharge_disposition_id'].isin([11,19,20,21])]
-        logging.info(f'>>>>>>>>>>>after clean invalid data, remained {len(self.train_data)} rows')
+        logging.info('>'*50+f'after clean invalid data, remained {len(self.train_data)} rows({len(self.train_data)/len(self.train_data)*100:.2f}%)')
 
-    def mark_extream_features(self):
+    def mark_extreme_features(self):
         '''
         统计单一值占比极高的特征，并删除
         '''
+        logging.info(f'==========2. mark extreme features==========')
+        extreme_features = []
         for feature,config in self.features_config.items():
-            if config['category']=='identifier' or config['type']!='categorical' or config['iskeep']==False:
+            if config['category']=='identifier' or config['type']!='categorical':
                 continue
             vc = self.train_data[feature].value_counts()
-            if vc.iloc[0]/len(self.train_data)>0.95:
-                logging.info(f'{feature} has {vc.iloc[0]}/{len(self.train_data)}({vc.iloc[0]/len(self.train_data)*100:.2f}%) of single value {vc.index[0]}')
-                if vc.iloc[0]/len(self.train_data)>0.98:
+            extreme_threshold = 0.95
+            if vc.iloc[0]/len(self.train_data)>extreme_threshold:
+                logging.info(f'{feature} has {vc.iloc[0]}/{len(self.train_data)}({vc.iloc[0]/len(self.train_data)*100:.2f}%) of single value: {vc.index[0]}')
+                config['drop_reason'] = 'extreme'
+                config['extream_value'] = vc.index[0]
+                config['extream_value_num'] = int(vc.iloc[0])
+                config['extream_value_p'] = float(vc.iloc[0]/len(self.train_data))
+                extreme_features.append(feature)
+                changed_features = []
+                if config['iskeep']==True:
                     config['iskeep'] = False
-                    logging.info(f'{feature} should dropp')
-                    input()
+                    changed_features.append(feature)
+            else:
+                if config.get('drop_reason','Unknown')=='extreme':
+                    config['iskeep'] = True
+                if config.get('drop_reason','Unknown')=='extreme':
+                    del config['drop_reason']
+                    del config['extream_value']
+                    del config['extream_value_num']
+                    del config['extream_value_p']
+        if len(changed_features)>0:
+            logging.info(f'marked {len(changed_features)} features as not keep: {changed_features}')
+        else:
+            logging.info('no features marked as not keep')
+        logging.info(f'marked {len(extreme_features)} features as extreme: {extreme_features}')
         write_jsonl(self.feature_json,self.feature_json_path)
+        self.show_unkeep_features()
 
     def drop_features(self):
         '''
         根据feature_tabel中的keep列，删除train_data中的特征
         '''
-        logging.info(f'==========drop extream features==========')
+        logging.info(f'==========3. drop unkeep features==========')
         drop_features = []
         for feature,config in self.features_config.items():
             if config['iskeep']==False:
-                drop_features.append(feature)
+                drop_features.append({feature:config['drop_reason']})
         logging.info(f'drop {len(drop_features)} features: {drop_features}')
         self.train_data.drop(columns=drop_features, inplace=True)
-        write_jsonl(self.feature_json,self.feature_json_path)
 
     def reencode(self):
         '''
@@ -149,65 +139,28 @@ class DataProcess:
             - self.feature_json['value_num']
         '''
         for feature, config in self.features_config.items():
-            # 跳过没有在train_data中的特征,identifier,非categorical
-            # 获取唯一值（包括nan，nan转为字符串'nan'）
-            if config['iskeep']==False:
-                continue
-                
             # 跳过诊断特征，它们将在recode_train_data中特殊处理
             if feature in ['diag_1', 'diag_2', 'diag_3']:
                 logging.info(f"跳过诊断特征 {feature} 的重新编码，将在后续特殊处理")
                 continue
-                
+            if feature not in self.train_data.columns or config['category']=='identifier' or config['type']!='categorical':
+                continue
             values = self.train_data[feature]
             unique_values = []
             for v in values.unique():
                 if pd.isna(v):
-                    logging.info(f'{feature} has nan: {v}')
+                    logging.warning(f'{feature} has original nan: {v}')
                 else:
                     unique_values.append(str(v))
             # 保证顺序一致
             unique_values = sorted(list(dict.fromkeys(unique_values)))
             config['value_num'] = len(unique_values)
-            if feature not in self.train_data.columns or config['category']=='identifier' or config['type']!='categorical':
-                continue
             encoding_mapping = {val: idx for idx, val in enumerate(unique_values)}
             config['label_encoding']['unique_values'] = unique_values
             config['label_encoding']['encoding_mapping'] = encoding_mapping
         # 保存
         write_jsonl(self.feature_json, self.feature_json_path)
 
-    def config_features(self):
-        '''
-        check and fix feature.json, to add config:
-            - process: normal, no, special 
-            - iskeep: True, False
-            - missing: True, False，仅根据FeatureTabel中的Missing Values列判断，但是有的缺失值没有被标记
-        '''
-        for feature,config in self.features_config.items():
-            try:
-                if feature in self.feature_tabel.index:
-                    if self.feature_tabel.loc[feature]['keep']=='yes':
-                        self.features_config[feature]['iskeep'] = True
-                        config['process']='normal'
-                    elif self.feature_tabel.loc[feature]['keep']=='no':
-                        self.features_config[feature]['iskeep'] = False 
-                        config['process']='no'
-                    else:
-                        self.features_config[feature]['iskeep'] = True 
-                        config['process']='special'
-                else:
-                    print(f"Warning: Feature '{feature}' not found in feature table")
-                    config['process']='unknown'
-                if self.feature_tabel.loc[feature]['Missing Values']=='yes':
-                    self.features_config[feature]['missing'] = True
-                else:
-                    self.features_config[feature]['missing'] = False
-            except Exception as e:
-                print(f"Error processing feature '{feature}': {e}")
-                config['process']='error'
-
-        write_jsonl(self.feature_json,self.feature_json_path)
 
     def transfer_to_feature_tabel(self):
         '''
@@ -605,10 +558,9 @@ class DataProcess:
 def main():
     dp = DataProcess()
     # p dp.train_data['admission_type_id'].value_counts()
-    dp.config_features()
     dp.clean_invalid_data()
-    dp.mark_extream_features()
-    dp.drop_features()
+    dp.mark_extreme_features()
+    return
     dp.reencode()
     dp.transfer_all_nan()
     # dp.show_feature_config()
