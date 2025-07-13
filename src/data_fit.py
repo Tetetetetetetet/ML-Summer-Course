@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 warnings.filterwarnings('ignore')
 
 class DataFit:
-    def __init__(self, data_source='logistic_imputed',mode='normal',isoversample=False):
+    def __init__(self, data_source='logistic_imputed', mode='normal', isoversample=False):
         """
         初始化DataFit类
         
@@ -497,9 +497,9 @@ def main():
     """
     parser = ArgumentParser()
     parser.add_argument('-m','--mode', type=str, default='normal', help='数据集模式')
-    parser.add_argument('-s','--isoversample', type=bool, default=False, help='数据集模式',action='store_true')
+    parser.add_argument('-s','--isoversample', default=False, help='过采样',action='store_true')
     args = parser.parse_args()
-    data_fit = DataFit(data_source='logistic_imputed',mode=args.mode,isoversample=args.isoversample)
+    data_fit = DataFit(data_source='logistic_imputed', mode=args.mode, isoversample=args.isoversample)
     data_fit.run_complete_pipeline()
 
 

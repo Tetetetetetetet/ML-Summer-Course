@@ -24,13 +24,13 @@ Dataset/processed/train_processed/modeling_results/modeling_report.json: src/dat
 	Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_final.csv Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_final.csv
 	python src/data_fit.py
 
-Dataset/processed/train_processed/modeling_oversample_results/modeling_report.json: src/data_fit_over_sample.py \
+Dataset/processed/train_processed/modeling_oversample_results/modeling_report.json: src/data_fit.py \
 	Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_final.csv Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_final.csv
 	python src/data_fit.py --isoversample
 
 impute: Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_final.csv Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_final.csv
 
-train: src/data_fit.py src/data_fit_over_sample.py
+train: src/data_fit.py src
 ifeq ($(OVERSAMPLE),false)
 	make Dataset/processed/train_processed/modeling_results/modeling_report.json
 else ifeq ($(OVERSAMPLE), true)

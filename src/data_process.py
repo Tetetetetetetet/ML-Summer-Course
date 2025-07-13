@@ -17,6 +17,7 @@ logging.basicConfig(
     format="[%(levelname)s] %(message)s",  # 日志格式
 )
 
+"""
 def categorize_diagnosis(new,old):
   '''
   The diagnosis columns are converted from icd9 codes to one of the 9 categories.
@@ -57,6 +58,7 @@ def categorize_diagnosis(new,old):
       elif row[new] > 0 :
         #if the code of the row does not belong to any category then it is given 0.
           data.loc[index, new] = 0
+"""
 
 class DataProcess:
     def __init__(self):
