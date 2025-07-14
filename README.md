@@ -1,3 +1,8 @@
+# 糖尿病数据集分析项目
+
+## 项目概述
+
+本项目对糖尿病数据集进行全面的数据分析和机器学习建模，包括数据预处理、缺失值填充、特征工程和模型训练。
 
 ## 环境配置
 
@@ -13,7 +18,7 @@
 ```bash
 # 1. 创建环境
 conda env create -f environment.yml
-conda activate diabetes_analysis
+conda activate 309
 
 # 2. 安装自定义工具包
 cd myutils
@@ -29,94 +34,152 @@ cd myutils && pip install -e .
 ```
 
 ## 运行
+
 ### for linux/macos
-数据预处理
-```
+
+#### 完整pipeline
+```bash
 make
 ```
-预期结果：
+
+#### 分步运行
+
+**1. 数据预处理**
+```bash
+make process
 ```
-[INFO] ==========保存最终结果==========
-[INFO] 训练集保存到: Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_final.csv
-[INFO] 测试集保存到: Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_final.csv
-[INFO] 处理报告保存到: Dataset/processed/train_processed/logistic_imputed/imputation_report.json
-[INFO] ==========逻辑回归填充完成==========
-[INFO] 训练集: (90105, 29) -> (90105, 29)
-[INFO] 测试集: (10009, 29) -> (10009, 29)
-[INFO] 训练集缺失值: 103197 -> 0
-[INFO] 测试集缺失值: 11411 -> 0
-[INFO] ==========逻辑回归缺失值填充流程完成==========
+
+**2. 改进的逻辑回归缺失值填充**
+```bash
+make impute
 ```
-训练，测试
-1. 不使用过采样
-```
+
+**3. 模型训练**
+```bash
+# 不使用过采样
 make train
-```
-预期结果
-```
-[INFO] ==========save_model==========
-[INFO] 模型保存到: Dataset/processed/train_processed/modeling_results/best_model_20250712_144301.pkl
-[INFO] ==========generate_report==========
-[INFO] 建模报告保存到: Dataset/processed/train_processed/modeling_results/modeling_report.json
-[INFO] ==========建模总结==========
-[INFO] 数据源: logistic_imputed
-[INFO] 最佳模型: GradientBoosting
-[INFO] 最佳准确率: 0.5821
-[INFO] ==========建模流程完成==========
-```
-2. 使用过采样
-```
+
+# 使用过采样
 make train OVERSAMPLE=true
 ```
 
+### 预期结果
+
+**数据预处理结果：**
+```
+[INFO] 训练集: (90105, 50) -> (90105, 50)
+[INFO] 测试集: (10009, 50) -> (10009, 50)
+```
+
+**改进的逻辑回归填值结果：**
+```
+[INFO] ==========改进的逻辑回归填补流程开始==========
+[INFO] 训练集缺失值: 350852
+[INFO] 测试集缺失值: 38842
+[INFO] 填补后训练集缺失值: 0
+[INFO] 填补后测试集缺失值: 0
+[INFO] ==========改进的逻辑回归填补流程完成==========
+```
+
+**模型训练结果：**
+```
+[INFO] ==========建模总结==========
+[INFO] 数据源: improved_logistic_imputed
+[INFO] 最佳模型: RandomForest
+[INFO] 最佳准确率: 0.5846
+[INFO] ==========建模流程完成==========
+```
 
 ### for windows
-处理数据
-```
+
+**处理数据**
+```bash
 python src/data_process.py
 python src/data_process_test.py
-python src/logistic_imputation_pipeline.py
+python src/improved_logistic_imputation.py
 ```
-训练
-```
+
+**训练模型**
+```bash
 python src/data_fit.py
 ```
 
-### 结果文件
-- Dataset/train_processed/recoded_train.csv: 重新编码后的train数据集，缺失值记为None
-- Dataset/test_processed/recoded_test.csv: 重新编码后的test数据集，缺失值记为None
-- Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_final.csv: 逻辑回归填值后的train数据集，可直接用于训练
-- Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_final.csv: 逻辑回归填值后的test数据集，可直接用于测试
+## 结果文件
+
+### 数据预处理结果
+- `Dataset/processed/train_processed/recoded_train.csv`: 重新编码后的训练数据集，缺失值记为None
+- `Dataset/processed/test_processed/recoded_test.csv`: 重新编码后的测试数据集，缺失值记为None
+
+### 改进的逻辑回归填值结果
+- `Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_train_final.csv`: 改进逻辑回归填值后的训练数据集，可直接用于训练
+- `Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_test_final.csv`: 改进逻辑回归填值后的测试数据集，可直接用于测试
+- `Dataset/processed/train_processed/improved_logistic_imputed/imputation_report.json`: 填值报告
+- `Dataset/processed/train_processed/improved_logistic_imputed/model_info.json`: 模型信息
+
+### 模型训练结果
+- `Dataset/processed/train_processed/modeling_results/modeling_report.json`: 建模报告
+- `Dataset/processed/train_processed/modeling_results/best_model_*.pkl`: 最佳模型文件
+- `Dataset/processed/train_processed/modeling_results/predictions_*.csv`: 预测结果
+
+## 改进的逻辑回归填值方法
+
+### 主要改进
+1. **数据标准化**: 使用StandardScaler对数值特征进行标准化，解决收敛问题
+2. **多solver尝试**: 自动尝试不同的优化算法（lbfgs, liblinear, saga）
+3. **鲁棒性增强**: 当模型训练失败时，使用备选填充方法
+4. **错误处理**: 完善的异常处理机制，确保填值过程不会中断
+5. **测试集支持**: 使用训练好的模型对测试集进行一致的填值
+
+### 解决的核心问题
+- **迭代限制问题**: 通过数据标准化和多solver尝试解决"STOP: TOTAL NO. of ITERATIONS REACHED LIMIT"
+- **数值稳定性**: 处理矩阵运算中的除零、溢出等问题
+- **特征兼容性**: 确保训练集和测试集的特征处理一致
 
 ## 如何修改
+
 ### 尝试新的数据预处理方式
-在`recoded_train.csv`基础上对数据做降纬/embedding/过采样/..., 然后保存为新的结果文件放在`Dataset/processed/train_processed`下，然后在`data_fit` `46-48`行中类似如下
+在`recoded_train.csv`基础上对数据做降维/embedding/过采样/..., 然后保存为新的结果文件放在`Dataset/processed/train_processed`下，然后在`data_fit.py`中修改：
+
 ```python
 self.mode2dataset = {
-   'normal': {'train': 'logistic_imputed/logistic_imputed_train_final.csv','test': 'logistic_imputed/logistic_imputed_test_final.csv'},
-   '2class': {'train': 'logistic_imputed/logistic_imputed_train_final_2class.csv','test': 'logistic_imputed/logistic_imputed_test_final_2class.csv'}
+   'normal': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final.csv'},
+   '2class': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final_2class.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final_2class.csv'},
+   'my_mode': {'train':'path/to/train_dataset','test':'path/to/test_dataset'}
 }
 ```
-增加一项
-```python
-'my_mode': {'train':'path/to/train_dataset','test':'path/to/test_dataset'}
-```
-路径是相对于`train_processed/`的相对路径
 
+路径是相对于`train_processed/`的相对路径
 
 ## 项目结构
 
 ```
 coursework/
 ├── config/
-│   └── feature.json  # 特征配置文件
+│   └── feature.json          # 特征配置文件
 ├── Dataset/
+│   └── processed/
+│       ├── train_processed/
+│       │   ├── recoded_train.csv                    # 重编码训练数据
+│       │   ├── improved_logistic_imputed/          # 改进逻辑回归填值结果
+│       │   │   ├── improved_logistic_imputed_train_final.csv
+│       │   │   ├── improved_logistic_imputed_test_final.csv
+│       │   │   ├── imputation_report.json
+│       │   │   └── model_info.json
+│       │   └── modeling_results/                   # 模型训练结果
+│       └── test_processed/
+│           └── recoded_test.csv                    # 重编码测试数据
 ├── src/
-├── myutils/
-├── environment.yml
-├── setup.sh
-├── docs.md
-└── README.md
+│   ├── data_process.py                             # 数据预处理
+│   ├── data_process_test.py                        # 测试集预处理
+│   ├── improved_logistic_imputation.py             # 改进的逻辑回归填值
+│   ├── data_fit.py                                 # 模型训练
+│   └── data_visualization.py                       # 数据可视化
+├── myutils/                                        # 自定义工具包
+├── environment.yml                                 # 环境配置
+├── setup.sh                                        # 快速安装脚本
+├── Makefile                                        # 构建脚本
+├── docs.md                                         # 详细文档
+└── README.md                                       # 本文档
 ```
 
 > Dataset/FeatureTabel_Ch.xlsx: 带中文解释 && gpt意见的FeatureTabel
@@ -162,16 +225,31 @@ feature.json包含了数据集的所有特征配置信息，主要包括以下�
 
 ### 原始数据可视化
 ```bash
-conda activate diabetes_analysis
+conda activate 309
 python src/data_visualization.py
 ```
 
+### 测试改进的填值方法
+```bash
+python src/test_improved_imputation.py
+```
 
 ## 常见问题
 
-- ImportError: No module named 'myutils'
+- **ImportError: No module named 'myutils'**
   - 进入myutils目录，运行`pip install -e .`
-- myutils目录为空
+- **myutils目录为空**
   - 运行`git submodule update --init --recursive`
-- 其他问题请参考docs.md或运行`python test_setup.py`进行环境自检 
+- **填值过程中出现迭代限制警告**
+  - 这是正常现象，改进的方法会自动处理并继续填值
+- **其他问题**请参考docs.md或运行`python test_setup.py`进行环境自检
+
+## 更新日志
+
+### v2.0 (2025-07-14)
+- ✅ 实现了改进的逻辑回归缺失值填充方法
+- ✅ 解决了"STOP: TOTAL NO. of ITERATIONS REACHED LIMIT"问题
+- ✅ 支持训练集和测试集的统一填值
+- ✅ 集成了完整的pipeline自动化流程
+- ✅ 增强了错误处理和鲁棒性 
  
