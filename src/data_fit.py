@@ -46,8 +46,8 @@ class DataFit:
         self.best_model_name = None
         self.results = {}
         self.mode2dataset = {
-            'normal': {'train': 'logistic_imputed/logistic_imputed_train_final.csv','test': 'logistic_imputed/logistic_imputed_test_final.csv'},
-            '2class': {'train': 'logistic_imputed/logistic_imputed_train_final_2class.csv','test': 'logistic_imputed/logistic_imputed_test_final_2class.csv'},
+            'normal': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final.csv'},
+            '2class': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final_2class.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final_2class.csv'},
         }
         
         # 创建结果保存目录

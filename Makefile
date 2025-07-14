@@ -2,7 +2,7 @@
 
 OVERSAMPLE = false
 
-all: pipeline src/data_process.py src/data_process_test.py src/data_missing.py src/logistic_imputation_pipeline.py
+all: pipeline src/data_process.py src/data_process_test.py src/data_missing.py src/improved_logistic_imputation.py
 
 pipeline: impute
 
@@ -17,23 +17,22 @@ Dataset/processed/test_processed/recoded_test.csv:
 process:
 	python src/data_process.py
 	python src/data_process_test.py
-impute:
-	python src/logistic_imputation_pipeline.py
-# 2. 缺失值填充
-Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_final.csv Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_final.csv: \
+
+# 2. 改进的缺失值填充
+Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_train_final.csv Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_test_final.csv: \
 	Dataset/processed/train_processed/recoded_train.csv Dataset/processed/test_processed/recoded_test.csv
-	python src/logistic_imputation_pipeline.py
+	python src/improved_logistic_imputation.py
 
 # 3. 模型训练
 Dataset/processed/train_processed/modeling_results/modeling_report.json: src/data_fit.py \
-	Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_final.csv Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_final.csv
+	Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_train_final.csv Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_test_final.csv
 	python src/data_fit.py
 
 Dataset/processed/train_processed/modeling_oversample_results/modeling_report.json: src/data_fit.py \
-	Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_final.csv Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_final.csv
+	Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_train_final.csv Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_test_final.csv
 	python src/data_fit.py --isoversample
 
-impute: Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_final.csv Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_final.csv
+impute: Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_train_final.csv Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_test_final.csv
 
 train: src/data_fit.py src
 ifeq ($(OVERSAMPLE),false)
@@ -53,7 +52,7 @@ checki:
 process: Dataset/processed/train_processed/recoded_train.csv Dataset/processed/test_processed/recoded_test.csv
 
 clean:
-	rm -rf Dataset/processed/train_processed/logistic_imputed/*
+	rm -rf Dataset/processed/train_processed/improved_logistic_imputed/*
 	rm -rf Dataset/processed/train_processed/modeling_results/*
 	rm -rf Dataset/processed/train_processed/modeling_oversample_results/*
 	rm -f Dataset/processed/train_processed/recoded_train.csv

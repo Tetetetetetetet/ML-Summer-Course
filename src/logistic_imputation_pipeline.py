@@ -24,14 +24,14 @@ class LogisticImputationPipeline:
         logging.info("==========加载recoded数据==========")
         
         # 加载训练集
-        train_path = self.train_output_dir / 'recoded_train.csv'
+        train_path = self.train_output_dir / 'final_encoded_train.csv'
         if not train_path.exists():
             raise FileNotFoundError(f"训练集文件不存在: {train_path}")
         self.train_data = pd.read_csv(train_path)
         logging.info(f"训练集加载完成: {self.train_data.shape}")
         
         # 加载测试集
-        test_path = self.test_output_dir / 'recoded_test.csv'
+        test_path = self.test_output_dir / 'final_encoded_test.csv'
         if not test_path.exists():
             raise FileNotFoundError(f"测试集文件不存在: {test_path}")
         self.test_data = pd.read_csv(test_path)

@@ -511,9 +511,62 @@ class MissingDataHandler:
                 target_encoder = LabelEncoder()
                 y_train_encoded = target_encoder.fit_transform(y_train.astype(str))
                 
-                # 训练逻辑回归模型
-                lr_model = LogisticRegression(random_state=42, max_iter=1000)
-                lr_model.fit(X_train, y_train_encoded)
+                # 训练逻辑回归模型 - 改进版本
+                try:
+                    # 首先尝试标准化数据
+                    scaler = StandardScaler()
+                    X_train_scaled = scaler.fit_transform(X_train)
+                    
+                    # 尝试不同的求解器和参数
+                    solvers = ['lbfgs', 'liblinear', 'saga']
+                    max_iters = [2000, 5000, 10000]
+                    
+                    lr_model = None
+                    for solver in solvers:
+                        for max_iter in max_iters:
+                            try:
+                                if solver == 'liblinear':
+                                    lr_model = LogisticRegression(
+                                        solver=solver, 
+                                        max_iter=max_iter, 
+                                        random_state=42,
+                                        C=1.0,
+                                        tol=1e-4
+                                    )
+                                else:
+                                    lr_model = LogisticRegression(
+                                        solver=solver, 
+                                        max_iter=max_iter, 
+                                        random_state=42,
+                                        C=1.0,
+                                        tol=1e-4
+                                    )
+                                
+                                lr_model.fit(X_train_scaled, y_train_encoded)
+                                logging.info(f"成功训练模型: solver={solver}, max_iter={max_iter}")
+                                break
+                                
+                            except Exception as e:
+                                logging.warning(f"模型训练失败: solver={solver}, max_iter={max_iter}, error={e}")
+                                continue
+                        
+                        if lr_model is not None:
+                            break
+                    
+                    # 如果所有尝试都失败，使用线性回归作为备选
+                    if lr_model is None:
+                        logging.warning("所有逻辑回归模型都失败，使用线性回归作为备选")
+                        from sklearn.linear_model import LinearRegression
+                        lr_model = LinearRegression()
+                        lr_model.fit(X_train_scaled, y_train_encoded)
+                    
+                except Exception as e:
+                    logging.error(f"模型训练完全失败: {e}")
+                    # 使用最简单的填充方法
+                    most_common = y_train.mode().iloc[0]
+                    predictions = [most_common] * missing_count
+                    imputed_data.loc[missing_mask, feature] = predictions
+                    continue
                 
                 # 预测缺失值
                 missing_data = data[missing_mask].copy()

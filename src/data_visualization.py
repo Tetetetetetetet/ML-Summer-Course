@@ -550,7 +550,7 @@ class DataVisualizer:
                    verticalalignment='top', fontsize=10,
                    bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
         
-        plt.tight_layout()
+            plt.tight_layout()
             plt.savefig(f'src/visualizations/{feature}_diagnosis_features_histogram.png', dpi=300, bbox_inches='tight')
             plt.close()
         
