@@ -123,7 +123,7 @@ class DataProcess:
         drop_features = []
         for feature,config in self.features_config.items():
             if config['iskeep']==False:
-                drop_features.append({feature:config['drop_reason']})
+                drop_features.append(feature)
         logging.info(f'drop {len(drop_features)} features: {drop_features}')
         self.train_data.drop(columns=drop_features, inplace=True)
 
@@ -144,8 +144,22 @@ class DataProcess:
             if feature in ['diag_1', 'diag_2', 'diag_3']:
                 logging.info(f"跳过诊断特征 {feature} 的重新编码，将在后续特殊处理")
                 continue
+            medication_map = {
+                    "Down": 0,
+                    "No": 1,
+                    "Steady": 2,
+                    "Up": 3
+                }
+            # 特殊处理药物特征
+            if config['category'] == 'medication':
+                config['label_encoding']['encoding_mapping'] = medication_map
+                config['label_encoding']['unique_values'] = list(medication_map.keys())
+                config['value_num'] = len(medication_map)
+                continue
+            # 跳过不用编码的特征
             if feature not in self.train_data.columns or config['category']=='identifier' or config['type']!='categorical':
                 continue
+            # 编码
             values = self.train_data[feature]
             unique_values = []
             for v in values.unique():
@@ -569,6 +583,8 @@ def main():
     dp.recode_train_data()
     dp.save_train_data('recoded_train')
     dp.check_recoded_data()
+    dp.drop_features()
+    dp.save_train_data('final_encoded_train')
     # dp.visualize_recoded_features()
     dp.transfer_to_feature_tabel()
 
