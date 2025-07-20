@@ -56,7 +56,7 @@ class DataFit:
             'f_classif': SelectKBest(score_func=f_classif, k=self.k),
             'chi2': SelectKBest(score_func=chi2, k=self.k),
         }
-        self.feature_selector = list(self.feature_selectors.items())[0]
+        self.feature_selector = (args.feature_selector, self.feature_selectors[args.feature_selector])
         self.mode2dataset = {
             'normal': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final.csv'},
             'selected': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final_selected.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final_selected.csv'},
@@ -685,6 +685,7 @@ def main():
     parser.add_argument('-e','--exp_name',type=str,default='normal_exp',help='实验名称')
     parser.add_argument('-k','--k',type=str,default='all',help='特征选择保留的特征数量("all" or int)')
     parser.add_argument('--model',type=str,default='LogisticRegression',help='模型名称 or "all"')
+    parser.add_argument('--feature_selector',type=str,default='chi2',help='特征选择方法, can be "chi2" or "f_classif"')
     args = parser.parse_args()
     data_fit = DataFit(args=args)
     data_fit.run_complete_pipeline()

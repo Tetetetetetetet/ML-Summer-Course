@@ -81,9 +81,13 @@ make train OVERSAMPLE=true
   - `"selected"`: 使用特征选择后的数据集
   - `"2class"`: 使用二分类数据集
 
-- **k**: 特征选择参数
-  - `"all"`: 保留所有特征
+- **k**: 特征选择数量参数
+  - `"all"`: 保留所有特征（在已筛选的数据集基础上）
   - `整数`: 保留指定数量的特征（如 `10`, `20`, `50`）
+
+- **feature_selector**: 特征选择方法
+  - `"chi2"`: 使用卡方检验进行特征选择（适用于非负特征）
+  - `"f_classif"`: 使用F检验进行特征选择（适用于数值特征）
 
 - **isoversample**: 是否使用过采样
   - `true`: 使用SMOTE过采样处理类别不平衡
@@ -91,8 +95,13 @@ make train OVERSAMPLE=true
 
 #### 实验命名规则
 脚本会根据参数自动生成实验名称：
-- 使用过采样：`{mode}_{k}_{model}_oversample`
-- 不使用过采样：`{mode}_{k}_{model}_notoversample`
+- 使用过采样：`{mode}_{k}_{model}_{feature_selector}_oversample`
+- 不使用过采样：`{mode}_{k}_{model}_{feature_selector}_notoversample`
+
+#### 特征选择说明
+- **数据集预处理**: 所有数据集在进入模型训练前都经过了初步的特征筛选
+- **k="all"的含义**: 在已筛选的数据集基础上保留所有特征，而不是原始数据集的所有特征
+- **特征选择方法**: 可以选择不同的统计检验方法来评估特征重要性
 
 ### 使用示例
 
@@ -115,19 +124,27 @@ k=20  # 保留前20个特征
 ./train.sh
 ```
 
-#### 4. 启用过采样
+#### 4. 选择特征选择方法
+```bash
+# 修改train.sh中的feature_selector参数
+feature_selector="f_classif"  # 使用F检验
+./train.sh
+```
+
+#### 5. 启用过采样
 ```bash
 # 修改train.sh中的isoversample参数
 isoversample=true
 ./train.sh
 ```
 
-#### 5. 完整自定义配置
+#### 6. 完整自定义配置
 ```bash
 # 修改train.sh中的所有参数
 model="RandomForest"
 mode="normal"
 k=50
+feature_selector="f_classif"
 isoversample=true
 ./train.sh
 ```
@@ -137,11 +154,13 @@ isoversample=true
 训练完成后，结果将保存在：
 ```
 output/{exp_name}/
-├── feature_importance.csv          # 特征重要性
-├── feature_importance.png          # 特征重要性可视化
-├── predictions.csv                 # 预测结果
-├── best_model.pkl                  # 最佳模型文件
-└── modeling_report.json            # 建模报告
+├── feature_scores_{feature_selector}.csv    # 特征选择分数
+├── feature_scores_{feature_selector}.png    # 特征选择分数可视化
+├── feature_importance.csv                   # 模型特征重要性
+├── feature_importance.png                   # 特征重要性可视化
+├── predictions.csv                          # 预测结果
+├── best_model.pkl                           # 最佳模型文件
+└── modeling_report.json                     # 建模报告
 ```
 
 ### 参数组合建议
@@ -159,6 +178,7 @@ isoversample=false
 model="LogisticRegression"
 mode="selected"
 k=20
+feature_selector="f_classif"
 isoversample=false
 ```
 
@@ -175,6 +195,7 @@ isoversample=true
 model="LogisticRegression"
 mode="selected"
 k=10
+feature_selector="chi2"
 isoversample=false
 ```
 
@@ -366,5 +387,31 @@ python src/test_improved_imputation.py
 - ✅ 解决了"STOP: TOTAL NO. of ITERATIONS REACHED LIMIT"问题
 - ✅ 支持训练集和测试集的统一填值
 - ✅ 集成了完整的pipeline自动化流程
+
+## 特征选择方法详解
+
+### chi2（卡方检验）
+- **适用场景**: 非负特征（如计数、频率等）
+- **原理**: 基于特征与目标变量之间的卡方统计量
+- **优势**: 对分类特征效果好，计算速度快
+- **限制**: 要求特征值非负
+
+### f_classif（F检验）
+- **适用场景**: 数值特征
+- **原理**: 基于方差分析，计算特征与目标变量之间的F统计量
+- **优势**: 适用于连续数值特征，理论基础扎实
+- **限制**: 假设特征服从正态分布
+
+### 选择建议
+- **医疗数据**: 推荐使用 `f_classif`，因为医疗特征多为数值型
+- **文本数据**: 推荐使用 `chi2`，因为文本特征通常为非负
+- **混合数据**: 可以尝试两种方法，比较结果
+
+### 特征选择流程
+1. **预处理阶段**: 所有数据集都经过初步特征筛选
+2. **特征评分**: 使用选定的统计方法计算每个特征的重要性分数
+3. **特征排序**: 根据分数对特征进行排序
+4. **特征选择**: 根据k参数选择前k个特征（k="all"时保留所有特征）
+5. **结果保存**: 特征分数和可视化结果保存到输出目录
 - ✅ 增强了错误处理和鲁棒性 
  
