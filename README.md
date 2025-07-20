@@ -63,6 +63,121 @@ make train
 make train OVERSAMPLE=true
 ```
 
+## train.sh
+
+`train.sh` 是一个便捷的模型训练脚本，提供了灵活的参数配置选项。
+
+### 参数说明
+
+#### 基本参数
+- **model**: 指定要训练的模型
+  - `"all"`: 训练所有可用模型（RandomForest, GradientBoosting, LogisticRegression）
+  - `"LogisticRegression"`: 仅训练逻辑回归模型
+  - `"RandomForest"`: 仅训练随机森林模型
+  - `"GradientBoosting"`: 仅训练梯度提升模型
+
+- **mode**: 指定数据集模式
+  - `"normal"`: 使用完整数据集
+  - `"selected"`: 使用特征选择后的数据集
+  - `"2class"`: 使用二分类数据集
+
+- **k**: 特征选择参数
+  - `"all"`: 保留所有特征
+  - `整数`: 保留指定数量的特征（如 `10`, `20`, `50`）
+
+- **isoversample**: 是否使用过采样
+  - `true`: 使用SMOTE过采样处理类别不平衡
+  - `false`: 不使用过采样
+
+#### 实验命名规则
+脚本会根据参数自动生成实验名称：
+- 使用过采样：`{mode}_{k}_{model}_oversample`
+- 不使用过采样：`{mode}_{k}_{model}_notoversample`
+
+### 使用示例
+
+#### 1. 快速开始（使用默认参数）
+```bash
+./train.sh
+```
+
+#### 2. 训练特定模型
+```bash
+# 修改train.sh中的model参数
+model="LogisticRegression"
+./train.sh
+```
+
+#### 3. 使用特征选择
+```bash
+# 修改train.sh中的k参数
+k=20  # 保留前20个特征
+./train.sh
+```
+
+#### 4. 启用过采样
+```bash
+# 修改train.sh中的isoversample参数
+isoversample=true
+./train.sh
+```
+
+#### 5. 完整自定义配置
+```bash
+# 修改train.sh中的所有参数
+model="RandomForest"
+mode="normal"
+k=50
+isoversample=true
+./train.sh
+```
+
+### 输出结果
+
+训练完成后，结果将保存在：
+```
+output/{exp_name}/
+├── feature_importance.csv          # 特征重要性
+├── feature_importance.png          # 特征重要性可视化
+├── predictions.csv                 # 预测结果
+├── best_model.pkl                  # 最佳模型文件
+└── modeling_report.json            # 建模报告
+```
+
+### 参数组合建议
+
+#### 探索性分析
+```bash
+model="all"
+mode="normal"
+k="all"
+isoversample=false
+```
+
+#### 特征选择实验
+```bash
+model="LogisticRegression"
+mode="selected"
+k=20
+isoversample=false
+```
+
+#### 处理类别不平衡
+```bash
+model="all"
+mode="normal"
+k="all"
+isoversample=true
+```
+
+#### 快速实验
+```bash
+model="LogisticRegression"
+mode="selected"
+k=10
+isoversample=false
+```
+
 ### 预期结果
 
 **数据预处理结果：**
