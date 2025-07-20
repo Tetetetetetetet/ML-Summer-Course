@@ -1,4 +1,5 @@
 import pandas as pd
+from myutils import read_jsonl
 import numpy as np
 import os
 import logging
@@ -8,9 +9,9 @@ from sklearn.model_selection import train_test_split, cross_val_score, GridSearc
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, roc_auc_score
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.feature_selection import SelectKBest, f_classif, RFE
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, roc_auc_score, f1_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import SelectKBest, f_classif, RFE, chi2
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
@@ -22,39 +23,56 @@ logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 warnings.filterwarnings('ignore')
 
 class DataFit:
-    def __init__(self, data_source='logistic_imputed', mode='normal', isoversample=False):
+    def __init__(self, args=None):
         """
         初始化DataFit类
         
         Args:
-            data_source: 数据源类型 ('logistic_imputed', 'knn_imputed', 'mean_imputed', 'median_imputed')
+
         """
-        self.output_dir = 'Dataset/processed/train_processed'
-        self.data_source = data_source
-        self.mode = mode
+        self.output_dir = 'output/'
+        self.results_dir = os.path.join(self.output_dir, args.exp_name)
+        os.makedirs(self.results_dir, exist_ok=True)
+        self.dataset_dir = 'Dataset/processed/train_processed'
+        self.mode = args.mode
+        self.exp_name = args.exp_name
         self.train_data = None
         self.test_data = None
         self.X_train = None
         self.X_test = None
         self.y_train = None
         self.y_test = None
-        self.isoversample = isoversample
-        self.models = {}
+        self.isoversample = args.isoversample
         self.scaler = StandardScaler()
-        self.feature_selector = None
         self.best_model = None
         self.best_model_name = None
         self.results = {}
+        self.feature_json = read_jsonl('config/feature.json')
+        self.feature_config = self.feature_json['features']
+        self.k = args.k
+        if self.k != 'all':
+            self.k = int(self.k)
+        self.feature_selectors = {
+            'f_classif': SelectKBest(score_func=f_classif, k=self.k),
+            'chi2': SelectKBest(score_func=chi2, k=self.k),
+        }
+        self.feature_selector = list(self.feature_selectors.items())[0]
         self.mode2dataset = {
             'normal': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final.csv'},
+            'selected': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final_selected.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final_selected.csv'},
             '2class': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final_2class.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final_2class.csv'},
         }
+        self.models = {
+            'RandomForest': RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1),
+            'GradientBoosting': GradientBoostingClassifier(n_estimators=100, random_state=42),
+            'LogisticRegression': LogisticRegression(random_state=42, max_iter=1000, n_jobs=-1)
+        }
+        if args.model != 'all':
+            self.models = {args.model: self.models[args.model]}
         
         # 创建结果保存目录
-        self.results_dir = os.path.join(self.output_dir, 'modeling_results' if not self.isoversample else 'modeling_oversample_results')
-        os.makedirs(self.results_dir, exist_ok=True)
         
-        logging.info(f"DataFit初始化完成，数据源: {data_source}")
+        logging.info(f"DataFit初始化完成，mode: {self.mode}")
     
     def load_data(self):
         """
@@ -65,8 +83,8 @@ class DataFit:
         try:
             # 加载训练集和测试集
             if self.mode in self.mode2dataset:
-                train_path = os.path.join(self.output_dir, self.mode2dataset[self.mode]['train'])
-                test_path = os.path.join(self.output_dir, self.mode2dataset[self.mode]['test'])
+                train_path = os.path.join(self.dataset_dir, self.mode2dataset[self.mode]['train'])
+                test_path = os.path.join(self.dataset_dir, self.mode2dataset[self.mode]['test'])
             else:
                 raise ValueError(f"Invalid mode: {self.mode}")
             
@@ -91,7 +109,7 @@ class DataFit:
     
     def preprocess_data(self):
         """
-        数据预处理：特征工程、编码、缩放等
+        数据预处理：特征工程、缩放等
         """
         logging.info("==========preprocess_data==========")
         
@@ -101,72 +119,41 @@ class DataFit:
             logging.error(f"目标变量 '{target_col}' 不存在")
             return
         
+        assert target_col in self.train_data.columns, f"目标变量 '{target_col}' 不存在"
+        assert target_col in self.test_data.columns, f"目标变量 '{target_col}' 不存在"
+        
         # 准备训练数据
         X_train_full = self.train_data.drop(columns=[target_col])
         y_train_full = self.train_data[target_col]
         
-        # 准备测试数据（如果有目标变量）
-        if target_col in self.test_data.columns:
-            X_test_full = self.test_data.drop(columns=[target_col])
-            y_test_full = self.test_data[target_col]
-        else:
-            X_test_full = self.test_data.copy()
-            y_test_full = None
+        # 准备测试数据
+        X_test_full = self.test_data.drop(columns=[target_col])
+        y_test_full = self.test_data[target_col]
         
-        # 处理分类变量
-        categorical_features = []
-        numeric_features = []
-        
-        for col in X_train_full.columns:
-            if X_train_full[col].dtype == 'object' or X_train_full[col].nunique() < 10:
-                categorical_features.append(col)
-            else:
-                numeric_features.append(col)
-        
-        logging.info(f"分类特征: {len(categorical_features)} 个")
-        logging.info(f"数值特征: {len(numeric_features)} 个")
-        
-        # 对分类变量进行标签编码
-        label_encoders = {}
-        X_train_encoded = X_train_full.copy()
-        X_test_encoded = X_test_full.copy()
-        
-        for col in categorical_features:
-            le = LabelEncoder()
-            # 先全部转成字符串
-            X_train_encoded[col] = X_train_encoded[col].astype(str)
-            X_test_encoded[col] = X_test_encoded[col].astype(str)
-            # 训练集fit
-            le.fit(X_train_encoded[col])
-            # 测试集中的新类别全部替换成训练集众数
-            train_classes = set(le.classes_)
-            test_classes = set(X_test_encoded[col].unique())
-            unseen = test_classes - train_classes
-            if unseen:
-                logging.warning(f"特征 '{col}' 在测试集中有新的类别: {unseen}")
-                most_common = X_train_encoded[col].mode().iloc[0]
-                X_test_encoded[col] = X_test_encoded[col].replace(list(unseen), most_common)
-            # 再transform
-            X_train_encoded[col] = le.transform(X_train_encoded[col])
-            X_test_encoded[col] = le.transform(X_test_encoded[col])
-            label_encoders[col] = le
+        logging.info(f"特征数量: {len(X_train_full.columns)} 个")
         
         # 特征选择 - 保留全部特征
         logging.info("进行特征选择...")
-        self.feature_selector = SelectKBest(score_func=f_classif, k='all')
-        logging.info(f"开始特征选择，保留全部 {len(X_train_encoded.columns)} 个特征...")
-        X_train_selected = self.feature_selector.fit_transform(X_train_encoded, y_train_full)
-        X_test_selected = self.feature_selector.transform(X_test_encoded)
-        
-        # 获取选中的特征名称
-        selected_features = X_train_encoded.columns[self.feature_selector.get_support()].tolist()
-        logging.info(f"特征选择完成，选中的特征: {selected_features}")
-        
+        selector_name,selector = self.feature_selector
+        X_train_selected = selector.fit_transform(X_train_full, y_train_full)
+        X_test_selected = selector.transform(X_test_full)
+        selected_features = X_train_full.columns[selector.get_support()].tolist()
+        # 记录特征分数
+        feature_scores = pd.DataFrame(selector.scores_, index=X_train_full.columns, columns=['score'])
+        feature_scores.to_csv(os.path.join(self.results_dir, f'feature_scores_{selector_name}.csv'), index=True)
+        logging.info(f"开始特征选择，保留{len(selected_features)}个特征，使用{selector_name}方法,\n特征分数保存到{os.path.join(self.results_dir, f'feature_scores_{selector_name}.csv')}\n选择特征: {selected_features}")
+        # 画出特征分数图
+        plt.figure(figsize=(10, 6))
+        sns.barplot(x=feature_scores['score'], y=feature_scores.index)
+        plt.title(f'Feature Scores for {selector_name}')
+        plt.xlabel('Score')
+        plt.ylabel('Features')
+        plt.savefig(os.path.join(self.results_dir, f'feature_scores_{selector_name}.png'))
+        plt.close()
         # 数据标准化
         X_train_scaled = self.scaler.fit_transform(X_train_selected)
         X_test_scaled = self.scaler.transform(X_test_selected)
-        
-        
+            
         if self.isoversample:
             smt = SMOTE()
             X_train_scaled, y_train_full = smt.fit_resample(X_train_scaled, y_train_full)
@@ -186,11 +173,7 @@ class DataFit:
         logging.info("==========train_models==========")
         
         # 定义模型 - 训练多个模型
-        models = {
-            'RandomForest': RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1),
-            'GradientBoosting': GradientBoostingClassifier(n_estimators=100, random_state=42),
-            'LogisticRegression': LogisticRegression(random_state=42, max_iter=1000, n_jobs=-1)
-        }
+        models = self.models
         
         # 训练模型
         for name, model in models.items():
@@ -215,41 +198,104 @@ class DataFit:
             
             # 预测
             y_pred = model.predict(self.X_test)
-            y_pred_proba = model.predict_proba(self.X_test)[:, 1] if hasattr(model, 'predict_proba') else None
+            y_pred_proba = model.predict_proba(self.X_test) if hasattr(model, 'predict_proba') else None
             
             # 计算指标
             accuracy = accuracy_score(self.y_test, y_pred)
+            
+            # 计算F1-macro
+            f1_macro = f1_score(self.y_test, y_pred, average='macro')
+            
             results[name] = {
                 'accuracy': accuracy,
+                'f1_macro': f1_macro,
                 'predictions': y_pred,
                 'probabilities': y_pred_proba
             }
             
             # 如果有概率预测，计算AUC
             if y_pred_proba is not None:
-                try:
-                    auc = roc_auc_score(self.y_test, y_pred_proba)
-                    results[name]['auc'] = auc
-                except:
-                    results[name]['auc'] = None
+                auc_result = self.calculate_auc(self.y_test, y_pred_proba, name)
+                results[name]['auc'] = auc_result
             
-            # 打印分类报告
-            logging.info(f"模型 {name} 准确率: {accuracy:.4f}")
+            # 打印总体表现
+            logging.info(f"模型 {name} 总体表现:")
+            logging.info(f"  准确率: {accuracy:.4f}")
+            logging.info(f"  F1-Macro: {f1_macro:.4f}")
             if results[name].get('auc'):
-                logging.info(f"模型 {name} AUC: {results[name]['auc']:.4f}")
+                logging.info(f"  AUC: {results[name]['auc']:.4f}")
             
             # 保存详细报告
             report = classification_report(self.y_test, y_pred, output_dict=True)
+            
+            '''
+            # 打印各类别详细指标
+            logging.info(f"模型 {name} 各类别表现:")
+            for class_name in ['0', '1', '2']:
+                if class_name in report:
+                    class_report = report[class_name]
+                    support = class_report['support']
+                    precision = class_report['precision']
+                    recall = class_report['recall']
+                    f1 = class_report['f1-score']
+                    logging.info(f"  类别{class_name}: precision={precision:.3f}, recall={recall:.3f}, f1-score={f1:.3f}, support={support}")
+            '''
+            results[name]['f1_macro'] = report['macro avg']['f1-score']
             results[name]['classification_report'] = report
         
         self.results = results
         
-        # 找到最佳模型
-        best_model_name = max(results.keys(), key=lambda x: results[x]['accuracy'])
+        # 找到最佳模型（综合考虑准确率和F1-macro）
+        best_model_name = max(results.keys(), key=lambda x: results[x]['f1_macro'])
         self.best_model = self.models[best_model_name]
         self.best_model_name = best_model_name
         
-        logging.info(f"最佳模型: {best_model_name} (准确率: {results[best_model_name]['accuracy']:.4f})")
+        best_result = results[best_model_name]
+        logging.info(f"最佳模型: {best_model_name}")
+        logging.info(f"  准确率: {best_result['accuracy']:.4f}")
+        logging.info(f"  F1-Macro: {best_result['f1_macro']:.4f}")
+        if best_result.get('auc'):
+            logging.info(f"  AUC: {best_result['auc']:.4f}")
+    
+    def calculate_auc(self, y_true, y_pred_proba, model_name):
+        """
+        计算AUC的通用方法，支持二分类和多分类
+        """
+        try:
+            # 检查目标变量的类别数量
+            unique_classes = np.unique(y_true)
+            n_classes = len(unique_classes)
+            
+            logging.info(f"目标变量类别: {unique_classes}, 数量: {n_classes}")
+            
+            if n_classes == 2:
+                # 二分类情况 - 取正类的概率
+                if y_pred_proba.shape[1] == 2:
+                    # 如果概率矩阵是2列，取第1列（正类概率）
+                    auc = roc_auc_score(y_true, y_pred_proba[:, 1])
+                else:
+                    # 如果概率矩阵是1列，直接使用
+                    auc = roc_auc_score(y_true, y_pred_proba)
+                logging.info(f"模型 {model_name} 使用二分类AUC")
+                
+            elif n_classes > 2:
+                # 多分类情况 - 使用one-vs-rest方法
+                auc = roc_auc_score(y_true, y_pred_proba, multi_class='ovr', average='macro')
+                logging.info(f"模型 {model_name} 使用多分类AUC (one-vs-rest, macro average)")
+                
+                # 也可以计算每个类别的AUC
+                auc_per_class = roc_auc_score(y_true, y_pred_proba, multi_class='ovr', average=None)
+                logging.info(f"模型 {model_name} 各类别AUC: {dict(zip(unique_classes, auc_per_class))}")
+                
+            else:
+                logging.warning(f"模型 {model_name} 目标变量类别数量异常: {n_classes}")
+                return None
+                
+            return auc
+            
+        except Exception as e:
+            logging.warning(f"模型 {model_name} 计算AUC失败: {e}")
+            return None
     
     def hyperparameter_tuning(self, model_name='RandomForest'):
         """
@@ -274,9 +320,13 @@ class DataFit:
                 'max_depth': [3, 5, 7]
             },
             'LogisticRegression': {
-                'C': [0.1, 1, 10],
-                'penalty': ['l1', 'l2'],
-                'solver': ['liblinear', 'saga']
+                'C': [0.001, 0.01, 0.1, 1, 10, 100, 1000],  # 更细致的正则化强度
+                'penalty': ['l1', 'l2', 'elasticnet', None],  # 添加弹性网络和无正则化
+                'solver': ['liblinear', 'saga', 'lbfgs', 'newton-cg'],  # 更多求解器
+                'max_iter': [100, 200, 500, 1000],  # 最大迭代次数
+                'tol': [1e-4, 1e-3, 1e-2],  # 收敛容差
+                'class_weight': [None, 'balanced'],  # 类别权重
+                'multi_class': ['ovr', 'multinomial']  # 多分类策略
             }
         }
         
@@ -284,28 +334,151 @@ class DataFit:
             logging.warning(f"模型 {model_name} 没有预定义的参数网格")
             return
         
+        # 对于LogisticRegression，创建兼容的参数组合
+        if model_name == 'LogisticRegression':
+            param_grid = self._create_logistic_param_grid()
+        else:
+            param_grid = param_grids[model_name]
+        
+        # 定义评估指标
+        scoring = {
+            'accuracy': 'accuracy',
+            'precision_macro': 'precision_macro',
+            'recall_macro': 'recall_macro',
+            'f1_macro': 'f1_macro',
+            'roc_auc_ovr': 'roc_auc_ovr'
+        }
+        
         # 网格搜索
         grid_search = GridSearchCV(
             self.models[model_name],
-            param_grids[model_name],
+            param_grid,
             cv=5,
-            scoring='accuracy',
+            scoring=scoring,
+            refit='f1_macro',  # 使用F1-macro作为主要指标
+            n_jobs=-1,
+            verbose=1,
+            error_score=0
+        )
+        
+        try:
+            grid_search.fit(self.X_train, self.y_train)
+            
+            # 更新最佳模型
+            self.models[f'{model_name}_tuned'] = grid_search.best_estimator_
+            self.best_model = grid_search.best_estimator_
+            self.best_model_name = f'{model_name}_tuned'
+            
+            logging.info(f"最佳参数: {grid_search.best_params_}")
+            logging.info(f"最佳交叉验证分数: {grid_search.best_score_:.4f}")
+            
+            # 显示所有评估指标
+            logging.info("交叉验证结果:")
+            for metric, score in grid_search.cv_results_['mean_test_score'].items():
+                logging.info(f"  {metric}: {score:.4f}")
+            
+            # 重新评估
+            self.evaluate_models()
+            
+        except Exception as e:
+            logging.error(f"超参数调优失败: {e}")
+            logging.info("尝试使用简化的参数网格...")
+            self._fallback_hyperparameter_tuning(model_name)
+    
+    def _create_logistic_param_grid(self):
+        """
+        创建LogisticRegression的兼容参数网格
+        """
+        param_grid = []
+        
+        # 基础参数组合
+        base_params = {
+            'C': [0.1, 1, 10],
+            'max_iter': [500],  # 增加迭代次数避免收敛问题
+            'tol': [1e-4],
+            'class_weight': [None, 'balanced']
+        }
+        
+        # 不同求解器的参数组合（基于测试结果优化）
+        solver_params = [
+            # liblinear - 支持l1和l2，表现较好
+            {'solver': ['liblinear'], 'penalty': ['l1', 'l2'], 'multi_class': ['ovr']},
+            # lbfgs - 只支持l2，稳定
+            {'solver': ['lbfgs'], 'penalty': ['l2'], 'multi_class': ['ovr']},
+            # saga - 支持多种正则化，但需要更多参数
+            {'solver': ['saga'], 'penalty': ['l1', 'l2'], 'multi_class': ['ovr']},
+            # newton-cg - 只支持l2
+            {'solver': ['newton-cg'], 'penalty': ['l2'], 'multi_class': ['ovr']}
+        ]
+        
+        for solver_param in solver_params:
+            for C in base_params['C']:
+                for max_iter in base_params['max_iter']:
+                    for tol in base_params['tol']:
+                        for class_weight in base_params['class_weight']:
+                            for solver in solver_param['solver']:
+                                for penalty in solver_param['penalty']:
+                                    for multi_class in solver_param['multi_class']:
+                                        # 跳过不兼容的组合
+                                        if penalty == 'l1' and solver not in ['liblinear', 'saga']:
+                                            continue
+                                        
+                                        param_combination = {
+                                            'C': C,
+                                            'solver': solver,
+                                            'penalty': penalty,
+                                            'max_iter': max_iter,
+                                            'tol': tol,
+                                            'class_weight': class_weight,
+                                            'multi_class': multi_class
+                                        }
+                                        param_grid.append(param_combination)
+        
+        logging.info(f"生成了 {len(param_grid)} 个兼容的参数组合")
+        return param_grid
+    
+    def _fallback_hyperparameter_tuning(self, model_name):
+        """
+        简化版超参数调优（备用方案）
+        """
+        logging.info(f"使用简化版超参数调优: {model_name}")
+        
+        fallback_params = {
+            'LogisticRegression': {
+                'C': [0.1, 1, 10],
+                'penalty': ['l2'],
+                'solver': ['lbfgs'],
+                'max_iter': [200],
+                'class_weight': [None, 'balanced']
+            }
+        }
+        
+        if model_name not in fallback_params:
+            return
+        
+        grid_search = GridSearchCV(
+            self.models[model_name],
+            fallback_params[model_name],
+            cv=5,
+            scoring='f1_macro',
             n_jobs=-1,
             verbose=1
         )
         
-        grid_search.fit(self.X_train, self.y_train)
-        
-        # 更新最佳模型
-        self.models[f'{model_name}_tuned'] = grid_search.best_estimator_
-        self.best_model = grid_search.best_estimator_
-        self.best_model_name = f'{model_name}_tuned'
-        
-        logging.info(f"最佳参数: {grid_search.best_params_}")
-        logging.info(f"最佳交叉验证分数: {grid_search.best_score_:.4f}")
-        
-        # 重新评估
-        self.evaluate_models()
+        try:
+            grid_search.fit(self.X_train, self.y_train)
+            
+            self.models[f'{model_name}_tuned'] = grid_search.best_estimator_
+            self.best_model = grid_search.best_estimator_
+            self.best_model_name = f'{model_name}_tuned'
+            
+            logging.info(f"简化版最佳参数: {grid_search.best_params_}")
+            logging.info(f"简化版最佳分数: {grid_search.best_score_:.4f}")
+            
+            self.evaluate_models()
+            
+        except Exception as e:
+            logging.error(f"简化版超参数调优也失败: {e}")
     
     def feature_importance_analysis(self):
         """
@@ -366,7 +539,7 @@ class DataFit:
         
         # 对测试集进行预测
         predictions = self.best_model.predict(self.X_test)
-        probabilities = self.best_model.predict_proba(self.X_test)[:, 1] if hasattr(self.best_model, 'predict_proba') else None
+        probabilities = self.best_model.predict_proba(self.X_test) if hasattr(self.best_model, 'predict_proba') else None
         
         # 创建预测结果DataFrame
         results_df = pd.DataFrame({
@@ -374,12 +547,19 @@ class DataFit:
         })
         
         if probabilities is not None:
-            results_df['prediction_probability'] = probabilities
+            # 处理多分类概率矩阵
+            if len(probabilities.shape) == 2 and probabilities.shape[1] > 1:
+                # 多分类情况 - 保存每个类别的概率
+                for i in range(probabilities.shape[1]):
+                    results_df[f'probability_class_{i}'] = probabilities[:, i]
+                logging.info(f"保存了 {probabilities.shape[1]} 个类别的概率")
+            else:
+                # 二分类情况
+                results_df['prediction_probability'] = probabilities
         
         # 保存预测结果
         if output_file is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_file = os.path.join(self.results_dir, f'predictions_{timestamp}.csv')
+            output_file = os.path.join(self.results_dir, f'predictions.csv')
         
         results_df.to_csv(output_file, index=False)
         logging.info(f"预测结果保存到: {output_file}")
@@ -397,8 +577,7 @@ class DataFit:
             return
         
         if model_path is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            model_path = os.path.join(self.results_dir, f'best_model_{timestamp}.pkl')
+            model_path = os.path.join(self.results_dir, f'best_model.pkl')
         
         import pickle
         with open(model_path, 'wb') as f:
@@ -419,9 +598,10 @@ class DataFit:
         logging.info("==========generate_report==========")
         
         report = {
-            'data_source': self.data_source,
             'best_model': self.best_model_name,
+            'best_model_f1_macro': self.results[self.best_model_name]['f1_macro'],
             'training_data_shape': self.X_train.shape,
+            'selected_features': self.X_train.columns.tolist(),
             'test_data_shape': self.X_test.shape,
             'model_performance': {},
             'feature_importance': {},
@@ -433,6 +613,7 @@ class DataFit:
             report['model_performance'][name] = {
                 'accuracy': result['accuracy'],
                 'auc': result.get('auc'),
+                'f1_macro': result.get('f1_macro'),
                 'classification_report': result.get('classification_report', {})
             }
         
@@ -445,9 +626,12 @@ class DataFit:
         
         # 打印总结
         logging.info("==========建模总结==========")
-        logging.info(f"数据源: {self.data_source}")
+        logging.info(f"实验名称: {self.exp_name}")
+        logging.info(f"数据集模式: {self.mode}")
+        logging.info(f"是否过采样: {self.isoversample}")
         logging.info(f"最佳模型: {self.best_model_name}")
         logging.info(f"最佳准确率: {self.results[self.best_model_name]['accuracy']:.4f}")
+        logging.info(f"最佳F1-Macro: {self.results[self.best_model_name]['f1_macro']:.4f}")
         if self.results[self.best_model_name].get('auc'):
             logging.info(f"最佳AUC: {self.results[self.best_model_name]['auc']:.4f}")
     
@@ -471,7 +655,7 @@ class DataFit:
             self.evaluate_models()
             
             # 5. 超参数调优（可选）
-            # self.hyperparameter_tuning('RandomForest')
+            self.hyperparameter_tuning('LogisticRegression')
             
             # 6. 特征重要性分析
             self.feature_importance_analysis()
@@ -496,10 +680,13 @@ def main():
     主函数
     """
     parser = ArgumentParser()
-    parser.add_argument('-m','--mode', type=str, default='normal', help='数据集模式')
+    parser.add_argument('--mode', type=str, default='normal', help='数据集模式')
     parser.add_argument('-s','--isoversample', default=False, help='过采样',action='store_true')
+    parser.add_argument('-e','--exp_name',type=str,default='normal_exp',help='实验名称')
+    parser.add_argument('-k','--k',type=str,default='all',help='特征选择保留的特征数量("all" or int)')
+    parser.add_argument('--model',type=str,default='LogisticRegression',help='模型名称 or "all"')
     args = parser.parse_args()
-    data_fit = DataFit(data_source='logistic_imputed', mode=args.mode, isoversample=args.isoversample)
+    data_fit = DataFit(args=args)
     data_fit.run_complete_pipeline()
 
 
