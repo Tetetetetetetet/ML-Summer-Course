@@ -64,11 +64,15 @@ class DataFit:
             'f_classif': SelectKBest(score_func=f_classif, k=self.k),
             'chi2': SelectKBest(score_func=chi2, k=self.k),
         }
-        self.feature_selector = (args.feature_selector, self.feature_selectors[args.feature_selector])
+        if args.feature_selector!="None":
+            self.feature_selector = (args.feature_selector, self.feature_selectors[args.feature_selector])
+        else:
+            self.feature_selector = None
         self.mode2dataset = {
             'normal': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final.csv'},
             'selected': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final_selected.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final_selected.csv'},
             '2class': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final_2class.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final_2class.csv'},
+            'network_data': {'train': 'network_train.csv','test': 'network_test.csv'}
         }
         self.models = {
             'RandomForest': RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1),
@@ -91,8 +95,8 @@ class DataFit:
                 validation_split=0.2,
                 random_state=42,
                 need_train=True,
-                use_network_order=True,  # 使用与Network版本相同的特征顺序
-                use_network_data=True    # 直接使用Network版本的数据集
+                use_network_order=False,  # 使用与Network版本相同的特征顺序
+                use_network_data=False    # 直接使用Network版本的数据集
             )
         if args.model != 'all':
             self.models = {args.model: self.models[args.model]}
@@ -165,33 +169,38 @@ class DataFit:
         
         # 特征选择 - 保留全部特征
         logging.info("进行特征选择...")
-        selector_name,selector = self.feature_selector
-        X_train_selected = selector.fit_transform(X_train_full, y_train_full)
-        X_test_selected = selector.transform(X_test_full)
-        selected_features = X_train_full.columns[selector.get_support()].tolist()
-        # 记录特征分数
-        feature_scores = pd.DataFrame(selector.scores_, index=X_train_full.columns, columns=['score'])
-        feature_scores.to_csv(os.path.join(self.results_dir, f'feature_scores_{selector_name}.csv'), index=True)
-        logging.info(f"开始特征选择，保留{len(selected_features)}个特征，使用{selector_name}方法,\n特征分数保存到{os.path.join(self.results_dir, f'feature_scores_{selector_name}.csv')}\n选择特征: {selected_features}")
-        # 画出特征分数图
-        plt.figure(figsize=(10, 6))
-        sns.barplot(x=feature_scores['score'], y=feature_scores.index)
-        plt.title(f'Feature Scores for {selector_name}')
-        plt.xlabel('Score')
-        plt.ylabel('Features')
-        plt.savefig(os.path.join(self.results_dir, f'feature_scores_{selector_name}.png'))
-        plt.close()
-        # 数据标准化
-        X_train_scaled = self.scaler.fit_transform(X_train_selected)
-        X_test_scaled = self.scaler.transform(X_test_selected)
+        if self.feature_selector:
+            selector_name,selector = self.feature_selector
+            X_train_selected = selector.fit_transform(X_train_full, y_train_full)
+            X_test_selected = selector.transform(X_test_full)
+            # 记录特征分数
+            feature_scores = pd.DataFrame(selector.scores_, index=X_train_full.columns, columns=['score'])
+            feature_scores.to_csv(os.path.join(self.results_dir, f'feature_scores_{selector_name}.csv'), index=True)
+            logging.info(f"开始特征选择，保留{len(selected_features)}个特征，使用{selector_name}方法,\n特征分数保存到{os.path.join(self.results_dir, f'feature_scores_{selector_name}.csv')}\n选择特征: {selected_features}")
+            # 画出特征分数图
+            plt.figure(figsize=(10, 6))
+            sns.barplot(x=feature_scores['score'], y=feature_scores.index)
+            plt.title(f'Feature Scores for {selector_name}')
+            plt.xlabel('Score')
+            plt.ylabel('Features')
+            plt.savefig(os.path.join(self.results_dir, f'feature_scores_{selector_name}.png'))
+            plt.close()
+            selected_features = X_train_full.columns[selector.get_support()].tolist()
+        else:
+            X_train_selected = X_train_full
+            X_test_selected = X_test_full
+            selected_features = X_train_full.columns.tolist()
+                # 数据标准化
+        X_train_selected = self.scaler.fit_transform(X_train_selected)
+        X_test_selected = self.scaler.transform(X_test_selected)
             
         if self.isoversample:
             smt = SMOTE()
-            X_train_scaled, y_train_full = smt.fit_resample(X_train_scaled, y_train_full)
+            X_train_selected, y_train_full = smt.fit_resample(X_train_selected, y_train_full)
         
         # 转换为DataFrame
-        self.X_train = pd.DataFrame(X_train_scaled, columns=selected_features)
-        self.X_test = pd.DataFrame(X_test_scaled, columns=selected_features)
+        self.X_train = pd.DataFrame(X_train_selected, columns=selected_features)
+        self.X_test = pd.DataFrame(X_test_selected, columns=selected_features)
         self.y_train = y_train_full
         self.y_test = y_test_full
         

@@ -1,7 +1,7 @@
-model="ResNet"
-mode="selected"
+model="LogisticRegression"
+mode="network_data"
 k=all
-feature_selector="chi2"
+feature_selector=None
 isoversample=false
 if [ $isoversample == true ]; then
     exp_name="${mode}_${k}_${model}_${feature_selector}_oversample"
