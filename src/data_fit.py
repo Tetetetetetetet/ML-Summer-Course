@@ -18,6 +18,14 @@ from datetime import datetime
 from argparse import ArgumentParser
 from imblearn.over_sampling import SMOTE
 
+# 导入ResNet模型
+try:
+    from resnet_model import ResNet
+    RESNET_AVAILABLE = True
+except ImportError:
+    RESNET_AVAILABLE = False
+    logging.warning("ResNet模型不可用，请确保tensorflow已安装")
+
 # 设置日志
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 warnings.filterwarnings('ignore')
@@ -67,8 +75,31 @@ class DataFit:
             'GradientBoosting': GradientBoostingClassifier(n_estimators=100, random_state=42),
             'LogisticRegression': LogisticRegression(random_state=42, max_iter=1000, n_jobs=-1)
         }
+        
+        # 添加ResNet模型（如果可用）
+        if RESNET_AVAILABLE:
+            # 根据特征选择结果确定ResNet的特征数量
+            if self.k == 'all':
+                resnet_n = None  # 使用所有特征
+            else:
+                resnet_n = self.k
+            
+            self.models['ResNet'] = ResNet(
+                n=resnet_n,
+                epochs=200,  # 减少训练轮数以加快速度
+                batch_size=64,
+                validation_split=0.2,
+                random_state=42,
+                need_train=True,
+                use_network_order=True,  # 使用与Network版本相同的特征顺序
+                use_network_data=True    # 直接使用Network版本的数据集
+            )
         if args.model != 'all':
             self.models = {args.model: self.models[args.model]}
+        
+        # 为ResNet模型设置mode
+        if RESNET_AVAILABLE and 'ResNet' in self.models:
+            self.models['ResNet'].set_mode(self.mode)
         
         # 创建结果保存目录
         
@@ -176,6 +207,7 @@ class DataFit:
         models = self.models
         
         # 训练模型
+        failed_models = []
         for name, model in models.items():
             logging.info(f"训练模型: {name}")
             try:
@@ -184,6 +216,13 @@ class DataFit:
                 logging.info(f"模型 {name} 训练完成")
             except Exception as e:
                 logging.error(f"模型 {name} 训练失败: {e}")
+                failed_models.append(name)
+                # 从模型字典中移除失败的模型
+                if name in self.models:
+                    del self.models[name]
+        
+        if failed_models:
+            logging.warning(f"以下模型训练失败，将被跳过: {failed_models}")
     
     def evaluate_models(self):
         """
@@ -490,6 +529,11 @@ class DataFit:
             logging.error("没有可用的最佳模型")
             return
         
+        # ResNet模型不支持特征重要性分析
+        if self.best_model_name == 'ResNet':
+            logging.info("ResNet模型不支持特征重要性分析，跳过此步骤")
+            return
+        
         # 获取特征重要性
         if hasattr(self.best_model, 'feature_importances_'):
             importances = self.best_model.feature_importances_
@@ -577,19 +621,26 @@ class DataFit:
             return
         
         if model_path is None:
-            model_path = os.path.join(self.results_dir, f'best_model.pkl')
+            if self.best_model_name == 'ResNet':
+                model_path = os.path.join(self.results_dir, 'best_model.h5')
+            else:
+                model_path = os.path.join(self.results_dir, 'best_model.pkl')
         
-        import pickle
-        with open(model_path, 'wb') as f:
-            pickle.dump({
-                'model': self.best_model,
-                'scaler': self.scaler,
-                'feature_selector': self.feature_selector,
-                'feature_names': self.X_train.columns.tolist(),
-                'model_name': self.best_model_name
-            }, f)
-        
-        logging.info(f"模型保存到: {model_path}")
+        if self.best_model_name == 'ResNet':
+            # ResNet模型已经在其内部保存，这里只需要记录信息
+            logging.info("ResNet模型已在训练时保存到output/resnet_models/目录")
+        else:
+            # 传统机器学习模型保存为.pkl格式
+            import pickle
+            with open(model_path, 'wb') as f:
+                pickle.dump({
+                    'model': self.best_model,
+                    'scaler': self.scaler,
+                    'feature_selector': self.feature_selector,
+                    'feature_names': self.X_train.columns.tolist(),
+                    'model_name': self.best_model_name
+                }, f)
+            logging.info(f"模型保存到: {model_path}")
     
     def generate_report(self):
         """

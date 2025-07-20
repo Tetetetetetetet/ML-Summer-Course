@@ -73,8 +73,9 @@ make train OVERSAMPLE=true
 - **model**: 指定要训练的模型
   - `"all"`: 训练所有可用模型（RandomForest, GradientBoosting, LogisticRegression）
   - `"LogisticRegression"`: 仅训练逻辑回归模型
-  - `"RandomForest"`: 仅训练随机森林模型
-  - `"GradientBoosting"`: 仅训练梯度提升模型
+- `"RandomForest"`: 仅训练随机森林模型
+- `"GradientBoosting"`: 仅训练梯度提升模型
+- `"ResNet"`: 仅训练ResNet-like神经网络模型（需要TensorFlow）
 
 - **mode**: 指定数据集模式
   - `"normal"`: 使用完整数据集
@@ -149,6 +150,16 @@ isoversample=true
 ./train.sh
 ```
 
+#### 7. 使用ResNet神经网络模型
+```bash
+# 修改train.sh中的model参数
+model="ResNet"
+k=20
+feature_selector="f_classif"
+isoversample=false
+./train.sh
+```
+
 ### 输出结果
 
 训练完成后，结果将保存在：
@@ -156,10 +167,14 @@ isoversample=true
 output/{exp_name}/
 ├── feature_scores_{feature_selector}.csv    # 特征选择分数
 ├── feature_scores_{feature_selector}.png    # 特征选择分数可视化
-├── feature_importance.csv                   # 模型特征重要性
-├── feature_importance.png                   # 特征重要性可视化
+├── feature_importance.csv                   # 模型特征重要性（传统模型）
+├── feature_importance.png                   # 特征重要性可视化（传统模型）
+├── resnet_confusion_matrix.png              # ResNet混淆矩阵（仅ResNet模型）
+├── resnet_training_history.png              # ResNet训练历史（仅ResNet模型）
+├── resnet_results.json                      # ResNet详细结果（仅ResNet模型）
 ├── predictions.csv                          # 预测结果
-├── best_model.pkl                           # 最佳模型文件
+├── best_model.pkl                           # 最佳模型文件（传统模型）
+├── best_model.h5                            # 最佳模型文件（ResNet模型）
 └── modeling_report.json                     # 建模报告
 ```
 
@@ -413,5 +428,58 @@ python src/test_improved_imputation.py
 3. **特征排序**: 根据分数对特征进行排序
 4. **特征选择**: 根据k参数选择前k个特征（k="all"时保留所有特征）
 5. **结果保存**: 特征分数和可视化结果保存到输出目录
+
+## ResNet神经网络模型
+
+### 模型特点
+- **架构**: ResNet-like全连接网络，包含残差连接
+- **层数**: 3个残差块 + 2个全连接层
+- **激活函数**: ReLU
+- **正则化**: Dropout + BatchNormalization
+- **输出**: 3分类softmax输出
+- **接口兼容**: 完全兼容sklearn接口，可直接在data_fit.py中使用
+
+### 优势
+- **残差连接**: 缓解梯度消失问题，支持更深的网络
+- **自动特征工程**: 通过多层网络自动学习特征表示
+- **正则化**: 多种正则化技术防止过拟合
+- **类别权重**: 自动处理类别不平衡问题
+- **智能缓存**: 相同参数的模型只训练一次，自动加载已有模型
+
+### 使用要求
+- **TensorFlow**: 需要安装TensorFlow 2.x
+- **内存**: 相比传统模型需要更多内存
+- **训练时间**: 训练时间较长，建议使用GPU加速
+
+### 参数说明
+- **n**: 使用前n个特征（None表示使用所有特征）
+- **epochs**: 训练轮数（默认100，可调整）
+- **batch_size**: 批次大小（默认64）
+- **validation_split**: 验证集比例（默认0.2）
+- **class_weight**: 类别权重（自动计算）
+- **need_train**: 是否需要训练（True训练并保存，False尝试加载已有模型）
+
+### 特征维度检查
+- **自动检查**: 自动检查特征数量与网络架构的兼容性
+- **特征不足**: 如果特征数量小于指定数量，会报错并停止
+- **特征过多**: 如果特征数量大于第一层维度(256)，会自动截取前256个特征
+
+### 模型保存和加载
+- **保存位置**: `output/resnet_models/` 目录
+- **参数哈希**: 基于模型参数生成唯一标识
+- **自动加载**: 相同参数的模型会自动加载，避免重复训练
+- **保存内容**: 模型文件(.h5)、参数文件(.json)、标准化器(.pkl)、训练历史(.json)
+
+### 使用示例
+```bash
+# 在train.sh中使用ResNet
+model="ResNet"
+k=20
+feature_selector="f_classif"
+./train.sh
+
+# 或直接运行
+python src/data_fit.py --model ResNet --k 20 --feature_selector f_classif
+```
 - ✅ 增强了错误处理和鲁棒性 
  

@@ -1,5 +1,5 @@
-model="LogisticRegression"
-mode="normal"
+model="ResNet"
+mode="selected"
 k=all
 feature_selector="chi2"
 isoversample=false
