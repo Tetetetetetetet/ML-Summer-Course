@@ -14,7 +14,7 @@
         "encounter_id": {
             "feature_id": 0,
             "category": "identifier",
-            "type": "categorical",
+            "type": "ID",
             "description": "就诊ID",
             "label_encoding": {
                 "unique_values": [],
@@ -29,7 +29,7 @@
         "patient_nbr": {
             "feature_id": 1,
             "category": "identifier",
-            "type": "categorical",
+            "type": "ID",
             "description": "患者ID",
             "label_encoding": {
                 "unique_values": [],
