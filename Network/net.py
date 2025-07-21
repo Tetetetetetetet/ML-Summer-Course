@@ -5,6 +5,30 @@ import tensorflow as tf
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report, confusion_matrix
 
+def setup_gpu():
+    """
+    配置GPU设置
+    """
+    try:
+        # 检查是否有可用的GPU
+        gpus = tf.config.list_physical_devices('GPU')
+        if gpus:
+            print(f"发现 {len(gpus)} 个GPU设备")
+            
+            # 设置GPU内存增长策略，避免一次性分配所有内存
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+                print(f"已为GPU {gpu.name} 启用内存增长")
+            
+            print("GPU配置完成，将使用GPU进行训练")
+            return True
+        else:
+            print("未发现GPU设备，将使用CPU进行训练")
+            return False
+            
+    except Exception as e:
+        print(f"GPU配置失败: {e}，将使用CPU进行训练")
+        return False
 
 # -------------------------------------------------
 # 1. 构建模型
@@ -79,6 +103,9 @@ def train(train_csv: str,
         batch_size   : 批次大小
         save_path    : 模型保存路径（含文件名）
     """
+    # 配置GPU
+    setup_gpu()
+    
     # 1) 读数据
     train_df = pd.read_csv(train_csv)
     model, cols = build_model(feature_cols=feature_cols, n=n)

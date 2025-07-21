@@ -12,16 +12,33 @@ from datetime import datetime
 import hashlib
 import pickle
 
+# 自定义F1-macro指标
+def f1_macro_metric(y_true, y_pred):
+    """
+    自定义F1-macro指标，与sklearn的f1_score(average='macro')保持一致
+    """
+    # 将one-hot编码转换为类别索引
+    y_true_class = tf.argmax(y_true, axis=1)
+    y_pred_class = tf.argmax(y_pred, axis=1)
+    
+    # 转换为numpy数组进行计算
+    y_true_np = y_true_class.numpy()
+    y_pred_np = y_pred_class.numpy()
+    
+    # 计算F1-macro
+    f1 = f1_score(y_true_np, y_pred_np, average='macro')
+    return tf.constant(f1, dtype=tf.float32)
+
 class ResNet:
     """
     ResNet-like 全连接网络模型类
     完全兼容data_fit.py的接口，可以直接添加到self.models中使用
     """
     
-    def __init__(self, feature_cols=None, n=None, epochs=200, batch_size=64, 
+    def __init__(self, feature_cols=None, n=None, epochs=200, batch_size=128, gpu_batch_size=512,
                  validation_split=0.2, class_weight=None, random_state=42,
                  need_train=True, model_save_dir='output/resnet_models',
-                 use_network_order=False, use_network_data=False):
+                 ):
         """
         初始化ResNet模型
         
@@ -35,20 +52,20 @@ class ResNet:
             random_state: 随机种子
             need_train: 是否需要训练，True时训练并保存，False时尝试加载已有模型
             model_save_dir: 模型保存目录
-            use_network_order: 是否使用与Network版本相同的特征顺序
-            use_network_data: 是否直接使用Network版本的数据集
         """
         self.feature_cols = feature_cols
         self.n = n
         self.epochs = epochs
         self.batch_size = batch_size
+        self.gpu_batch_size = gpu_batch_size
         self.validation_split = validation_split
         self.class_weight = class_weight
         self.random_state = random_state
         self.need_train = need_train
         self.model_save_dir = model_save_dir
-        self.use_network_order = use_network_order
-        self.use_network_data = use_network_data
+        
+        # GPU配置
+        self._setup_gpu()
         
         # 设置随机种子
         np.random.seed(random_state)
@@ -66,7 +83,35 @@ class ResNet:
         # 创建模型保存目录
         os.makedirs(self.model_save_dir, exist_ok=True)
         
-        logging.info(f"ResNet模型初始化完成，need_train={need_train}, use_network_data={use_network_data}")
+        logging.info(f"ResNet模型初始化完成，need_train={need_train}")
+    
+    def _setup_gpu(self):
+        """
+        配置GPU设置
+        """
+        try:
+            # 检查是否有可用的GPU
+            gpus = tf.config.list_physical_devices('GPU')
+            if gpus:
+                logging.info(f"发现 {len(gpus)} 个GPU设备")
+                
+                # 设置GPU内存增长策略，避免一次性分配所有内存
+                # 注意：必须在创建任何GPU设备之前设置
+                for gpu in gpus:
+                    try:
+                        tf.config.experimental.set_memory_growth(gpu, True)
+                        logging.info(f"已为GPU {gpu.name} 启用内存增长")
+                    except RuntimeError as e:
+                        logging.warning(f"GPU {gpu.name} 内存增长设置失败: {e}")
+                
+                logging.info("GPU配置完成，将使用GPU进行训练")
+                self.use_gpu = True
+                self.batch_size = self.gpu_batch_size
+            else:
+                logging.info("未发现GPU设备，将使用CPU进行训练")
+                self.use_gpu = False
+        except Exception as e:
+            logging.warning(f"GPU配置失败: {e}，将使用CPU进行训练")
     
     def _build_model(self, input_dim):
         """
@@ -123,7 +168,7 @@ class ResNet:
             'n': self.n,
             'epochs': self.epochs,
             'batch_size': self.batch_size,
-            'validation_split': self.validation_split,
+            'validation_split': float(self.validation_split) if self.validation_split is not None else None,
             'class_weight': self.class_weight,
             'random_state': self.random_state,
             'mode': self.mode
@@ -208,8 +253,8 @@ class ResNet:
         params = self._get_model_params_for_comparison()
         # 添加训练时生成的参数
         params.update({
-            'input_dim': self.input_dim,
-            'actual_feature_cols': self.actual_feature_cols,
+            'input_dim': int(self.input_dim) if self.input_dim is not None else None,
+            'actual_feature_cols': [int(x) for x in self.actual_feature_cols] if self.actual_feature_cols is not None else None,
             'feature_names': getattr(self, 'feature_names', None)  # 保存特征名称
         })
         
@@ -225,8 +270,13 @@ class ResNet:
         # 保存训练历史
         if self.history is not None:
             history_file = os.path.join(model_dir, 'history.json')
+            # 转换训练历史中的numpy类型
+            history_dict = {}
+            for key, values in self.history.history.items():
+                history_dict[key] = [float(v) for v in values]
+            
             with open(history_file, 'w') as f:
-                json.dump(self.history.history, f, indent=2)
+                json.dump(history_dict, f, indent=2)
         
         logging.info(f"模型已保存到: {model_dir}")
     
@@ -387,8 +437,6 @@ class ResNet:
         else:
             self.actual_feature_cols = list(self.feature_cols)
         
-
-        
         # 选择特征
         try:
             logging.info(f"选择特征，特征索引: {self.actual_feature_cols}")
@@ -401,8 +449,9 @@ class ResNet:
             logging.error(f"输入数据形状: {X.shape}")
             raise
         
-        # 构建模型
-        self._build_model(X_selected.shape[1])
+        # 构建模型（如果还没有构建）
+        if self.model is None:
+            self._build_model(X_selected.shape[1])
         
         # 准备数据
         X_scaled = self._prepare_data(X_selected, is_training=True)
@@ -411,13 +460,39 @@ class ResNet:
         class_weights = self._calculate_class_weights(y)
         
         # 训练模型
+        logging.info("开始训练ResNet模型...")
+        
+        # 编译模型（如果还没有编译）
+        if not hasattr(self.model, '_compiled') or not self.model._compiled:
+            self.model.compile(
+                optimizer='adam',
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy', f1_macro_metric]  # 添加F1-macro指标
+            )
+        
+        # 训练
         self.history = self.model.fit(
             X_scaled, y,
             epochs=self.epochs,
             batch_size=self.batch_size,
             validation_split=self.validation_split,
             class_weight=class_weights,
-            verbose=2
+            verbose=1,
+            callbacks=[
+                tf.keras.callbacks.EarlyStopping(
+                    monitor='val_f1_macro_metric',  # 监控验证F1-macro
+                    patience=15,
+                    restore_best_weights=True,
+                    mode='max'  # F1分数越高越好
+                ),
+                tf.keras.callbacks.ReduceLROnPlateau(
+                    monitor='val_f1_macro_metric',  # 监控验证F1-macro
+                    factor=0.5,
+                    patience=15,
+                    min_lr=1e-7,
+                    mode='max'  # F1分数越高越好
+                )
+            ]
         )
         
         self.is_fitted = True
@@ -516,8 +591,6 @@ class ResNet:
             'random_state': self.random_state,
             'need_train': self.need_train,
             'model_save_dir': self.model_save_dir,
-            'use_network_order': self.use_network_order,
-            'use_network_data': self.use_network_data
         }
     
     def set_params(self, **params):
@@ -528,18 +601,3 @@ class ResNet:
             if hasattr(self, key):
                 setattr(self, key, value)
         return self
-
-
-def create_resnet_model(feature_cols=None, n=None, **kwargs):
-    """
-    创建ResNet模型的工厂函数
-    
-    Args:
-        feature_cols: 特征列
-        n: 特征数量
-        **kwargs: 其他参数
-    
-    Returns:
-        ResNet实例
-    """
-    return ResNet(feature_cols=feature_cols, n=n, **kwargs) 

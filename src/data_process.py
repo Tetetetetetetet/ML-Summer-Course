@@ -1,7 +1,6 @@
 from matplotlib.pyplot import ecdf, isinteractive
 import logging
 from tqdm import tqdm
-from myutils import read_jsonl,write_jsonl
 from pathlib import Path
 import pdb
 import pandas as pd
@@ -11,6 +10,18 @@ import seaborn as sns
 import os
 import json
 from typing import Dict
+
+# 兼容不同环境的导入方式
+try:
+    from myutils import read_jsonl, write_jsonl
+except ImportError:
+    try:
+        from .myutils import read_jsonl, write_jsonl
+    except ImportError:
+        try:
+            from src.myutils import read_jsonl, write_jsonl
+        except ImportError:
+            raise ImportError("myutils不可用，请检查myutils.py是否存在")
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,6 +36,7 @@ class DataProcess:
         self.feature_tabel = pd.read_csv('Dataset/FeatureTabel_Ch.csv', index_col=0)
         self.train_data = pd.read_csv('Dataset/diabetic_data_training.csv')
         self.output_dir = Path('Dataset/processed/train_processed')
+        os.makedirs(self.output_dir,exist_ok=True)
         self.dataset_path = Path('Dataset')
         self.ids_mapping = read_jsonl('config/id_mapping.json')
         self.visualization_dir = 'Dataset/processed/visualization'

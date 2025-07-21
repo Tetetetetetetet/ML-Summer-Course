@@ -1,6 +1,0 @@
-setup.py
-myutils/__init__.py
-myutils.egg-info/PKG-INFO
-myutils.egg-info/SOURCES.txt
-myutils.egg-info/dependency_links.txt
-myutils.egg-info/top_level.txt

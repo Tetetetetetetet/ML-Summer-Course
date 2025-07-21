@@ -1,5 +1,4 @@
 import pandas as pd
-from myutils import read_jsonl
 import numpy as np
 import os
 import logging
@@ -17,7 +16,32 @@ import seaborn as sns
 from datetime import datetime
 from argparse import ArgumentParser
 from imblearn.over_sampling import SMOTE
-from resnet_model import ResNet
+
+# 兼容不同环境的导入方式
+try:
+    from myutils import read_jsonl
+except ImportError:
+    try:
+        from .myutils import read_jsonl
+    except ImportError:
+        try:
+            from src.myutils import read_jsonl
+        except ImportError:
+            raise ImportError("myutils不可用，请检查myutils.py是否存在")
+# 兼容不同环境的导入方式
+try:
+    from .resnet_model import ResNet
+except ImportError:
+    try:
+        from resnet_model import ResNet
+    except ImportError:
+        try:
+            from src.resnet_model import ResNet
+        except ImportError:
+            # 如果ResNet不可用，创建一个占位符类
+            class ResNet:
+                def __init__(self, **kwargs):
+                    raise ImportError("ResNet模型不可用，请检查TensorFlow安装")
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
@@ -33,6 +57,7 @@ class DataFit:
         """
         self.output_dir = 'output/'
         self.results_dir = os.path.join(self.output_dir, args.exp_name)
+        os.system(f"cp train.sh {self.results_dir}/train.sh")
         os.makedirs(self.results_dir, exist_ok=True)
         self.dataset_dir = 'Dataset/processed/train_processed'
         self.mode = args.mode
@@ -82,21 +107,15 @@ class DataFit:
         
         self.models['ResNet'] = ResNet(
             n=resnet_n,
-            epochs=200,  # 减少训练轮数以加快速度
-            batch_size=64,
+            epochs=args.resnet_epochs,
+            batch_size=args.gpu_batch_size,  # 直接使用gpu_batch_size作为batch_size
             validation_split=0.2,
             random_state=42,
             need_train=True,
-            use_network_order=True,  # 使用与Network版本相同的特征顺序
-            use_network_data=True# 直接使用Network版本的数据集
         )
         self.models['ResNet'].set_mode(self.mode)
         if args.model != 'all':
             self.models = {args.model: self.models[args.model]}
-        
-        # 为ResNet模型设置mode
-        
-        # 创建结果保存目录
         
         logging.info(f"DataFit初始化完成，mode: {self.mode}")
     
@@ -204,7 +223,7 @@ class DataFit:
         logging.info("==========train_models==========")
         
         # 定义模型 - 训练多个模型
-        models = self.models
+        models = self.models.copy()  # 创建副本避免迭代时修改
         
         # 训练模型
         failed_models = []
@@ -283,6 +302,11 @@ class DataFit:
             results[name]['classification_report'] = report
         
         self.results = results
+        
+        # 检查是否有成功训练的模型
+        if not results:
+            logging.error("没有成功训练的模型，无法进行评估")
+            return
         
         # 找到最佳模型（综合考虑准确率和F1-macro）
         best_model_name = max(results.keys(), key=lambda x: results[x]['f1_macro'])
@@ -650,7 +674,7 @@ class DataFit:
         
         report = {
             'best_model': self.best_model_name,
-            'best_model_f1_macro': self.results[self.best_model_name]['f1_macro'],
+            'best_model_f1_macro': float(self.results[self.best_model_name]['f1_macro']),
             'training_data_shape': self.X_train.shape,
             'selected_features': self.X_train.columns.tolist(),
             'test_data_shape': self.X_test.shape,
@@ -737,6 +761,8 @@ def main():
     parser.add_argument('-k','--k',type=str,default='all',help='特征选择保留的特征数量("all" or int)')
     parser.add_argument('--model',type=str,default='LogisticRegression',help='模型名称 or "all"')
     parser.add_argument('--feature_selector',type=str,default='chi2',help='特征选择方法, can be "chi2" or "f_classif"')
+    parser.add_argument('--gpu_batch_size',type=int,default=512,help='GPU批次大小')
+    parser.add_argument('--resnet_epochs',type=int,default=200,help='ResNet训练轮数')
     args = parser.parse_args()
     data_fit = DataFit(args=args)
     data_fit.run_complete_pipeline()
