@@ -108,7 +108,8 @@ class DataFit:
         self.models['ResNet'] = ResNet(
             n=resnet_n,
             epochs=args.resnet_epochs,
-            batch_size=args.gpu_batch_size,  # 直接使用gpu_batch_size作为batch_size
+            batch_size=64,
+            gpu_batch_size=args.resnet_gpu_batch_size,
             validation_split=0.2,
             random_state=42,
             need_train=True,
@@ -761,7 +762,7 @@ def main():
     parser.add_argument('-k','--k',type=str,default='all',help='特征选择保留的特征数量("all" or int)')
     parser.add_argument('--model',type=str,default='LogisticRegression',help='模型名称 or "all"')
     parser.add_argument('--feature_selector',type=str,default='chi2',help='特征选择方法, can be "chi2" or "f_classif"')
-    parser.add_argument('--gpu_batch_size',type=int,default=512,help='GPU批次大小')
+    parser.add_argument('--resnet_gpu_batch_size',type=int,default=512,help='GPU批次大小')
     parser.add_argument('--resnet_epochs',type=int,default=200,help='ResNet训练轮数')
     args = parser.parse_args()
     data_fit = DataFit(args=args)

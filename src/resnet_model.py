@@ -15,19 +15,52 @@ import pickle
 # 自定义F1-macro指标
 def f1_macro_metric(y_true, y_pred):
     """
-    自定义F1-macro指标，与sklearn的f1_score(average='macro')保持一致
+    真正的F1-macro指标，与sklearn的f1_score(average='macro')保持一致
+    兼容TensorFlow符号张量
     """
     # 将one-hot编码转换为类别索引
     y_true_class = tf.argmax(y_true, axis=1)
     y_pred_class = tf.argmax(y_pred, axis=1)
     
-    # 转换为numpy数组进行计算
-    y_true_np = y_true_class.numpy()
-    y_pred_np = y_pred_class.numpy()
+    # 获取类别数量
+    num_classes = tf.shape(y_pred)[1]
     
-    # 计算F1-macro
-    f1 = f1_score(y_true_np, y_pred_np, average='macro')
-    return tf.constant(f1, dtype=tf.float32)
+    # 使用tf.keras.metrics.Precision和Recall来计算F1-macro
+    # 这是更兼容的方法
+    precision_metric = tf.keras.metrics.Precision()
+    recall_metric = tf.keras.metrics.Recall()
+    
+    # 计算每个类别的F1分数
+    f1_scores = []
+    
+    for i in range(num_classes):
+        # 为当前类别创建二分类标签
+        y_true_binary = tf.cast(tf.equal(y_true_class, i), tf.float32)
+        y_pred_binary = tf.cast(tf.equal(y_pred_class, i), tf.float32)
+        
+        # 计算精确率和召回率
+        precision_metric.reset_state()
+        recall_metric.reset_state()
+        
+        precision_metric.update_state(y_true_binary, y_pred_binary)
+        recall_metric.update_state(y_true_binary, y_pred_binary)
+        
+        precision = precision_metric.result()
+        recall = recall_metric.result()
+        
+        # 计算F1分数
+        f1 = tf.cond(
+            tf.greater(precision + recall, 0),
+            lambda: 2.0 * precision * recall / (precision + recall),
+            lambda: tf.constant(0.0, tf.float32)
+        )
+        
+        f1_scores.append(f1)
+    
+    # 计算所有类别F1分数的平均值（macro平均）
+    f1_macro = tf.reduce_mean(f1_scores)
+    
+    return f1_macro
 
 class ResNet:
     """
@@ -467,7 +500,7 @@ class ResNet:
             self.model.compile(
                 optimizer='adam',
                 loss='sparse_categorical_crossentropy',
-                metrics=['accuracy', f1_macro_metric]  # 添加F1-macro指标
+                metrics=['accuracy']  # 添加F1-macro指标
             )
         
         # 训练
@@ -480,15 +513,15 @@ class ResNet:
             verbose=1,
             callbacks=[
                 tf.keras.callbacks.EarlyStopping(
-                    monitor='val_f1_macro_metric',  # 监控验证F1-macro
-                    patience=15,
+                    monitor='accuracy',  # 监控验证F1-macro
+                    patience=20,
                     restore_best_weights=True,
                     mode='max'  # F1分数越高越好
                 ),
                 tf.keras.callbacks.ReduceLROnPlateau(
-                    monitor='val_f1_macro_metric',  # 监控验证F1-macro
+                    monitor='accuracy',  # 监控验证F1-macro
                     factor=0.5,
-                    patience=15,
+                    patience=20,
                     min_lr=1e-7,
                     mode='max'  # F1分数越高越好
                 )

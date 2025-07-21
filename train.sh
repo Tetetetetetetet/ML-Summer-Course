@@ -13,7 +13,7 @@ if [ $isoversample == true ]; then
 else
     if [ $model == "ResNet" ]; then
         exp_name="${mode}-k_${k}-model_${model}-bs_${resnet_gpu_batch_size}-ep_${resnet_epochs}-fs_${feature_selector}-notoversample"
-        python src/data_fit.py --mode $mode -e $exp_name -k $k --model $model --feature_selector $feature_selector --gpu_batch_size $resnet_gpu_batch_size --resnet_epochs $resnet_epochs
+        python src/data_fit.py --mode $mode -e $exp_name -k $k --model $model --feature_selector $feature_selector --resnet_gpu_batch_size $resnet_gpu_batch_size --resnet_epochs $resnet_epochs
     else
         exp_name="${mode}-k_${k}-model_${model}-fs_${feature_selector}-notoversample"
         python src/data_fit.py --mode $mode -e $exp_name -k $k --model $model --feature_selector $feature_selector
