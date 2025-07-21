@@ -1,4 +1,4 @@
-model="LogisticRegression"
+model="ResNet"
 mode="network_data"
 k=all
 feature_selector=None
@@ -7,6 +7,6 @@ if [ $isoversample == true ]; then
     exp_name="${mode}_${k}_${model}_${feature_selector}_oversample"
     python src/data_fit.py --mode $mode -e $exp_name -k $k --model $model --isoversample --feature_selector $feature_selector
 else
-    exp_name="${mode}_${k}_${model}_${feature_selector}_notoversample"
+    exp_name="resentfixad_${mode}_${k}_${model}_${feature_selector}_notoversample"
     python src/data_fit.py --mode $mode -e $exp_name -k $k --model $model --feature_selector $feature_selector
 fi

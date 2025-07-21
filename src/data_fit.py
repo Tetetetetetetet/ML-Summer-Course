@@ -17,14 +17,7 @@ import seaborn as sns
 from datetime import datetime
 from argparse import ArgumentParser
 from imblearn.over_sampling import SMOTE
-
-# 导入ResNet模型
-try:
-    from resnet_model import ResNet
-    RESNET_AVAILABLE = True
-except ImportError:
-    RESNET_AVAILABLE = False
-    logging.warning("ResNet模型不可用，请确保tensorflow已安装")
+from resnet_model import ResNet
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
@@ -81,29 +74,27 @@ class DataFit:
         }
         
         # 添加ResNet模型（如果可用）
-        if RESNET_AVAILABLE:
-            # 根据特征选择结果确定ResNet的特征数量
-            if self.k == 'all':
-                resnet_n = None  # 使用所有特征
-            else:
-                resnet_n = self.k
-            
-            self.models['ResNet'] = ResNet(
-                n=resnet_n,
-                epochs=200,  # 减少训练轮数以加快速度
-                batch_size=64,
-                validation_split=0.2,
-                random_state=42,
-                need_train=True,
-                use_network_order=False,  # 使用与Network版本相同的特征顺序
-                use_network_data=False    # 直接使用Network版本的数据集
-            )
+        # 根据特征选择结果确定ResNet的特征数量
+        if self.k == 'all':
+            resnet_n = None  # 使用所有特征
+        else:
+            resnet_n = self.k
+        
+        self.models['ResNet'] = ResNet(
+            n=resnet_n,
+            epochs=200,  # 减少训练轮数以加快速度
+            batch_size=64,
+            validation_split=0.2,
+            random_state=42,
+            need_train=True,
+            use_network_order=True,  # 使用与Network版本相同的特征顺序
+            use_network_data=True# 直接使用Network版本的数据集
+        )
+        self.models['ResNet'].set_mode(self.mode)
         if args.model != 'all':
             self.models = {args.model: self.models[args.model]}
         
         # 为ResNet模型设置mode
-        if RESNET_AVAILABLE and 'ResNet' in self.models:
-            self.models['ResNet'].set_mode(self.mode)
         
         # 创建结果保存目录
         

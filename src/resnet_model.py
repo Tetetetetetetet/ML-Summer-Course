@@ -148,7 +148,7 @@ class ResNet:
     
     def _find_existing_model(self):
         """
-        查找是否存在参数一致的已训练模型
+        查找是否存在参数一致的已训练模型(对比参数字典而非hash)
         
         Returns:
             model_path: 模型路径，如果找到的话
@@ -209,7 +209,8 @@ class ResNet:
         # 添加训练时生成的参数
         params.update({
             'input_dim': self.input_dim,
-            'actual_feature_cols': self.actual_feature_cols
+            'actual_feature_cols': self.actual_feature_cols,
+            'feature_names': getattr(self, 'feature_names', None)  # 保存特征名称
         })
         
         params_file = os.path.join(model_dir, 'model_params.json')
@@ -342,20 +343,23 @@ class ResNet:
         """
         logging.info("==========ResNet模型训练开始==========")
         
-        # 如果使用Network数据，直接加载
-        if self.use_network_data:
-            logging.info("使用Network版本数据集")
-            X_train, y_train, X_test, y_test = self._load_network_data()
-            # 保存测试数据供后续使用
-            self.X_test_network = X_test
-            self.y_test_network = y_test
-            X, y = X_train, y_train
-        else:
-            # 确保X是numpy数组
-            if hasattr(X, 'values'):
-                X = X.values
-            if hasattr(y, 'values'):
-                y = y.values
+        # 保存原始特征名称（如果可用）
+        if hasattr(X, 'columns'):
+            self.feature_names = X.columns.tolist()
+            logging.info(f"检测到特征名称: {self.feature_names}")
+        
+        # 确保X和y是numpy数组
+        if hasattr(X, 'values'):
+            X = X.values
+        if hasattr(y, 'values'):
+            y = y.values
+        
+        # 确保数据类型
+        X = np.asarray(X, dtype=np.float32)
+        y = np.asarray(y, dtype=np.int32)
+        
+        logging.info(f"数据类型转换完成 - X: {X.dtype}, y: {y.dtype}")
+        logging.info(f"数据形状 - X: {X.shape}, y: {y.shape}")
         
         # 检查是否需要训练
         if not self.need_train:
@@ -379,26 +383,11 @@ class ResNet:
                     logging.error(f"特征数量({X.shape[1]})小于指定数量({self.n})")
                     raise ValueError(f"特征数量({X.shape[1]})小于指定数量({self.n})")
                 
-                if self.use_network_order and self.n == 28:
-                    # 使用与Network版本相同的特征顺序
-                    logging.info("使用Network版本的特征顺序")
-                    # 检查数据是否包含目标变量
-                    if X.shape[1] == 29:  # 包含目标变量
-                        # 在集成版本中，目标变量在第26列，需要排除它
-                        # 使用前25列 + 第27-28列（跳过第26列的目标变量）
-                        self.actual_feature_cols = list(range(25)) + [26, 27]
-                        logging.info("检测到数据包含目标变量，使用前25列+第27-28列作为特征")
-                    else:
-                        self.actual_feature_cols = list(range(28))
-                else:
-                    self.actual_feature_cols = list(range(self.n))
+                self.actual_feature_cols = list(range(self.n))
         else:
             self.actual_feature_cols = list(self.feature_cols)
         
-        # 检查特征维度
-        if len(self.actual_feature_cols) > 256:  # 第一层维度
-            logging.error(f"特征数量({len(self.actual_feature_cols)})大于第一层维度(256)，将只使用前256个特征")
-            self.actual_feature_cols = self.actual_feature_cols[:256]
+
         
         # 选择特征
         try:
@@ -455,13 +444,9 @@ class ResNet:
         if not self.is_fitted:
             raise ValueError("模型尚未训练，请先调用fit方法")
         
-        # 如果使用Network数据，使用保存的测试数据
-        if self.use_network_data and hasattr(self, 'X_test_network'):
-            X = self.X_test_network
-        else:
-            # 确保X是numpy数组
-            if hasattr(X, 'values'):
-                X = X.values
+        # 确保X是numpy数组
+        if hasattr(X, 'values'):
+            X = X.values
         
         # 选择特征
         try:
@@ -496,13 +481,9 @@ class ResNet:
         if not self.is_fitted:
             raise ValueError("模型尚未训练，请先调用fit方法")
         
-        # 如果使用Network数据，使用保存的测试数据
-        if self.use_network_data and hasattr(self, 'X_test_network'):
-            X = self.X_test_network
-        else:
-            # 确保X是numpy数组
-            if hasattr(X, 'values'):
-                X = X.values
+        # 确保X是numpy数组
+        if hasattr(X, 'values'):
+            X = X.values
         
         # 选择特征
         try:
