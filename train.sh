@@ -23,13 +23,13 @@ nvidia-smi --query-gpu=index,name,memory.used,memory.total,utilization.gpu --for
 echo "=== 开始训练 ==="
 
 model="ResNet"
-mode="normal"
-# mode="network_data"
+# mode="selected"
+mode="network_data"
 k=all
 feature_selector=None
 resnet_epochs=1000
 isoversample=true
-resnet_gpu_batch_size=64 # 更新为最佳批次大小
+resnet_gpu_batch_size=128 # 更新为最佳批次大小
 echo "====train.sh====="
 cat train.sh
 if [ $isoversample == true ]; then

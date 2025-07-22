@@ -207,7 +207,8 @@ class ResNet:
             'mode': self.mode
         }
         params_str = json.dumps(params, sort_keys=True)
-        return hashlib.md5(params_str.encode()).hexdigest()
+        self.hash = hashlib.md5(params_str.encode()).hexdigest()
+        return self.hash
     
     def _get_model_params_for_comparison(self):
         """
