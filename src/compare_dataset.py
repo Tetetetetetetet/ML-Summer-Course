@@ -4,8 +4,8 @@ import json
 
 resnet_data_train = pd.read_csv('Dataset/processed/train_processed/network_train.csv')
 resnet_data_test = pd.read_csv('Dataset/processed/train_processed/network_test.csv')
-original_data_train = pd.read_csv('Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_train_final_selected.csv')
-original_data_test = pd.read_csv('Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_test_final_selected.csv')
+original_data_train = pd.read_csv('Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_train_final.csv')
+original_data_test = pd.read_csv('Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_test_final.csv')
 missing_features = []
 feature_json = json.load(open('config/feature.json', 'r'))
 feature_config = feature_json['features']
