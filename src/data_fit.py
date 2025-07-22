@@ -1,4 +1,5 @@
 import pandas as pd
+import shutil
 import numpy as np
 import os
 import logging
@@ -57,8 +58,8 @@ class DataFit:
         """
         self.output_dir = 'output/'
         self.results_dir = os.path.join(self.output_dir, args.exp_name)
-        os.system(f"cp train.sh {self.results_dir}/train.sh")
         os.makedirs(self.results_dir, exist_ok=True)
+        shutil.copy('train.sh', self.results_dir)
         self.dataset_dir = 'Dataset/processed/train_processed'
         self.mode = args.mode
         self.exp_name = args.exp_name

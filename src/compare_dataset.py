@@ -1,10 +1,22 @@
 import pandas as pd
+import tqdm
+import json
 
 resnet_data_train = pd.read_csv('Network/Data/train.csv')
 resnet_data_test = pd.read_csv('Network/Data/test.csv')
 original_data_train = pd.read_csv('Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_train_final_selected.csv')
 original_data_test = pd.read_csv('Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_test_final_selected.csv')
-
+missing_features = []
+feature_json = json.load(open('config/feature.json', 'r'))
+feature_config = feature_json['features']
+for feature_name, feature_config in feature_config.items():
+    if feature_config.get('missing', False) and feature_name in resnet_data_test.columns:
+        resnet_data_train.drop(feature_name, axis=1, inplace=True)
+        resnet_data_test.drop(feature_name, axis=1, inplace=True)
+        original_data_train.drop(feature_name, axis=1, inplace=True)
+        original_data_test.drop(feature_name, axis=1, inplace=True)
+        missing_features.append(feature_name)
+print(f'num of missing_features: {len(missing_features)}')
 print(resnet_data_train.shape)
 print(original_data_train.shape)
 print(resnet_data_test.shape)
@@ -29,7 +41,7 @@ print("\n=== 逐行检验样本匹配情况 ===")
 # 训练集检验
 print("训练集检验:")
 missing_in_train = 0
-for idx, row in resnet_data_train.iterrows():
+for idx, row in tqdm.tqdm(list(resnet_data_train.iterrows())):
     # 检查这一行是否在original_data_train中存在
     # 使用所有列进行匹配
     mask = (original_data_train == row).all(axis=1)
@@ -43,7 +55,7 @@ print(f"训练集中缺失的样本数量: {missing_in_train}/{len(resnet_data_t
 # 测试集检验
 print("\n测试集检验:")
 missing_in_test = 0
-for idx, row in resnet_data_test.iterrows():
+for idx, row in tqdm.tqdm(list(resnet_data_test.iterrows())):
     # 检查这一行是否在original_data_test中存在
     mask = (original_data_test == row).all(axis=1)
     if not mask.any():
