@@ -103,7 +103,9 @@ class DataFit:
             '2class': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final_2class.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final_2class.csv'},
             'network_data': {'train': 'network_train.csv','test': 'network_test.csv'},
             'nan_as_newclass': {'train': 'nan_as_newclass_train.csv','test': 'nan_as_newclass_test.csv'},
-            'one_hot': {'train':'one_hot_network_train.csv','test':'one_hot_network_test.csv'}
+            'one_hot': {'train':'one_hot_network_train.csv','test':'one_hot_network_test.csv'},
+            'new_imputation': {'train':'new_imputation_train_try.csv','test':'new_imputation_test_try.csv'},
+            'new_imputation_final': {'train':'new_imputed/new_imputed_train.csv','test':'new_imputed/new_imputed_test.csv'}
         }
         self.models = {
             'RandomForest': RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1),

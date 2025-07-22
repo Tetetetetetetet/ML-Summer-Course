@@ -24,7 +24,7 @@ echo "=== 开始训练 ==="
 
 model="ResNet"
 # mode="selected"
-mode="network_data"
+mode="new_imputation_final"
 # mode="one_hot"
 k=all
 feature_selector=None
@@ -33,7 +33,7 @@ isoversample=true
 resnet_batch_size=128
 resnet_gpu_batch_size=128 # 更新为最佳批次大小
 eval=False
-cover_old_result=False
+cover_old_result=True
 
 echo "train.sh"
 cat train.sh

@@ -170,7 +170,7 @@ class MissingAnalysisHandler:
         
         return filled_df
 
-    def em_categorical_imputation(slef, data : pd.DataFrame, max_iter=100, tol=1e-4):
+    def em_categorical_imputation(slef, data : pd.DataFrame, max_iter=100, tol=1e-5):
         df = data.copy()
         n_samples, n_features = df.shape
         
