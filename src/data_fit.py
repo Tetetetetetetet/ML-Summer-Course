@@ -57,7 +57,16 @@ class DataFit:
 
         """
         self.output_dir = 'output/'
-        self.results_dir = os.path.join(self.output_dir, args.exp_name)
+        self.cover_old_result = args.cover_old_result
+        if not self.cover_old_result:
+            try_id = 1
+            while True:
+                self.results_dir = os.path.join(self.output_dir, f"{args.exp_name}-{try_id}")
+                if not os.path.exists(self.results_dir):
+                    break
+                try_id += 1
+        else:
+            self.results_dir = os.path.join(self.output_dir, args.exp_name)
         os.makedirs(self.results_dir, exist_ok=True)
         shutil.copy('train.sh', self.results_dir)
         self.dataset_dir = 'Dataset/processed/train_processed'
@@ -655,7 +664,7 @@ class DataFit:
         
         if self.best_model_name == 'ResNet':
             # ResNet模型已经在其内部保存，这里只需要记录信息
-            logging.info("ResNet模型已在训练时保存到output/resnet_models/目录")
+            self.best_model._save_model(model_path)
         else:
             # 传统机器学习模型保存为.pkl格式
             import pickle
@@ -768,6 +777,7 @@ def main():
     parser.add_argument('--feature_selector',type=str,default='chi2',help='特征选择方法, can be "chi2" or "f_classif"')
     parser.add_argument('--resnet_gpu_batch_size',type=int,default=512,help='GPU批次大小')
     parser.add_argument('--resnet_epochs',type=int,default=200,help='ResNet训练轮数')
+    parser.add_argument('--cover_old_result',type=bool,default=False,help='是否覆盖旧的实验结果')
     args = parser.parse_args()
     data_fit = DataFit(args=args)
     data_fit.run_complete_pipeline()
