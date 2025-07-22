@@ -2,13 +2,14 @@ import pandas as pd
 import tqdm
 import json
 
-resnet_data_train = pd.read_csv('Network/Data/train.csv')
-resnet_data_test = pd.read_csv('Network/Data/test.csv')
+resnet_data_train = pd.read_csv('Dataset/processed/train_processed/network_train.csv')
+resnet_data_test = pd.read_csv('Dataset/processed/train_processed/network_test.csv')
 original_data_train = pd.read_csv('Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_train_final_selected.csv')
 original_data_test = pd.read_csv('Dataset/processed/train_processed/improved_logistic_imputed/improved_logistic_imputed_test_final_selected.csv')
 missing_features = []
 feature_json = json.load(open('config/feature.json', 'r'))
 feature_config = feature_json['features']
+"""
 for feature_name, feature_config in feature_config.items():
     if feature_config.get('missing', False) and feature_name in resnet_data_test.columns:
         resnet_data_train.drop(feature_name, axis=1, inplace=True)
@@ -16,6 +17,7 @@ for feature_name, feature_config in feature_config.items():
         original_data_train.drop(feature_name, axis=1, inplace=True)
         original_data_test.drop(feature_name, axis=1, inplace=True)
         missing_features.append(feature_name)
+"""
 print(f'num of missing_features: {len(missing_features)}')
 print(resnet_data_train.shape)
 print(original_data_train.shape)
