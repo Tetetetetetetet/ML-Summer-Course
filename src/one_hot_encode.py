@@ -1,4 +1,5 @@
 import pandas as pd
+import pdb
 import json
 from sklearn.preprocessing import OneHotEncoder
 
@@ -20,9 +21,13 @@ with open(feature_json_path, 'r') as f:
 # 决定需要 One-Hot 编码的特征
 onehot_features = []
 excluded_features = []
+for name,info in feature_info.items():
+    if info['type'] == 'categorical' and info['iskeep']:
+        train_df[name] = train_df[name].astype(int)
+
 
 for name, info in feature_info.items():
-    if info['type'] == 'categorical' and name != 'age' and name != 'readmitted':
+    if info['type'] == 'categorical' and name != 'age' and name != 'readmitted' and info['iskeep']:
         if info.get('value_num', 0) <= 30:
             onehot_features.append(name)
         else:

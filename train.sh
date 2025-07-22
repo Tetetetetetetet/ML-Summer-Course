@@ -25,11 +25,15 @@ echo "=== 开始训练 ==="
 model="ResNet"
 # mode="selected"
 mode="network_data"
+# mode="one_hot"
 k=all
 feature_selector=None
 resnet_epochs=1000
 isoversample=true
-resnet_gpu_batch_size=512 # 更新为最佳批次大小
+resnet_batch_size=128
+resnet_gpu_batch_size=128 # 更新为最佳批次大小
+eval=False
+cover_old_result=False
 
 echo "train.sh"
 cat train.sh
@@ -37,18 +41,18 @@ cat train.sh
 if [ $isoversample == true ]; then
     if [ $model == "ResNet" ]; then
         exp_name="${mode}-k_${k}-model_${model}-bs_${resnet_gpu_batch_size}-ep_${resnet_epochs}-fs_${feature_selector}-oversample"
-        python src/data_fit.py --mode $mode -e $exp_name -k $k --model $model --isoversample --feature_selector $feature_selector --resnet_gpu_batch_size $resnet_gpu_batch_size --resnet_epochs $resnet_epochs
+        python src/data_fit.py --mode $mode -e $exp_name -k $k --model $model --isoversample --feature_selector $feature_selector --resnet_batch_size $resnet_batch_size --resnet_gpu_batch_size $resnet_gpu_batch_size --resnet_epochs $resnet_epochs --eval $eval --cover_old_result $cover_old_result
     else
         exp_name="${mode}-k_${k}-model_${model}-fs_${feature_selector}-oversample"
-        python src/data_fit.py --mode $mode -e $exp_name -k $k --model $model --isoversample --feature_selector $feature_selector
+        python src/data_fit.py --mode $mode -e $exp_name -k $k --model $model --isoversample --feature_selector $feature_selector --eval $eval --cover_old_result $cover_old_result
     fi
 else
     if [ $model == "ResNet" ]; then
         exp_name="${mode}-k_${k}-model_${model}-bs_${resnet_gpu_batch_size}-ep_${resnet_epochs}-fs_${feature_selector}-notoversample"
-        python src/data_fit.py --mode $mode -e $exp_name -k $k --model $model --feature_selector $feature_selector --resnet_gpu_batch_size $resnet_gpu_batch_size --resnet_epochs $resnet_epochs
+        python src/data_fit.py --mode $mode -e $exp_name -k $k --model $model --feature_selector $feature_selector --resnet_batch_size $resnet_batch_size --resnet_gpu_batch_size $resnet_gpu_batch_size --resnet_epochs $resnet_epochs --eval $eval --cover_old_result $cover_old_result
     else
         exp_name="${mode}-k_${k}-model_${model}-fs_${feature_selector}-notoversample"
-        python src/data_fit.py --mode $mode -e $exp_name -k $k --model $model --feature_selector $feature_selector
+        python src/data_fit.py --mode $mode -e $exp_name -k $k --model $model --feature_selector $feature_selector --eval $eval --cover_old_result $cover_old_result
     fi
 fi
 

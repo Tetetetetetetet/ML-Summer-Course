@@ -1,4 +1,5 @@
 import pandas as pd
+import pdb
 import shutil
 import numpy as np
 import os
@@ -102,7 +103,7 @@ class DataFit:
             '2class': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final_2class.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final_2class.csv'},
             'network_data': {'train': 'network_train.csv','test': 'network_test.csv'},
             'nan_as_newclass': {'train': 'nan_as_newclass_train.csv','test': 'nan_as_newclass_test.csv'},
-            'one_hot': {'train':'','test':''}
+            'one_hot': {'train':'one_hot_network_train.csv','test':'one_hot_network_test.csv'}
         }
         self.models = {
             'RandomForest': RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1),
@@ -117,14 +118,15 @@ class DataFit:
         else:
             resnet_n = self.k
         
+
         self.models['ResNet'] = ResNet(
             n=resnet_n,
             epochs=args.resnet_epochs,
-            batch_size=64,
+            batch_size=args.resnet_batch_size,
             gpu_batch_size=args.resnet_gpu_batch_size,
             validation_split=0.2,
             random_state=42,
-            need_train=True,
+            need_train=(not args.eval),
         )
         self.models['ResNet'].set_mode(self.mode)
         if args.model != 'all':
@@ -776,10 +778,24 @@ def main():
     parser.add_argument('-k','--k',type=str,default='all',help='特征选择保留的特征数量("all" or int)')
     parser.add_argument('--model',type=str,default='LogisticRegression',help='模型名称 or "all"')
     parser.add_argument('--feature_selector',type=str,default='chi2',help='特征选择方法, can be "chi2" or "f_classif"')
-    parser.add_argument('--resnet_gpu_batch_size',type=int,default=512,help='GPU批次大小')
+    parser.add_argument('--resnet_batch_size',type=int,default=128,help='ResNet批次大小')
+    parser.add_argument('--resnet_gpu_batch_size',type=int,default=512,help='ResNet GPU批次大小')
     parser.add_argument('--resnet_epochs',type=int,default=200,help='ResNet训练轮数')
-    parser.add_argument('--cover_old_result',type=bool,default=False,help='是否覆盖旧的实验结果')
+    parser.add_argument('--cover_old_result',type=str,default=False,help='是否覆盖旧的实验结果')
+    parser.add_argument('--eval',type=str,default=False,help='是否训练模型')
     args = parser.parse_args()
+    if args.eval=='False':
+        args.eval = False
+    elif args.eval=='True':
+        args.eval = True
+    else:
+        raise ValueError(f"Invalid eval: {args.eval}")
+    if args.cover_old_result=='False':
+        args.cover_old_result = False
+    elif args.cover_old_result=='True':
+        args.cover_old_result = True
+    else:
+        raise ValueError(f"Invalid cover_old_result: {args.cover_old_result}")
     data_fit = DataFit(args=args)
     data_fit.run_complete_pipeline()
 
