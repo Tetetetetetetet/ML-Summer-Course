@@ -4,6 +4,7 @@ import logging
 import os
 from pathlib import Path
 from data_missing import MissingDataHandler
+from data_missing_analysis import MissingAnalysisHandler
 import json
 
 logging.basicConfig(
@@ -16,6 +17,7 @@ class LogisticImputationPipeline:
         self.train_output_dir = Path('Dataset/processed/train_processed')
         self.test_output_dir = Path('Dataset/processed/test_processed')
         self.handler = MissingDataHandler()
+        self.handler2 = MissingAnalysisHandler()
         
     def load_recoded_data(self):
         """
@@ -123,6 +125,17 @@ class LogisticImputationPipeline:
         
         return imputed_train, imputed_test
     
+    def run_em_imputation(self):
+        imputed_train = self.handler2.analysis_data(self.train_data)
+        imputed_test = self.handler2.analysis_data(self.test_data)
+        # 3. 验证填充结果
+        logging.info("步骤3: 验证填充结果")
+        self.verify_imputation_results(imputed_train, imputed_test)
+        
+        # 4. 保存最终结果
+        logging.info("步骤4: 保存最终结果")
+        self.save_final_results(imputed_train, imputed_test)
+
     def verify_imputation_results(self, imputed_train, imputed_test):
         """
         验证填充结果
@@ -233,7 +246,8 @@ def main():
         missing_analysis = pipeline.analyze_missing_values()
         
         # 3. 运行逻辑回归填充
-        imputed_train, imputed_test = pipeline.run_logistic_imputation()
+        #imputed_train, imputed_test = pipeline.run_logistic_imputation()
+        imputed_train, imputed_test = pipeline.run_em_imputation()
         
         logging.info("==========逻辑回归缺失值填充流程完成==========")
         

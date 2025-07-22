@@ -158,15 +158,6 @@ class MissingDataHandler:
         logging.info(f"剩余数据集大小: {len(data)} 行")
         return data
 
-    def pca_for_low_mid_missing_dataset(self):
-        """
-        对于低缺失率和中缺失率特征，进行主成分分析
-        """
-        low_complete_data = handler.process_low_missing_features()
-        handler.pca(low_complete_data,'low_missing_complete')
-        mid_complete_data = handler.get_mid_missing_complete_dataset()
-        handler.pca(mid_complete_data,'mid_missing_complete')
-
     def pca(self, data: pd.DataFrame,exp_name:str='first_try'):
         '''
         对于数据集data做主成分分析
