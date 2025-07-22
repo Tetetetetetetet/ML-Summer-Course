@@ -31,6 +31,9 @@ resnet_epochs=1000
 isoversample=true
 resnet_gpu_batch_size=512 # 更新为最佳批次大小
 
+echo "train.sh"
+cat train.sh
+
 if [ $isoversample == true ]; then
     if [ $model == "ResNet" ]; then
         exp_name="${mode}-k_${k}-model_${model}-bs_${resnet_gpu_batch_size}-ep_${resnet_epochs}-fs_${feature_selector}-oversample"
