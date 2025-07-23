@@ -100,6 +100,7 @@ class DataFit:
         self.mode2dataset = {
             'normal': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final.csv'},
             'oldLR': {'train': 'logistic_imputed/logistic_imputed_train_try_1.csv','test': 'logistic_imputed/logistic_imputed_test_try_1.csv'},
+            'LR': {'train': 'logistic_imputed/logistic_imputed_train_try.csv','test': 'logistic_imputed/logistic_imputed_test_try.csv'},
             'LR_pipeline': {'train': 'logistic_imputed/logistic_imputed_train_pipeline.csv','test': 'logistic_imputed/logistic_imputed_test_pipeline.csv'},
             'all_c': {'train': 'logistic_imputed/logistic_imputed_train_allc.csv','test': 'logistic_imputed/logistic_imputed_test_allc.csv'},
             'selected': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final_selected.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final_selected.csv'},
