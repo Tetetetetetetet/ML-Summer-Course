@@ -451,6 +451,7 @@ class MissingDataHandler:
             # 对所有特征做缺失值填充
             for col in X_train.columns:
                 if X_train[col].isna().sum() > 0:
+                    logging.info(f'填补训练集中{col}有缺失值，填充中位数/众数')
                     if X_train[col].dtype in [np.float64, np.int64]:
                         median_val = X_train[col].median()
                         X_train[col] = X_train[col].fillna(median_val)
@@ -507,6 +508,7 @@ class MissingDataHandler:
             
             # 检查目标变量是否为分类变量
             if is_categorical_feature(y_train):
+                logging.info(f'填补目标特征{feature}为分类变量，使用逻辑回归')
                 # 分类变量，使用逻辑回归
                 target_encoder = LabelEncoder()
                 y_train_encoded = target_encoder.fit_transform(y_train.astype(str))
@@ -621,6 +623,8 @@ class MissingDataHandler:
                 }
                 
             else:
+                logging.info(f'填补目标特征{feature}为数值变量，使用线性回归')
+                input()
                 # 数值变量，使用线性回归
                 from sklearn.linear_model import LinearRegression
                 

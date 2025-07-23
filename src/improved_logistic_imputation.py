@@ -16,7 +16,6 @@ from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
-from new_data_missing_analysis import MissingAnalysisHandler
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -36,7 +35,6 @@ class ImprovedLogisticImputation:
         self.original_test_shape = None
         self.original_train_missing = 0
         self.original_test_missing = 0
-        self.mhandler = MissingAnalysisHandler()
         
     def is_categorical_feature(self, series, max_categories=20):
         """判断是否为分类特征"""
@@ -179,6 +177,9 @@ class ImprovedLogisticImputation:
         
         # 判断目标变量类型
         is_categorical = self.is_categorical_feature(y_train)
+        if not is_categorical:
+            logging.info(f'特征 {feature} 的目标变量类型: 是数值类型')
+            input("enter to continue")
         
         # 预处理特征
         X_train_processed, _ = self.preprocess_features(X_train, feature_name=feature)
@@ -327,37 +328,6 @@ class ImprovedLogisticImputation:
         logging.info(f"改进的逻辑回归填补完成，结果保存在: {imputed_dir}")
         return imputed_train, imputed_test
     
-    def impute_em_dataset(self, train_data, test_data):
-        self.original_train_shape = train_data.shape
-        self.original_train_missing = train_data.isnull().sum().sum()
-        self.original_test_shape = test_data.shape
-        self.original_test_missing = test_data.isnull().sum().sum()
-
-        imputed_dir = self.output_dir / 'new_imputed'
-        imputed_dir.mkdir(exist_ok=True)
-        
-        missing_features = []
-        for col in train_data.columns:
-            if train_data[col].isna().sum() > 0:
-                missing_features.append(col)
-        
-        logging.info(f"需要填补的特征: {missing_features}")
-
-        imputed_train = self.mhandler.em_categorical_imputation(data = train_data)
-        print("youxi")
-        imputed_train.to_csv(imputed_dir / 'new_imputed_train.csv', index=False)
-
-        
-        imputed_test = self.mhandler.em_categorical_imputation(data = test_data)
-        imputed_test.to_csv(imputed_dir / 'new_imputed_test.csv', index=False)
-        print("yoo")
-        
-        self.generate_imputation_report(imputed_train, imputed_test, imputed_dir)
-        
-        logging.info(f"改进的逻辑回归填补完成，结果保存在: {imputed_dir}")
-        return imputed_train, imputed_test
-    
-
     def impute_test_feature(self, test_data, feature, missing_mask):
         """
         使用训练好的模型填补测试集特征
@@ -429,7 +399,7 @@ def main():
     handler = ImprovedLogisticImputation()
     
     # 加载训练数据
-    train_path = handler.output_dir / 'final_encoded_train.csv'
+    train_path = handler.output_dir / 'recoded_train.csv'
     if not train_path.exists():
         logging.error(f"训练数据文件不存在: {train_path}")
         return
@@ -438,7 +408,7 @@ def main():
     logging.info(f"加载训练数据: {train_path}, 形状: {train_data.shape}")
     
     # 加载测试数据
-    test_path = Path('Dataset/processed/test_processed/final_encoded_test.csv')
+    test_path = Path('Dataset/processed/test_processed/recoded_test.csv')
     test_data = None
     if test_path.exists():
         test_data = pd.read_csv(test_path)
@@ -453,9 +423,8 @@ def main():
     logging.info(f"测试集缺失值: {test_missing}")
     
     # 进行填补
-    #imputed_train, imputed_test = handler.impute_dataset(train_data, test_data)
-    imputed_train, imputed_test = handler.impute_em_dataset(train_data, test_data)
-
+    imputed_train, imputed_test = handler.impute_dataset(train_data, test_data)
+    
     # 验证结果
     final_train_missing = imputed_train.isnull().sum().sum()
     final_test_missing = imputed_test.isnull().sum().sum() if imputed_test is not None else 0

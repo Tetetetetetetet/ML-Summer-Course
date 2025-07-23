@@ -24,16 +24,16 @@ echo "=== 开始训练 ==="
 
 model="ResNet"
 # mode="selected"
-mode="LR_pipeline"
+mode="oldLR"
 # mode="one_hot"
 k=all
 feature_selector=None
 resnet_epochs=1000
 isoversample=true
 resnet_batch_size=128
-resnet_gpu_batch_size=1024 # 更新为最佳批次大小
+resnet_gpu_batch_size=128 # 更新为最佳批次大小
 eval=False
-cover_old_result=True
+cover_old_result=False
 
 echo "train.sh"
 cat train.sh

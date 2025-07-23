@@ -16,7 +16,7 @@ from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
-from data_missing_analysis import MissingAnalysisHandler
+from new_data_missing_analysis import MissingAnalysisHandler
 import warnings
 warnings.filterwarnings('ignore')
 
