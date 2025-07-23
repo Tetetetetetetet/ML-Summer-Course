@@ -486,6 +486,7 @@ class MissingDataHandler:
                 """
                 判断特征是否为分类变量
                 """
+                return True
                 # 如果是object类型，直接认为是分类变量
                 if series.dtype == 'object' or series.dtype == 'category':
                     return True

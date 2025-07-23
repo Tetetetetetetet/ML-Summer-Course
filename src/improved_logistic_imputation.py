@@ -38,13 +38,7 @@ class ImprovedLogisticImputation:
         
     def is_categorical_feature(self, series, max_categories=20):
         """判断是否为分类特征"""
-        if series.dtype in ['object', 'category']:
-            return True
-        elif series.dtype in [np.int64, np.int32]:
-            # 检查唯一值数量
-            unique_count = series.nunique()
-            return unique_count <= max_categories
-        return False
+        return True
     
     def preprocess_features(self, X_train, X_missing=None, feature_name=None):
         """
