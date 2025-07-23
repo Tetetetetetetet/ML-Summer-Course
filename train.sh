@@ -24,7 +24,7 @@ echo "=== 开始训练 ==="
 
 model="ResNet"
 # mode="selected"
-mode="oldLR"
+mode="LR_pipeline"
 # mode="one_hot"
 k=all
 feature_selector=None

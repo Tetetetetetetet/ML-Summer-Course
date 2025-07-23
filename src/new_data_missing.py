@@ -158,15 +158,6 @@ class MissingDataHandler:
         logging.info(f"剩余数据集大小: {len(data)} 行")
         return data
 
-    def pca_for_low_mid_missing_dataset(self):
-        """
-        对于低缺失率和中缺失率特征，进行主成分分析
-        """
-        low_complete_data = handler.process_low_missing_features()
-        handler.pca(low_complete_data,'low_missing_complete')
-        mid_complete_data = handler.get_mid_missing_complete_dataset()
-        handler.pca(mid_complete_data,'mid_missing_complete')
-
     def pca(self, data: pd.DataFrame,exp_name:str='first_try'):
         '''
         对于数据集data做主成分分析
@@ -378,7 +369,7 @@ class MissingDataHandler:
         imputer = KNNImputer(n_neighbors=5)
         data = imputer.fit_transform(data[columns])
         data = pd.DataFrame(data, columns=columns)
-        # data.to_csv(self.output_dir/'knn_imputed_train.csv',index=False)
+        data.to_csv(self.output_dir/'knn_imputed_train.csv',index=False)
         return data
 
     def logistic_regression_impute(self, data: pd.DataFrame, target_feature: str = None):
@@ -686,7 +677,7 @@ class MissingDataHandler:
             logging.info(f"特征 '{feature}' 填补完成: {missing_count} 个缺失值")
         
         # 保存填补后的数据
-        # imputed_data.to_csv(os.path.join(imputed_dir, 'logistic_imputed_train.csv'), index=False)
+        imputed_data.to_csv(os.path.join(imputed_dir, 'logistic_imputed_train.csv'), index=False)
         
         # 单独保存每个模型（在移除模型对象之前）
         for feature, model_data in model_info['models'].items():
@@ -834,8 +825,8 @@ class MissingDataHandler:
             logging.info(f"测试集特征 '{feature}' 填补完成: {missing_count} 个缺失值")
         
         # 保存填补后的测试数据
-        # test_output_dir = os.path.join(self.output_dir, 'logistic_imputed')
-        # imputed_test_data.to_csv(os.path.join(test_output_dir, 'logistic_imputed_test.csv'), index=False)
+        test_output_dir = os.path.join(self.output_dir, 'logistic_imputed')
+        imputed_test_data.to_csv(os.path.join(test_output_dir, 'logistic_imputed_test.csv'), index=False)
         
         logging.info(f"测试集逻辑回归填补完成")
         return imputed_test_data
@@ -942,8 +933,8 @@ class MissingDataHandler:
         res = res.sort_values('missing_count', ascending=False)
         
         # 保存结果
-        # output_path = os.path.join(imputed_dir, 'knn_imputation_analysis.csv')
-        # res.to_csv(output_path, index=False)
+        output_path = os.path.join(imputed_dir, 'knn_imputation_analysis.csv')
+        res.to_csv(output_path, index=False)
         
         # 保存详细统计信息
         detailed_stats = {
@@ -1062,8 +1053,8 @@ class MissingDataHandler:
         res = res.sort_values('missing_count', ascending=False)
         
         # 保存结果
-        # output_path = os.path.join(imputed_dir, 'logistic_imputation_analysis.csv')
-        # res.to_csv(output_path, index=False)
+        output_path = os.path.join(imputed_dir, 'logistic_imputation_analysis.csv')
+        res.to_csv(output_path, index=False)
         
         # 保存详细统计信息
         detailed_stats = {
@@ -1112,9 +1103,9 @@ class MissingDataHandler:
                 continue
                 
             # 保存数据集
-            # output_path = os.path.join(self.output_dir, 'complete_features', f'{feature_name}_complete.csv')
-            # complete_data.to_csv(output_path, index=False)
-            # logging.info(f"保存完整数据集: {output_path}, 形状: {complete_data.shape}")
+            output_path = os.path.join(self.output_dir, 'complete_features', f'{feature_name}_complete.csv')
+            complete_data.to_csv(output_path, index=False)
+            logging.info(f"保存完整数据集: {output_path}, 形状: {complete_data.shape}")
             
     def create_all_complete_dataset(self):
         """
@@ -1131,7 +1122,7 @@ class MissingDataHandler:
         
         # 保存完整数据集
         output_path = os.path.join(self.output_dir, 'all_features_complete.csv')
-        # complete_data.to_csv(output_path, index=False)
+        complete_data.to_csv(output_path, index=False)
         logging.info(f"\n保存所有特征完整数据集: {output_path}")
         logging.info(f"原始数据集大小: {self.train_data.shape}")
         logging.info(f"完整数据集大小: {complete_data.shape}")
@@ -1148,7 +1139,7 @@ def main():
     # data = handler.drop_mid_missing_dataset(data)
     # data = handler.drop_low_missing_dataset(data)
     data = handler.knn_impute(data)
-    # data.to_csv(os.path.join(handler.output_dir, 'knn_imputed_train.csv'), index=False)
+    data.to_csv(os.path.join(handler.output_dir, 'knn_imputed_train.csv'), index=False)
     
     # 分析KNN填补结果
     analysis_result = handler.analyse_knn_impute()
