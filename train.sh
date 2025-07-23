@@ -13,7 +13,7 @@ echo "CUDA_HOME: $CUDA_HOME"
 echo "CUDA_ROOT: $CUDA_ROOT"
 
 # 设置可见的GPU设备（选择相对空闲的GPU）
-export CUDA_VISIBLE_DEVICES=3,4,6,7
+export CUDA_VISIBLE_DEVICES=4,5,7
 echo "使用GPU设备: $CUDA_VISIBLE_DEVICES"
 
 # 检查GPU状态
@@ -24,16 +24,16 @@ echo "=== 开始训练 ==="
 
 model="ResNet"
 # mode="selected"
-mode="oldLR"
+mode="network_data"
 # mode="one_hot"
 k=all
 feature_selector=None
 resnet_epochs=1000
 isoversample=true
 resnet_batch_size=128
-resnet_gpu_batch_size=128 # 更新为最佳批次大小
-eval=False
-cover_old_result=False
+resnet_gpu_batch_size=512 # 更新为最佳批次大小
+eval=True
+cover_old_result=True
 
 echo "train.sh"
 cat train.sh

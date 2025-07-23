@@ -4,8 +4,8 @@ import json
 
 # resnet_data_train = pd.read_csv('Dataset/processed/train_processed/network_train.csv')
 # resnet_data_test = pd.read_csv('Dataset/processed/train_processed/network_test.csv')
-resnet_data_train = pd.read_csv('Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_final.csv')
-resnet_data_test = pd.read_csv('Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_final.csv')
+resnet_data_train = pd.read_csv('Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_allc.csv')
+resnet_data_test = pd.read_csv('Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_allc.csv')
 # original_data_train = pd.read_csv('Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_try.csv')
 # original_data_test = pd.read_csv('Dataset/processed/train_processed/logistic_imputed/logistic_imputed_test_try.csv')
 original_data_train = pd.read_csv('Dataset/processed/train_processed/logistic_imputed/logistic_imputed_train_try.csv')

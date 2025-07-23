@@ -99,15 +99,18 @@ class DataFit:
             self.feature_selector = None
         self.mode2dataset = {
             'normal': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final.csv'},
-            'oldLR': {'train': 'logistic_imputed/logistic_imputed_train_try.csv','test': 'logistic_imputed/logistic_imputed_test_try.csv'},
+            'oldLR': {'train': 'logistic_imputed/logistic_imputed_train_try_1.csv','test': 'logistic_imputed/logistic_imputed_test_try_1.csv'},
             'LR_pipeline': {'train': 'logistic_imputed/logistic_imputed_train_pipeline.csv','test': 'logistic_imputed/logistic_imputed_test_pipeline.csv'},
+            'all_c': {'train': 'logistic_imputed/logistic_imputed_train_allc.csv','test': 'logistic_imputed/logistic_imputed_test_allc.csv'},
             'selected': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final_selected.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final_selected.csv'},
             '2class': {'train': 'improved_logistic_imputed/improved_logistic_imputed_train_final_2class.csv','test': 'improved_logistic_imputed/improved_logistic_imputed_test_final_2class.csv'},
             'network_data': {'train': 'network_train.csv','test': 'network_test.csv'},
             'nan_as_newclass': {'train': 'nan_as_newclass_train.csv','test': 'nan_as_newclass_test.csv'},
             'one_hot': {'train':'one_hot_network_train.csv','test':'one_hot_network_test.csv'},
             'new_imputation': {'train':'new_imputation_train_try.csv','test':'new_imputation_test_try.csv'},
-            'new_imputation_final': {'train':'new_imputed/new_imputed_train.csv','test':'new_imputed/new_imputed_test.csv'}
+            'new_imputation_final': {'train':'new_imputed/new_imputed_train.csv','test':'new_imputed/new_imputed_test.csv'},
+            '2_feature': {'train':'logistic_imputed/logistic_imputed_train_try_1_split_features.csv','test':'logistic_imputed/logistic_imputed_test_try_1_split_features.csv'},
+            'without': {'train':'logistic_imputed/logistic_imputed_train_try_1_without_split_features.csv','test':'logistic_imputed/logistic_imputed_test_try_1_without_split_features.csv'}
         }
         self.models = {
             'RandomForest': RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1),
