@@ -174,8 +174,8 @@ class LogisticImputationPipeline:
         output_dir.mkdir(exist_ok=True)
         
         # 保存填充后的数据
-        train_output_path = output_dir / 'logistic_imputed_train_allc.csv'
-        test_output_path = output_dir / 'logistic_imputed_test_allc.csv'
+        train_output_path = output_dir / 'logistic_imputed_train_try.csv'
+        test_output_path = output_dir / 'logistic_imputed_test_try.csv'
         
         imputed_train.to_csv(train_output_path, index=False)
         imputed_test.to_csv(test_output_path, index=False)
